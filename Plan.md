@@ -420,6 +420,21 @@ A simple Settings sub-page (`/settings/zones`) shows all zones as editable cards
 - [x] 1.5 Seed Library page — list, search (LiveView), filter by type/brand/cycle
 - [x] 1.6 Seed detail page
 
+### Phase 1.5 — Supplier Catalog
+
+Scrape West Coast Seeds and Metchosin Farm product catalogs (both Shopify stores) via their public JSON API into a local `supplier_products` table. Links existing seeds to supplier products via fuzzy name matching, and enriches the seed detail page with the supplier's care HTML. Lays the groundwork for the Phase 2 "add seed" flow.
+
+- [ ] 1.5.1 Migration: create `supplier_products` table (supplier, shopify_product_id, handle, title, product_type, tags, description_html, url, scraped_at)
+- [ ] 1.5.2 Migration: add nullable `supplier_product_id` FK to `seeds`
+- [ ] 1.5.3 `SupplierCatalog` context + `SupplierProduct` schema
+- [ ] 1.5.4 Scraper modules for West Coast Seeds and Metchosin Farm (paginated Shopify `/products.json`)
+- [ ] 1.5.5 `mix supplier.scrape` — fetch and upsert full catalogs from both suppliers
+- [ ] 1.5.6 `mix supplier.match` — fuzzy-match seeds to supplier products (`String.jaro_distance/2`); auto-link ≥ 0.90, print review list for 0.75–0.89
+- [ ] 1.5.7 `mix supplier.link <seed_id> <supplier_product_id>` — manually confirm borderline matches
+- [ ] 1.5.8 Seed detail page: render supplier `description_html` in a "From the Supplier" section with a link to the product page
+
+**Future consideration:** Add an Oban job to run `supplier.scrape` on a weekly schedule, keeping the catalog current. A follow-up job can re-run fuzzy matching to auto-link seeds added since the last scrape.
+
 ### Phase 2 — Garden & Planting Tracking
 
 **Carry-overs from Phase 1 review (address early in Phase 2):**
@@ -476,7 +491,7 @@ A simple Settings sub-page (`/settings/zones`) shows all zones as editable cards
 - **Postgres:** Swap `ecto_sqlite3` adapter for `postgrex`. Migrations are database-agnostic — no SQL changes expected. Provision on fly.io with `fly postgres create`.
 - **Flutter:** If a native mobile app becomes desirable, the Phoenix backend can expose a JSON API with minimal changes. Auth0 already works with Flutter SDKs.
 - **Multi-user / sharing:** Auth model supports multiple users; garden data is already user-scoped from day one.
-- **Seed provider integration:** West Coast Seeds and Metchosin Farm URLs stored per-seed for deep linking to purchase pages.
+- **Seed provider integration:** Covered in Phase 1.5 — supplier catalogs scraped via Shopify JSON API, with periodic refresh via Oban as a future consideration.
 - **Smart device integration:** Webhooks from soil moisture sensors could trigger watering notifications via the existing Prowl pipeline.
 - **Plant growth tracking:** Add photos and height/weight measurements to plantings table.
 

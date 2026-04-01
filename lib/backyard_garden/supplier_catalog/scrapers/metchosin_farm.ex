@@ -28,10 +28,14 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
       handle: product["handle"],
       title: product["title"],
       product_type: product["product_type"],
-      tags: product["tags"],
+      tags: normalize_tags(product["tags"]),
       description_html: product["body_html"],
       url: "#{@base_url}/products/#{product["handle"]}",
       scraped_at: DateTime.utc_now() |> DateTime.truncate(:second)
     }
   end
+
+  # Shopify returns tags as a list; store as a comma-separated string.
+  defp normalize_tags(tags) when is_list(tags), do: Enum.join(tags, ", ")
+  defp normalize_tags(tags), do: tags
 end

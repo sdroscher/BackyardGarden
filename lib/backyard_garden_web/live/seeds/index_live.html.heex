@@ -1,0 +1,65 @@
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-stone-800">Seed Library</h1>
+    <span class="text-sm text-stone-500">{@seed_count} seeds</span>
+  </div>
+
+  <form id="filter-form" phx-change="filter" class="flex flex-wrap gap-3">
+    <input
+      type="text"
+      name="search"
+      value={@filters[:search]}
+      placeholder="Search seeds..."
+      phx-debounce="300"
+      class="flex-1 min-w-[180px] rounded-lg border border-stone-300 px-3 py-2 text-sm shadow-sm focus:border-green-500 focus:outline-none"
+    />
+    <select
+      name="type"
+      class="rounded-lg border border-stone-300 px-3 py-2 text-sm shadow-sm focus:border-green-500 focus:outline-none"
+    >
+      <option value="">All types</option>
+      <option :for={type <- @types} value={type} selected={@filters[:type] == type}>{type}</option>
+    </select>
+    <select
+      name="brand"
+      class="rounded-lg border border-stone-300 px-3 py-2 text-sm shadow-sm focus:border-green-500 focus:outline-none"
+    >
+      <option value="">All brands</option>
+      <option :for={brand <- @brands} value={brand} selected={@filters[:brand] == brand}>{brand}</option>
+    </select>
+    <select
+      name="cycle"
+      class="rounded-lg border border-stone-300 px-3 py-2 text-sm shadow-sm focus:border-green-500 focus:outline-none"
+    >
+      <option value="">All cycles</option>
+      <option :for={cycle <- @cycles} value={cycle} selected={@filters[:cycle] == cycle}>{cycle}</option>
+    </select>
+  </form>
+
+  <div class="overflow-x-auto rounded-xl border border-stone-200 shadow-sm">
+    <table class="w-full text-sm">
+      <thead class="bg-stone-100 text-stone-600 text-left">
+        <tr>
+          <th class="px-4 py-3 font-medium">Name</th>
+          <th class="px-4 py-3 font-medium hidden sm:table-cell">Type</th>
+          <th class="px-4 py-3 font-medium hidden md:table-cell">Brand</th>
+          <th class="px-4 py-3 font-medium hidden sm:table-cell">Cycle</th>
+          <th class="px-4 py-3 font-medium">Plant in</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-stone-100">
+        <tr :for={seed <- @seeds} class="hover:bg-stone-50 transition-colors">
+          <td class="px-4 py-3">
+            <.link navigate={~p"/seeds/#{seed.id}"} class="font-medium text-green-700 hover:underline">
+              {seed.name}
+            </.link>
+          </td>
+          <td class="px-4 py-3 text-stone-600 hidden sm:table-cell">{seed.type}</td>
+          <td class="px-4 py-3 text-stone-500 hidden md:table-cell">{seed.brand}</td>
+          <td class="px-4 py-3 text-stone-500 hidden sm:table-cell">{seed.cycle}</td>
+          <td class="px-4 py-3 text-stone-600">{seed.ideal_planting_time}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

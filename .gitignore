@@ -1,0 +1,53 @@
+# Elixir / Phoenix
+/_build/
+/cover/
+/deps/
+/doc/
+/.fetch
+erl_crash.dump
+*.ez
+*.beam
+/config/prod.secret.exs
+/config/runtime.exs.bak
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+priv/repo/backyard_garden*.db
+
+# Static assets (generated)
+/priv/static/assets/
+
+# Uploads
+/priv/static/uploads/
+
+# Environment / secrets
+.env
+.env.local
+*.secret.exs
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+
+# VS Code
+.vscode/
+
+# Node (for asset tooling)
+node_modules/
+npm-debug.log*
+
+# Test coverage
+cover/
+
+# Dialyzer
+.dialyzer_cache/
+priv/plts/

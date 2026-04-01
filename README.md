@@ -6,7 +6,11 @@ Built with **Elixir + Phoenix LiveView**, deployed to **fly.io**.
 
 ## Features
 
-- Seed library with search and filtering (62 seeds and counting)
+**Phase 1 — Complete**
+- Seed library with live search and filtering (62 seeds)
+- Seed detail pages
+
+**Phase 2+ — Planned**
 - Planting schedule tracking — planned, planted, harvested
 - Garden zone recommendations based on plant type, cycle, and sun requirements
 - Monthly planting calendar with ideal window overlays
@@ -19,7 +23,7 @@ Built with **Elixir + Phoenix LiveView**, deployed to **fly.io**.
 ### Prerequisites
 
 - Elixir 1.18+ and Erlang/OTP 27+ (install via [asdf](https://asdf-vm.com/))
-- Phoenix 1.7+
+- Phoenix 1.8+
 
 ```bash
 asdf plugin add erlang && asdf install erlang 27.2

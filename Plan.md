@@ -411,16 +411,21 @@ A simple Settings sub-page (`/settings/zones`) shows all zones as editable cards
 
 ## Implementation Phases
 
-### Phase 1 — Foundation (get something running)
+### Phase 1 — Foundation ✅ Complete
 
-- [ ] 1.1 Initialise Phoenix project with SQLite adapter (`ecto_sqlite3`)
-- [ ] 1.2 Create database migrations for `users`, `seeds`, `plantings`
-- [ ] 1.3 Seed database from `Seed Planting 2026.csv` (mix task)
-- [ ] 1.4 Basic layout (Tailwind) — nav, responsive shell
-- [ ] 1.5 Seed Library page — list, search (LiveView), filter by type/brand/cycle
-- [ ] 1.6 Seed detail page
+- [x] 1.1 Initialise Phoenix project with SQLite adapter (`ecto_sqlite3`)
+- [x] 1.2 Create database migrations for `seeds`
+- [x] 1.3 Seed database from `Seed Planting 2026.csv` (mix task)
+- [x] 1.4 Basic layout (Tailwind) — nav, responsive shell
+- [x] 1.5 Seed Library page — list, search (LiveView), filter by type/brand/cycle
+- [x] 1.6 Seed detail page
 
 ### Phase 2 — Garden & Planting Tracking
+
+**Carry-overs from Phase 1 review (address early in Phase 2):**
+- Add Content-Security-Policy header to the browser pipeline (Sobelow `Config.CSP` advisory — required before any deployment)
+- Reload type/brand/cycle filter dropdown options when seeds are created or edited (currently loaded once in `mount/3`)
+- Decide on `source_url` field: expose in seed edit form or leave for later
 
 - [ ] 2.1 My Garden page — list plantings by status
 - [ ] 2.2 Log Planting form — select seed, set date, location, notes
@@ -430,7 +435,7 @@ A simple Settings sub-page (`/settings/zones`) shows all zones as editable cards
 - [ ] 2.6 Seed database migration — add `sun_requirement` field
 - [ ] 2.7 Garden Zones — create default zones for simon@droscher.com (migration/seed data)
 - [ ] 2.8 Zone recommendation — show suggested zone(s) when logging a planting
-- [ ] 2.9 Seed edit form — allow setting `sun_requirement` per seed
+- [ ] 2.9 Seed edit form — allow setting `sun_requirement` and `source_url` per seed
 - [ ] 2.10 Zone settings page (`/settings/zones`) — add/edit/delete zones
 
 ### Phase 3 — Dashboard & Weather

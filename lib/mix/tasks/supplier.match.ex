@@ -25,7 +25,7 @@ defmodule Mix.Tasks.Supplier.Match do
   def run(_args) do
     Mix.Task.run("app.start")
 
-    seeds = Seeds.list_seeds()
+    seeds = Seeds.list_seeds() |> Enum.filter(&is_nil(&1.supplier_product_id))
 
     {auto_count, review, unmatched} =
       Enum.reduce(seeds, {0, [], []}, fn seed, {auto_count, review_acc, unmatched_acc} ->
@@ -33,7 +33,7 @@ defmodule Mix.Tasks.Supplier.Match do
 
         case SupplierCatalog.find_match_for_seed(seed, opts) do
           {nil, _} ->
-            {auto_count, review_acc, [seed.name | unmatched_acc]}
+            {auto_count, review_acc, [seed | unmatched_acc]}
 
           {product, score} when score >= @auto_threshold ->
             Repo.update_all(from(s in Seed, where: s.id == ^seed.id),
@@ -46,7 +46,7 @@ defmodule Mix.Tasks.Supplier.Match do
             {auto_count, [{seed, product, score} | review_acc], unmatched_acc}
 
           {_, _} ->
-            {auto_count, review_acc, [seed.name | unmatched_acc]}
+            {auto_count, review_acc, [seed | unmatched_acc]}
         end
       end)
 
@@ -87,6 +87,10 @@ defmodule Mix.Tasks.Supplier.Match do
   defp print_unmatched([]), do: :ok
 
   defp print_unmatched(unmatched) do
-    Mix.shell().info("Unmatched seeds (#{length(unmatched)}): #{Enum.join(unmatched, ", ")}")
+    Mix.shell().info("Unmatched seeds (#{length(unmatched)}):")
+
+    Enum.each(unmatched, fn seed ->
+      Mix.shell().info(~s|  "#{seed.name}" (#{seed.brand || "no brand"})  seed_id=#{seed.id}|)
+    end)
   end
 end

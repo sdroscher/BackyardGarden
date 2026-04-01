@@ -18,6 +18,9 @@ defmodule BackyardGardenWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
+    live "/seeds", Seeds.IndexLive, :index
+    live "/seeds/:id", Seeds.ShowLive, :show
   end
 
   # Other scopes may use custom stacks.

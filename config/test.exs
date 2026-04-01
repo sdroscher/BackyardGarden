@@ -6,10 +6,7 @@ import Config
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 config :backyard_garden, BackyardGarden.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "backyard_garden_test#{System.get_env("MIX_TEST_PARTITION")}",
+  database: Path.expand("../priv/repo/backyard_garden_test.db", __DIR__),
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: System.schedulers_online() * 2
 

@@ -11,6 +11,10 @@ config :backyard_garden,
   ecto_repos: [BackyardGarden.Repo],
   generators: [timestamp_type: :utc_datetime, binary_id: true]
 
+config :backyard_garden, BackyardGarden.Repo,
+  database: Path.expand("../priv/repo/backyard_garden.db", __DIR__),
+  pool_size: 5
+
 # Configure the endpoint
 config :backyard_garden, BackyardGardenWeb.Endpoint,
   url: [host: "localhost"],

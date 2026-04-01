@@ -1,0 +1,56 @@
+<div class="max-w-2xl space-y-6">
+  <div>
+    <.link navigate={~p"/seeds"} class="text-sm text-green-700 hover:underline">
+      ← Back to Seed Library
+    </.link>
+  </div>
+
+  <div class="bg-white rounded-xl border border-stone-200 shadow-sm p-6 space-y-4">
+    <div class="flex items-start justify-between gap-4">
+      <h1 class="text-2xl font-bold text-stone-800">{@seed.name}</h1>
+      <span class="shrink-0 rounded-full bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1">
+        {@seed.type}
+      </span>
+    </div>
+
+    <dl class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+      <div>
+        <dt class="text-stone-500 font-medium">Brand</dt>
+        <dd class="text-stone-800">{@seed.brand || "—"}</dd>
+      </div>
+      <div>
+        <dt class="text-stone-500 font-medium">Cycle</dt>
+        <dd class="text-stone-800">{@seed.cycle || "—"}</dd>
+      </div>
+      <div>
+        <dt class="text-stone-500 font-medium">Planting method</dt>
+        <dd class="text-stone-800">{@seed.planting_method || "—"}</dd>
+      </div>
+      <div>
+        <dt class="text-stone-500 font-medium">Ideal planting time</dt>
+        <dd class="text-stone-800">{@seed.ideal_planting_time || "—"}</dd>
+      </div>
+      <%= if @seed.maturity_days do %>
+        <div>
+          <dt class="text-stone-500 font-medium">Days to maturity</dt>
+          <dd class="text-stone-800">{@seed.maturity_days} days</dd>
+        </div>
+      <% end %>
+      <%= if @seed.sun_requirement do %>
+        <div>
+          <dt class="text-stone-500 font-medium">Sun requirement</dt>
+          <dd class="text-stone-800">
+            {@seed.sun_requirement |> String.replace("_", " ") |> String.capitalize()}
+          </dd>
+        </div>
+      <% end %>
+    </dl>
+
+    <%= if @seed.notes && @seed.notes != "" do %>
+      <div class="border-t border-stone-100 pt-4">
+        <dt class="text-stone-500 font-medium text-sm mb-1">Notes</dt>
+        <dd class="text-stone-700 text-sm">{@seed.notes}</dd>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -26,7 +26,7 @@ csv_path
    _actually_planted, maturity | _rest] = padded
 
   maturity_days =
-    case Regex.run(~r/(\d+)/, maturity) do
+    case Regex.run(~r/(\d+)/, String.trim(maturity)) do
       [_, n] -> String.to_integer(n)
       nil -> nil
     end

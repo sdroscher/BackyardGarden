@@ -1,6 +1,10 @@
 defmodule BackyardGardenWeb.Seeds.IndexLive do
   use BackyardGardenWeb, :live_view
 
+  @moduledoc """
+  LiveView for browsing and filtering the seed library.
+  """
+
   alias BackyardGarden.Seeds
 
   @impl true

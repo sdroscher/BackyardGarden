@@ -72,6 +72,7 @@ defmodule BackyardGardenWeb.Seeds.IndexLiveTest do
 
     assert html =~ "Carrots"
     refute html =~ "Basil"
+    refute html =~ "Echinacea"
   end
 
   test "filters by cycle", %{conn: conn} do
@@ -102,5 +103,37 @@ defmodule BackyardGardenWeb.Seeds.IndexLiveTest do
   test "each row links to seed detail", %{conn: conn, basil: basil} do
     {:ok, _view, html} = live(conn, ~p"/seeds")
     assert html =~ ~p"/seeds/#{basil.id}"
+  end
+
+  test "shows empty state when no seeds match filter", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/seeds")
+
+    html =
+      view
+      |> form("#filter-form", %{"type" => "", "brand" => "", "cycle" => "", "search" => "zzznomatch"})
+      |> render_change()
+
+    assert html =~ "0 seeds"
+    refute html =~ "Basil"
+    refute html =~ "Carrots"
+    refute html =~ "Echinacea"
+  end
+
+  test "combined type and brand filter", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/seeds")
+
+    html =
+      view
+      |> form("#filter-form", %{
+        "type" => "Herb",
+        "brand" => "Metchosin Farm",
+        "cycle" => "",
+        "search" => ""
+      })
+      |> render_change()
+
+    assert html =~ "Basil"
+    assert html =~ "Echinacea"
+    refute html =~ "Carrots"
   end
 end

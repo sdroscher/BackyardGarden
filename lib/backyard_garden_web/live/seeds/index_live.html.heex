@@ -10,6 +10,7 @@
       name="search"
       value={@filters[:search]}
       placeholder="Search seeds..."
+      phx-debounce="300"
       class="flex-1 min-w-[180px] rounded-lg border border-stone-300 px-3 py-2 text-sm shadow-sm focus:border-green-500 focus:outline-none"
     />
     <select
@@ -49,9 +50,9 @@
       <tbody class="divide-y divide-stone-100">
         <tr :for={seed <- @seeds} class="hover:bg-stone-50 transition-colors">
           <td class="px-4 py-3">
-            <a href={~p"/seeds/#{seed.id}"} class="font-medium text-green-700 hover:underline">
+            <.link navigate={~p"/seeds/#{seed.id}"} class="font-medium text-green-700 hover:underline">
               {seed.name}
-            </a>
+            </.link>
           </td>
           <td class="px-4 py-3 text-stone-600 hidden sm:table-cell">{seed.type}</td>
           <td class="px-4 py-3 text-stone-500 hidden md:table-cell">{seed.brand}</td>

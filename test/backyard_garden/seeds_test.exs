@@ -2,7 +2,6 @@ defmodule BackyardGarden.SeedsTest do
   use BackyardGarden.DataCase
 
   alias BackyardGarden.Seeds
-  alias BackyardGarden.Seeds.Seed
 
   defp seed_fixture(attrs \\ %{}) do
     defaults = %{name: "Test Seed", brand: "Metchosin Farm", type: "Herb", cycle: "Annual"}

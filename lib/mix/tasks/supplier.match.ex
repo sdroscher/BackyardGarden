@@ -29,7 +29,9 @@ defmodule Mix.Tasks.Supplier.Match do
 
     {auto_count, review, unmatched} =
       Enum.reduce(seeds, {0, [], []}, fn seed, {auto_count, review_acc, unmatched_acc} ->
-        case SupplierCatalog.find_match_for_seed(seed) do
+        opts = if supplier = supplier_key(seed.brand), do: [supplier: supplier], else: []
+
+        case SupplierCatalog.find_match_for_seed(seed, opts) do
           {nil, _} ->
             {auto_count, review_acc, [seed.name | unmatched_acc]}
 
@@ -75,6 +77,12 @@ defmodule Mix.Tasks.Supplier.Match do
 
     Mix.shell().info("")
   end
+
+  # Maps the free-text brand field to the supplier key used in supplier_products.
+  # Seeds with an unrecognised brand are matched against all suppliers.
+  defp supplier_key("Metchosin Farm"), do: "metchosin_farm"
+  defp supplier_key("West Coast Seeds"), do: "west_coast_seeds"
+  defp supplier_key(_), do: nil
 
   defp print_unmatched([]), do: :ok
 

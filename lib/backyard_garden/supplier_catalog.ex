@@ -32,16 +32,33 @@ defmodule BackyardGarden.SupplierCatalog do
   @doc """
   Returns {supplier_product, score} for the best fuzzy name match against the given seed,
   where score is 0.0–1.0 (Jaro distance). Returns {nil, 0.0} if no products exist.
-  """
-  def find_match_for_seed(seed) do
-    Repo.all(SupplierProduct)
-    |> Enum.map(fn product ->
-      score =
-        String.jaro_distance(String.downcase(seed.name), String.downcase(product.title))
 
-      {product, score}
+  Options:
+    - `:supplier` — restrict candidates to a specific supplier key (e.g. "west_coast_seeds")
+  """
+  def find_match_for_seed(seed, opts \\ []) do
+    SupplierProduct
+    |> filter_by_supplier(opts[:supplier])
+    |> Repo.all()
+    |> Enum.map(fn product ->
+      {product, match_score(seed.name, product.title)}
     end)
     |> Enum.max_by(fn {_product, score} -> score end, fn -> {nil, 0.0} end)
+  end
+
+  # Try matching on the full seed name and on the part after " - " (stripped of user-added
+  # category prefixes like "Zucchini - "), taking the higher score.
+  defp match_score(seed_name, product_title) do
+    product_lower = String.downcase(product_title)
+    full_score = String.jaro_distance(String.downcase(seed_name), product_lower)
+
+    case String.split(seed_name, " - ", parts: 2) do
+      [_prefix, variety] ->
+        max(full_score, String.jaro_distance(String.downcase(variety), product_lower))
+
+      _ ->
+        full_score
+    end
   end
 
   defp filter_by_supplier(query, nil), do: query

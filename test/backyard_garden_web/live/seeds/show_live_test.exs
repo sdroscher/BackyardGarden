@@ -4,6 +4,7 @@ defmodule BackyardGardenWeb.Seeds.ShowLiveTest do
   import Phoenix.LiveViewTest
 
   alias BackyardGarden.Seeds
+  alias BackyardGarden.SupplierCatalog
 
   setup do
     {:ok, seed} =
@@ -60,5 +61,35 @@ defmodule BackyardGardenWeb.Seeds.ShowLiveTest do
     assert_raise Ecto.NoResultsError, fn ->
       live(conn, ~p"/seeds/#{Ecto.UUID.generate()}")
     end
+  end
+
+  test "renders supplier section when seed is linked to a supplier product", %{conn: conn} do
+    {:ok, product} =
+      SupplierCatalog.upsert_supplier_product(%{
+        supplier: "metchosin_farm",
+        shopify_product_id: 11_111,
+        handle: "purple-basil",
+        title: "Purple Basil",
+        description_html: "<p>Great companion plant for tomatoes.</p>",
+        url: "https://metchosinfarm.ca/products/purple-basil",
+        scraped_at: ~U[2026-04-01 00:00:00Z]
+      })
+
+    {:ok, seed} =
+      Seeds.create_seed(%{name: "Purple Basil", type: "Herb", supplier_product_id: product.id})
+
+    {:ok, _view, html} = live(conn, ~p"/seeds/#{seed.id}")
+
+    assert html =~ "From the Supplier"
+    assert html =~ "Great companion plant for tomatoes."
+    assert html =~ "metchosinfarm.ca/products/purple-basil"
+  end
+
+  test "does not render supplier section when seed has no supplier product", %{
+    conn: conn,
+    seed: seed
+  } do
+    {:ok, _view, html} = live(conn, ~p"/seeds/#{seed.id}")
+    refute html =~ "From the Supplier"
   end
 end

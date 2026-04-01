@@ -9,7 +9,7 @@ defmodule BackyardGardenWeb.Seeds.ShowLive do
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
-    seed = Seeds.get_seed!(id)
+    seed = Seeds.get_seed_with_supplier!(id)
     {:ok, assign(socket, :seed, seed)}
   end
 

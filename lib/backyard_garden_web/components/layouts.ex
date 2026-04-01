@@ -36,15 +36,17 @@ defmodule BackyardGardenWeb.Layouts do
   def app(assigns) do
     ~H"""
     <header class="bg-green-800 text-white shadow-md">
-      <nav class="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
+      <nav aria-label="Main navigation" class="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
         <a href="/" class="flex items-center gap-2 text-lg font-semibold hover:text-green-200">
           <span>🌱</span>
           <span>BackyardGarden</span>
         </a>
         <div class="flex items-center gap-6 text-sm font-medium">
           <a href={~p"/seeds"} class="hover:text-green-200 transition-colors">Seeds</a>
-          <a href={~p"/garden"} class="hover:text-green-200 transition-colors">My Garden</a>
-          <a href={~p"/calendar"} class="hover:text-green-200 transition-colors">Calendar</a>
+          <%!-- TODO: switch to ~p"/garden" once route is added in Phase 2 --%>
+          <a href="/garden" class="hover:text-green-200 transition-colors">My Garden</a>
+          <%!-- TODO: switch to ~p"/calendar" once route is added in Phase 2 --%>
+          <a href="/calendar" class="hover:text-green-200 transition-colors">Calendar</a>
         </div>
       </nav>
     </header>

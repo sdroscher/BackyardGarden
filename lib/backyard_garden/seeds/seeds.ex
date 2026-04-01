@@ -68,7 +68,8 @@ defmodule BackyardGarden.Seeds do
   defp filter_by_search(query, ""), do: query
 
   defp filter_by_search(query, search) do
-    term = "%#{String.downcase(search)}%"
+    escaped = search |> String.downcase() |> String.replace("%", "\\%") |> String.replace("_", "\\_")
+    term = "%#{escaped}%"
 
     where(
       query,

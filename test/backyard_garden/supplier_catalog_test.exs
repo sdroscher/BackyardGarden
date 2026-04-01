@@ -4,7 +4,7 @@ defmodule BackyardGarden.SupplierCatalogTest do
   alias BackyardGarden.SupplierCatalog
   alias BackyardGarden.Seeds
 
-  defp product_fixture(attrs \\ %{}) do
+  defp product_fixture(attrs) do
     defaults = %{
       supplier: "metchosin_farm",
       shopify_product_id: 12_345,
@@ -102,7 +102,7 @@ defmodule BackyardGarden.SupplierCatalogTest do
 
     test "returns {nil, 0.0} when the supplier_products table is empty" do
       {:ok, seed} = Seeds.create_seed(%{name: "Tomato"})
-      assert {nil, 0.0} = SupplierCatalog.find_match_for_seed(seed)
+      assert {nil, +0.0} = SupplierCatalog.find_match_for_seed(seed)
     end
   end
 end

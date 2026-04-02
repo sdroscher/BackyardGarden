@@ -16,6 +16,9 @@ defmodule BackyardGarden.Seeds.Seed do
     field :source_url, :string
     field :notes, :string
 
+    belongs_to :supplier_product, BackyardGarden.SupplierCatalog.SupplierProduct,
+      type: :binary_id
+
     timestamps()
   end
 
@@ -31,7 +34,8 @@ defmodule BackyardGarden.Seeds.Seed do
       :maturity_days,
       :sun_requirement,
       :source_url,
-      :notes
+      :notes,
+      :supplier_product_id
     ])
     |> validate_required([:name])
   end

@@ -10,6 +10,11 @@ Built with **Elixir + Phoenix LiveView**, deployed to **fly.io**.
 - Seed library with live search and filtering (62 seeds)
 - Seed detail pages
 
+**Phase 1.5 — Complete**
+- Supplier catalog scraped from West Coast Seeds and Metchosin Farm (Shopify JSON API)
+- Fuzzy name matching links seeds to supplier products (`mix supplier.scrape`, `mix supplier.match`, `mix supplier.link`)
+- Seed detail page shows "From the Supplier" section with care HTML and link to product page
+
 **Phase 2+ — Planned**
 - Planting schedule tracking — planned, planted, harvested
 - Garden zone recommendations based on plant type, cycle, and sun requirements
@@ -55,8 +60,10 @@ mix test
 lib/
   backyard_garden/          # business logic (contexts)
     seeds/                  # Seeds context + schema
+    supplier_catalog/       # SupplierCatalog context, SupplierProduct schema, scrapers
     garden/                 # Plantings, Zones contexts (Phase 2)
   backyard_garden_web/      # web layer (LiveViews, router, layouts)
+  mix/tasks/                # mix supplier.scrape / match / link
 priv/
   repo/
     migrations/             # Ecto migrations
@@ -82,6 +89,30 @@ Targeted at [fly.io](https://fly.io). SQLite with a persistent volume for local/
 fly launch
 fly deploy
 ```
+
+## Supplier Catalog
+
+Seed detail pages can show care information scraped from supplier Shopify stores. Three mix tasks manage this:
+
+```bash
+# Fetch and upsert all products from West Coast Seeds and Metchosin Farm
+mix supplier.scrape
+
+# Import a single product by URL (useful for products missed by the bulk scrape)
+mix supplier.scrape https://www.westcoastseeds.com/products/bright-lights-1
+
+# Fuzzy-match seeds to supplier products (auto-links ≥ 0.90 score, prints review list for 0.75–0.89)
+mix supplier.match
+
+# Manually link a seed to a product — accepts a UUID, handle, or full product URL
+mix supplier.link <seed_id> <product_id|handle|url>
+
+# Examples:
+mix supplier.link <seed_id> https://metchosinfarm.ca/products/noche-zucchini
+mix supplier.link <seed_id> noche-zucchini
+```
+
+Run `mix supplier.scrape` first to populate the catalog, then `mix supplier.match` to link seeds. Re-running either task is safe — scrape uses upsert and match skips already-linked seeds.
 
 ## Seed Data
 

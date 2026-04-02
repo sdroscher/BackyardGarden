@@ -21,6 +21,11 @@ defmodule BackyardGarden.Seeds do
   @doc "Returns a single seed by id. Raises Ecto.NoResultsError if not found."
   def get_seed!(id), do: Repo.get!(Seed, id)
 
+  @doc "Returns a single seed by id with supplier_product preloaded. Raises if not found."
+  def get_seed_with_supplier!(id) do
+    get_seed!(id) |> Repo.preload(:supplier_product)
+  end
+
   @doc "Creates a seed. Returns {:ok, seed} or {:error, changeset}."
   def create_seed(attrs) do
     %Seed{}

@@ -12,10 +12,47 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
     fetch_page(1, [])
   end
 
-  @doc "Fetches a single product by handle and returns its attribute map."
+  @doc "Fetches a single product by handle, including the care guide scraped from the product page."
   def fetch_product(handle) do
     %{body: body} = Req.get!("#{@base_url}/products/#{handle}.json")
-    to_attrs(body["product"])
+    attrs = to_attrs(body["product"])
+    Map.put(attrs, :care_html, fetch_care_guide(handle))
+  end
+
+  # Fetches the product HTML page and parses the "All About" accordion sections.
+  # Returns nil if the section is absent or all sections are empty.
+  defp fetch_care_guide(handle) do
+    case Req.get("#{@base_url}/products/#{handle}") do
+      {:ok, %{body: html}} when is_binary(html) -> parse_care_guide(html)
+      _ -> nil
+    end
+  end
+
+  defp parse_care_guide(html) do
+    {:ok, document} = Floki.parse_document(html)
+
+    sections =
+      document
+      |> Floki.find("#all-about .accordion-container-htg")
+      |> Enum.flat_map(&section_to_html/1)
+
+    if sections == [], do: nil, else: Enum.join(sections, "\n")
+  end
+
+  defp section_to_html(container) do
+    heading =
+      container
+      |> Floki.find(".accordion strong")
+      |> Floki.text()
+      |> String.trim()
+
+    content_nodes = Floki.find(container, ".content-wrap")
+
+    if Floki.text(content_nodes) |> String.trim() == "" do
+      []
+    else
+      ["<div><h4>#{heading}</h4>#{Floki.raw_html(content_nodes)}</div>"]
+    end
   end
 
   defp fetch_page(page, acc) do

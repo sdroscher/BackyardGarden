@@ -17,6 +17,7 @@ defmodule BackyardGarden.SupplierCatalog.SupplierProduct do
     field :product_type, :string
     field :tags, :string
     field :description_html, :string
+    field :care_html, :string
     field :url, :string
     field :scraped_at, :utc_datetime
 
@@ -33,6 +34,7 @@ defmodule BackyardGarden.SupplierCatalog.SupplierProduct do
       :product_type,
       :tags,
       :description_html,
+      :care_html,
       :url,
       :scraped_at
     ])

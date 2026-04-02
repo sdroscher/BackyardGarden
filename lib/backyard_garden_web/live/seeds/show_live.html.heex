@@ -71,5 +71,14 @@
         {raw(@seed.supplier_product.description_html)}
       </div>
     </div>
+
+    <%= if @seed.supplier_product.care_html do %>
+      <div class="bg-white rounded-xl border border-stone-200 shadow-sm p-6 space-y-3">
+        <h2 class="text-lg font-semibold text-stone-800">Growing Guide</h2>
+        <div class="text-sm text-stone-700 space-y-4">
+          {raw(@seed.supplier_product.care_html)}
+        </div>
+      </div>
+    <% end %>
   <% end %>
 </div>

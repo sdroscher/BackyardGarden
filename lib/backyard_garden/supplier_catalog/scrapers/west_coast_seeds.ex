@@ -12,6 +12,12 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
     fetch_page(1, [])
   end
 
+  @doc "Fetches a single product by handle and returns its attribute map."
+  def fetch_product(handle) do
+    %{body: body} = Req.get!("#{@base_url}/products/#{handle}.json")
+    to_attrs(body["product"])
+  end
+
   defp fetch_page(page, acc) do
     %{body: body} = Req.get!("#{@base_url}/products.json?limit=250&page=#{page}")
 

@@ -98,6 +98,9 @@ Seed detail pages can show care information scraped from supplier Shopify stores
 # Fetch and upsert all products from West Coast Seeds and Metchosin Farm
 mix supplier.scrape
 
+# Import a single product by URL (useful for products missed by the bulk scrape)
+mix supplier.scrape https://www.westcoastseeds.com/products/bright-lights-1
+
 # Fuzzy-match seeds to supplier products (auto-links ≥ 0.90 score, prints review list for 0.75–0.89)
 mix supplier.match
 

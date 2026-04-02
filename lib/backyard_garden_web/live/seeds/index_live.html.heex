@@ -1,65 +1,140 @@
 <div class="space-y-4">
   <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold text-stone-800">Seed Library</h1>
-    <span class="text-sm text-stone-500">{@seed_count} seeds</span>
+    <h1 class="text-2xl font-bold text-[#14532d]">Seed Library</h1>
+    <span class="text-sm text-[#6b7280]">{@seed_count} seeds</span>
   </div>
 
-  <form id="filter-form" phx-change="filter" class="flex flex-wrap gap-3">
+  <%!-- Filter bar --%>
+  <form id="filter-form" phx-change="filter" class="bg-white border border-[#bbf7d0] rounded-xl p-3 flex flex-wrap gap-2">
     <input
       type="text"
       name="search"
       value={@filters[:search]}
       placeholder="Search seeds..."
       phx-debounce="300"
-      class="flex-1 min-w-[180px] rounded-lg border border-stone-300 px-3 py-2 text-sm shadow-sm focus:border-green-500 focus:outline-none"
+      class="flex-1 min-w-[160px] rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
     />
     <select
       name="type"
-      class="rounded-lg border border-stone-300 px-3 py-2 text-sm shadow-sm focus:border-green-500 focus:outline-none"
+      class="rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
     >
       <option value="">All types</option>
       <option :for={type <- @types} value={type} selected={@filters[:type] == type}>{type}</option>
     </select>
     <select
       name="brand"
-      class="rounded-lg border border-stone-300 px-3 py-2 text-sm shadow-sm focus:border-green-500 focus:outline-none"
+      class="rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
     >
       <option value="">All brands</option>
-      <option :for={brand <- @brands} value={brand} selected={@filters[:brand] == brand}>{brand}</option>
+      <option :for={brand <- @brands} value={brand} selected={@filters[:brand] == brand}>
+        {brand}
+      </option>
     </select>
     <select
       name="cycle"
-      class="rounded-lg border border-stone-300 px-3 py-2 text-sm shadow-sm focus:border-green-500 focus:outline-none"
+      class="rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
     >
       <option value="">All cycles</option>
-      <option :for={cycle <- @cycles} value={cycle} selected={@filters[:cycle] == cycle}>{cycle}</option>
+      <option :for={cycle <- @cycles} value={cycle} selected={@filters[:cycle] == cycle}>
+        {cycle}
+      </option>
+    </select>
+    <select
+      name="planting_method"
+      class="rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+    >
+      <option value="">All methods</option>
+      <option
+        :for={method <- @planting_methods}
+        value={method}
+        selected={@filters[:planting_method] == method}
+      >
+        {method}
+      </option>
+    </select>
+    <select
+      name="sun_requirement"
+      class="rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+    >
+      <option value="">All sun</option>
+      <option
+        :for={sun <- @sun_requirements}
+        value={sun}
+        selected={@filters[:sun_requirement] == sun}
+      >
+        {sun |> String.replace("_", " ") |> String.capitalize()}
+      </option>
     </select>
   </form>
 
-  <div class="overflow-x-auto rounded-xl border border-stone-200 shadow-sm">
+  <%!-- Desktop table (hidden on mobile) --%>
+  <div class="hidden sm:block overflow-x-auto rounded-xl border border-[#bbf7d0] shadow-sm">
     <table class="w-full text-sm">
-      <thead class="bg-stone-100 text-stone-600 text-left">
+      <thead class="bg-[#f0fdf4] text-[#14532d] text-left border-b-2 border-[#bbf7d0]">
         <tr>
-          <th class="px-4 py-3 font-medium">Name</th>
-          <th class="px-4 py-3 font-medium hidden sm:table-cell">Type</th>
-          <th class="px-4 py-3 font-medium hidden md:table-cell">Brand</th>
-          <th class="px-4 py-3 font-medium hidden sm:table-cell">Cycle</th>
-          <th class="px-4 py-3 font-medium">Plant in</th>
+          <th class="px-4 py-3 font-semibold">
+            <button phx-click="sort" phx-value-field="name" class="flex items-center gap-1 hover:text-[#2d6a4f]">
+              Name {sort_indicator(@sort_field, @sort_dir, "name")}
+            </button>
+          </th>
+          <th class="px-4 py-3 font-semibold">
+            <button phx-click="sort" phx-value-field="type" class="flex items-center gap-1 hover:text-[#2d6a4f]">
+              Type {sort_indicator(@sort_field, @sort_dir, "type")}
+            </button>
+          </th>
+          <th class="px-4 py-3 font-semibold hidden md:table-cell">
+            <button phx-click="sort" phx-value-field="brand" class="flex items-center gap-1 hover:text-[#2d6a4f]">
+              Brand {sort_indicator(@sort_field, @sort_dir, "brand")}
+            </button>
+          </th>
+          <th class="px-4 py-3 font-semibold hidden md:table-cell">
+            <button phx-click="sort" phx-value-field="cycle" class="flex items-center gap-1 hover:text-[#2d6a4f]">
+              Cycle {sort_indicator(@sort_field, @sort_dir, "cycle")}
+            </button>
+          </th>
+          <th class="px-4 py-3 font-semibold">
+            <button
+              phx-click="sort"
+              phx-value-field="ideal_planting_time"
+              class="flex items-center gap-1 hover:text-[#2d6a4f]"
+            >
+              Plant in {sort_indicator(@sort_field, @sort_dir, "ideal_planting_time")}
+            </button>
+          </th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-stone-100">
-        <tr :for={seed <- @seeds} class="hover:bg-stone-50 transition-colors">
+      <tbody class="divide-y divide-[#f0fdf4]">
+        <tr :for={seed <- @seeds} class="hover:bg-[#f0fdf4] transition-colors cursor-pointer odd:bg-white even:bg-[#fafafa]">
           <td class="px-4 py-3">
-            <.link navigate={~p"/seeds/#{seed.id}"} class="font-medium text-green-700 hover:underline">
+            <.link navigate={~p"/seeds/#{seed.id}"} class="font-semibold text-[#14532d] hover:text-[#2d6a4f] hover:underline">
               {seed.name}
             </.link>
           </td>
-          <td class="px-4 py-3 text-stone-600 hidden sm:table-cell">{seed.type}</td>
-          <td class="px-4 py-3 text-stone-500 hidden md:table-cell">{seed.brand}</td>
-          <td class="px-4 py-3 text-stone-500 hidden sm:table-cell">{seed.cycle}</td>
-          <td class="px-4 py-3 text-stone-600">{seed.ideal_planting_time}</td>
+          <td class="px-4 py-3">
+            <Layouts.type_badge type={seed.type} />
+          </td>
+          <td class="px-4 py-3 text-[#6b7280] hidden md:table-cell">{seed.brand}</td>
+          <td class="px-4 py-3 text-[#6b7280] hidden md:table-cell">{seed.cycle}</td>
+          <td class="px-4 py-3 text-[#374151]">{seed.ideal_planting_time}</td>
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <%!-- Mobile card grid (hidden on sm+) --%>
+  <div class="grid grid-cols-2 gap-3 sm:hidden">
+    <.link
+      :for={seed <- @seeds}
+      navigate={~p"/seeds/#{seed.id}"}
+      class={[
+        "bg-white border border-[#bbf7d0] rounded-xl p-3 space-y-1.5 hover:bg-[#f0fdf4] transition-colors",
+        mobile_card_border(seed.type)
+      ]}
+    >
+      <p class="font-bold text-[#14532d] text-sm leading-tight">{seed.name}</p>
+      <Layouts.type_badge type={seed.type} />
+      <p class="text-xs text-[#6b7280]">{seed.brand}</p>
+      <p class="text-xs text-[#374151] font-medium">🌱 {seed.ideal_planting_time}</p>
+    </.link>
   </div>
 </div>

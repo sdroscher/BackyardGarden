@@ -35,18 +35,23 @@ defmodule BackyardGardenWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="bg-green-800 text-white shadow-md">
-      <nav aria-label="Main navigation" class="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
-        <a href="/" class="flex items-center gap-2 text-lg font-semibold hover:text-green-200">
-          <span>🌱</span>
-          <span>BackyardGarden</span>
+    <header style="background: linear-gradient(90deg, #1a3a2a 0%, #2d6a4f 100%);" class="shadow-md">
+      <nav
+        aria-label="Main navigation"
+        class="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between"
+      >
+        <a href="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <span class="text-xl">🌿</span>
+          <span class="text-[#d8f3dc] text-lg font-bold tracking-tight">BackyardGarden</span>
         </a>
         <div class="flex items-center gap-6 text-sm font-medium">
-          <a href={~p"/seeds"} class="hover:text-green-200 transition-colors">Seeds</a>
-          <%!-- TODO: switch to ~p"/garden" once route is added in Phase 2 --%>
-          <a href="/garden" class="hover:text-green-200 transition-colors">My Garden</a>
-          <%!-- TODO: switch to ~p"/calendar" once route is added in Phase 2 --%>
-          <a href="/calendar" class="hover:text-green-200 transition-colors">Calendar</a>
+          <.nav_link href={~p"/seeds"} current_scope={@current_scope}>Seeds</.nav_link>
+          <a href="/garden" class="text-white/50 hover:text-[#95d5b2] transition-colors">
+            My Garden
+          </a>
+          <a href="/calendar" class="text-white/50 hover:text-[#95d5b2] transition-colors">
+            Calendar
+          </a>
         </div>
       </nav>
     </header>
@@ -57,6 +62,44 @@ defmodule BackyardGardenWeb.Layouts do
     </main>
     """
   end
+
+  defp nav_link(assigns) do
+    ~H"""
+    <a
+      href={@href}
+      class="text-[#95d5b2] border-b-2 border-[#52b788] pb-0.5 hover:text-white transition-colors"
+    >
+      {render_slot(@inner_block)}
+    </a>
+    """
+  end
+
+  @doc """
+  Renders a color-coded pill badge for a seed type.
+
+  ## Examples
+
+      <Layouts.type_badge type="Vegetable" />
+      <Layouts.type_badge type={@seed.type} />
+
+  """
+  attr :type, :string, required: true
+
+  def type_badge(assigns) do
+    ~H"""
+    <span class={[
+      "text-xs font-medium px-2.5 py-0.5 rounded-full",
+      type_badge_classes(@type)
+    ]}>
+      {@type}
+    </span>
+    """
+  end
+
+  defp type_badge_classes("Vegetable"), do: "text-[#16a34a] bg-[#dcfce7]"
+  defp type_badge_classes("Herb"), do: "text-[#7c3aed] bg-[#ede9fe]"
+  defp type_badge_classes("Flower"), do: "text-[#d97706] bg-[#fef3c7]"
+  defp type_badge_classes(_), do: "text-[#db2777] bg-[#fce7f3]"
 
   @doc """
   Shows the flash group with standard titles and content.

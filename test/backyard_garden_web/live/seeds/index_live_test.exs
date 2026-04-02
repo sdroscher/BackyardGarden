@@ -136,4 +136,77 @@ defmodule BackyardGardenWeb.Seeds.IndexLiveTest do
     assert html =~ "Echinacea"
     refute html =~ "Carrots"
   end
+
+  test "sort event sorts by field ascending", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/seeds")
+
+    html = render_click(view, "sort", %{"field" => "type"})
+
+    # Herb < Vegetable alphabetically, so Basil and Echinacea (Herb) come before Carrots (Vegetable)
+    basil_pos = :binary.match(html, "Basil") |> elem(0)
+    carrots_pos = :binary.match(html, "Carrots") |> elem(0)
+    assert basil_pos < carrots_pos
+  end
+
+  test "sort event toggles direction on second click", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/seeds")
+
+    # First click: sort by name asc (default is already name asc, but explicit)
+    render_click(view, "sort", %{"field" => "name"})
+    # Second click on same field: name desc — Echinacea should come first
+    html = render_click(view, "sort", %{"field" => "name"})
+
+    echinacea_pos = :binary.match(html, "Echinacea") |> elem(0)
+    basil_pos = :binary.match(html, "Basil") |> elem(0)
+    assert echinacea_pos < basil_pos
+  end
+
+  test "sort event resets to asc when switching fields", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/seeds")
+
+    # Sort by name desc first
+    render_click(view, "sort", %{"field" => "name"})
+    render_click(view, "sort", %{"field" => "name"})
+    # Now switch to type — should be asc (Herb before Vegetable)
+    html = render_click(view, "sort", %{"field" => "type"})
+
+    basil_pos = :binary.match(html, "Basil") |> elem(0)
+    carrots_pos = :binary.match(html, "Carrots") |> elem(0)
+    assert basil_pos < carrots_pos
+  end
+
+  test "renders planting_method dropdown", %{conn: conn} do
+    {:ok, _view, html} = live(conn, ~p"/seeds")
+    assert html =~ "planting_method"
+  end
+
+  test "renders sun_requirement dropdown", %{conn: conn} do
+    {:ok, _view, html} = live(conn, ~p"/seeds")
+    assert html =~ "sun_requirement"
+  end
+
+  test "filters by planting_method", %{conn: conn} do
+    {:ok, direct_sow} =
+      Seeds.create_seed(%{name: "Direct Sow Seed", planting_method: "Direct Sow", type: "Vegetable"})
+
+    {:ok, seedlings} =
+      Seeds.create_seed(%{name: "Seedlings Seed", planting_method: "Seedlings", type: "Herb"})
+
+    {:ok, view, _html} = live(conn, ~p"/seeds")
+
+    html =
+      view
+      |> form("#filter-form", %{
+        "type" => "",
+        "brand" => "",
+        "cycle" => "",
+        "planting_method" => "Direct Sow",
+        "sun_requirement" => "",
+        "search" => ""
+      })
+      |> render_change()
+
+    assert html =~ direct_sow.name
+    refute html =~ seedlings.name
+  end
 end

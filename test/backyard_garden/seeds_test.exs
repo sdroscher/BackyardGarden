@@ -63,6 +63,50 @@ defmodule BackyardGarden.SeedsTest do
       seeds = Seeds.list_seeds(%{type: "", brand: "", cycle: "", search: ""})
       assert length(seeds) == 2
     end
+
+    test "filters by planting_method" do
+      seed_fixture(%{name: "Basil", planting_method: "Seedlings"})
+      seed_fixture(%{name: "Carrots", planting_method: "Direct Sow"})
+      seeds = Seeds.list_seeds(%{planting_method: "Seedlings"})
+      assert length(seeds) == 1
+      assert hd(seeds).name == "Basil"
+    end
+
+    test "filters by sun_requirement" do
+      seed_fixture(%{name: "Basil", sun_requirement: "full_sun"})
+      seed_fixture(%{name: "Spinach", sun_requirement: "partial_sun"})
+      seeds = Seeds.list_seeds(%{sun_requirement: "partial_sun"})
+      assert length(seeds) == 1
+      assert hd(seeds).name == "Spinach"
+    end
+
+    test "sorts by name ascending by default" do
+      seed_fixture(%{name: "Zucchini"})
+      seed_fixture(%{name: "Basil"})
+      seeds = Seeds.list_seeds(%{})
+      assert hd(seeds).name == "Basil"
+    end
+
+    test "sorts by name descending" do
+      seed_fixture(%{name: "Zucchini"})
+      seed_fixture(%{name: "Basil"})
+      seeds = Seeds.list_seeds(%{sort_field: "name", sort_dir: :desc})
+      assert hd(seeds).name == "Zucchini"
+    end
+
+    test "sorts by type ascending" do
+      seed_fixture(%{name: "Zucchini", type: "Vegetable"})
+      seed_fixture(%{name: "Basil", type: "Herb"})
+      seeds = Seeds.list_seeds(%{sort_field: "type", sort_dir: :asc})
+      assert hd(seeds).type == "Herb"
+    end
+
+    test "unknown sort_field falls back to name sort" do
+      seed_fixture(%{name: "Zucchini"})
+      seed_fixture(%{name: "Basil"})
+      seeds = Seeds.list_seeds(%{sort_field: "nonexistent", sort_dir: :asc})
+      assert hd(seeds).name == "Basil"
+    end
   end
 
   describe "get_seed!/1" do
@@ -100,6 +144,23 @@ defmodule BackyardGarden.SeedsTest do
       seed_fixture(%{cycle: "Perennial"})
       seed_fixture(%{cycle: "Annual"})
       assert Seeds.list_cycles() == ["Annual", "Perennial"]
+    end
+  end
+
+  describe "list_planting_methods/0" do
+    test "returns distinct non-nil planting methods sorted" do
+      seed_fixture(%{planting_method: "Direct Sow"})
+      seed_fixture(%{planting_method: "Seedlings"})
+      seed_fixture(%{planting_method: "Seedlings"})
+      assert Seeds.list_planting_methods() == ["Direct Sow", "Seedlings"]
+    end
+  end
+
+  describe "list_sun_requirements/0" do
+    test "returns distinct non-nil sun requirements sorted" do
+      seed_fixture(%{sun_requirement: "full_sun"})
+      seed_fixture(%{sun_requirement: "partial_sun"})
+      assert Seeds.list_sun_requirements() == ["full_sun", "partial_sun"]
     end
   end
 

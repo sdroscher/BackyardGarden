@@ -46,11 +46,16 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
       title: product["title"],
       product_type: product["product_type"],
       tags: normalize_tags(product["tags"]),
-      description_html: product["body_html"],
+      description_html: clean_description(product["body_html"]),
       url: "#{@base_url}/products/#{product["handle"]}",
       scraped_at: DateTime.utc_now() |> DateTime.truncate(:second)
     }
   end
+
+  # West Coast Seeds embeds Shopify shortcode tags like [description action="start"]
+  # that only render inside their storefront. Strip them before storing.
+  defp clean_description(nil), do: nil
+  defp clean_description(html), do: Regex.replace(~r/\[[^\]]+\]/, html, "")
 
   # Shopify returns tags as a list; store as a comma-separated string.
   defp normalize_tags(tags) when is_list(tags), do: Enum.join(tags, ", ")

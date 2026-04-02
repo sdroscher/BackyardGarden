@@ -51,3 +51,4 @@ cover/
 # Dialyzer
 .dialyzer_cache/
 priv/plts/
+.superpowers/

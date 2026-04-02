@@ -44,8 +44,11 @@ defmodule Mix.Tasks.Supplier.Scrape do
     attrs = scraper.fetch_product(handle)
 
     case SupplierCatalog.upsert_supplier_product(attrs) do
-      {:ok, product} -> Mix.shell().info(~s|Imported "#{product.title}" (#{product.id})|)
-      {:error, changeset} -> Mix.shell().error("Failed: #{inspect(changeset.errors)}")
+      {:ok, product} ->
+        Mix.shell().info(~s|Imported "#{product.title}" (#{product.id})|)
+
+      {:error, changeset} ->
+        Mix.shell().error("Failed: #{inspect(changeset.errors)}")
     end
   end
 

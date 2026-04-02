@@ -420,18 +420,18 @@ A simple Settings sub-page (`/settings/zones`) shows all zones as editable cards
 - [x] 1.5 Seed Library page — list, search (LiveView), filter by type/brand/cycle
 - [x] 1.6 Seed detail page
 
-### Phase 1.5 — Supplier Catalog
+### Phase 1.5 — Supplier Catalog ✅ Complete
 
 Scrape West Coast Seeds and Metchosin Farm product catalogs (both Shopify stores) via their public JSON API into a local `supplier_products` table. Links existing seeds to supplier products via fuzzy name matching, and enriches the seed detail page with the supplier's care HTML. Lays the groundwork for the Phase 2 "add seed" flow.
 
-- [ ] 1.5.1 Migration: create `supplier_products` table (supplier, shopify_product_id, handle, title, product_type, tags, description_html, url, scraped_at)
-- [ ] 1.5.2 Migration: add nullable `supplier_product_id` FK to `seeds`
-- [ ] 1.5.3 `SupplierCatalog` context + `SupplierProduct` schema
-- [ ] 1.5.4 Scraper modules for West Coast Seeds and Metchosin Farm (paginated Shopify `/products.json`)
-- [ ] 1.5.5 `mix supplier.scrape` — fetch and upsert full catalogs from both suppliers
-- [ ] 1.5.6 `mix supplier.match` — fuzzy-match seeds to supplier products (`String.jaro_distance/2`); auto-link ≥ 0.90, print review list for 0.75–0.89
-- [ ] 1.5.7 `mix supplier.link <seed_id> <supplier_product_id>` — manually confirm borderline matches
-- [ ] 1.5.8 Seed detail page: render supplier `description_html` in a "From the Supplier" section with a link to the product page
+- [x] 1.5.1 Migration: create `supplier_products` table (supplier, shopify_product_id, handle, title, product_type, tags, description_html, url, scraped_at)
+- [x] 1.5.2 Migration: add nullable `supplier_product_id` FK to `seeds`
+- [x] 1.5.3 `SupplierCatalog` context + `SupplierProduct` schema
+- [x] 1.5.4 Scraper modules for West Coast Seeds and Metchosin Farm (paginated Shopify `/products.json`)
+- [x] 1.5.5 `mix supplier.scrape` — fetch and upsert full catalogs from both suppliers
+- [x] 1.5.6 `mix supplier.match` — fuzzy-match seeds to supplier products (`String.jaro_distance/2`); auto-link ≥ 0.90, print review list for 0.75–0.89
+- [x] 1.5.7 `mix supplier.link <seed_id> <supplier_product_id>` — manually confirm borderline matches
+- [x] 1.5.8 Seed detail page: render supplier `description_html` in a "From the Supplier" section with a link to the product page
 
 **Future consideration:** Add an Oban job to run `supplier.scrape` on a weekly schedule, keeping the catalog current. A follow-up job can re-run fuzzy matching to auto-link seeds added since the last scrape.
 

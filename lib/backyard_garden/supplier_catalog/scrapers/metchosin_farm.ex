@@ -14,12 +14,12 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
 
   @doc "Fetches a single product by handle and returns its attribute map."
   def fetch_product(handle) do
-    %{body: body} = Req.get!("#{@base_url}/products/#{handle}.json")
+    %{body: body} = Req.get!("#{@base_url}/products/#{handle}.json", receive_timeout: 15_000)
     to_attrs(body["product"])
   end
 
   defp fetch_page(page, acc) do
-    %{body: body} = Req.get!("#{@base_url}/products.json?limit=250&page=#{page}")
+    %{body: body} = Req.get!("#{@base_url}/products.json?limit=250&page=#{page}", receive_timeout: 15_000)
 
     case body["products"] do
       [] -> acc

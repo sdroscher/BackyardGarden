@@ -6,6 +6,7 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
 
   @base_url "https://www.westcoastseeds.com"
   @supplier "west_coast_seeds"
+  @excluded_sections ~w[Latin Difficulty]
 
   @doc "Returns a list of attribute maps ready for SupplierCatalog.upsert_supplier_product/1."
   def fetch_all_products do
@@ -14,7 +15,7 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
 
   @doc "Fetches a single product by handle, including the care guide scraped from the product page."
   def fetch_product(handle) do
-    %{body: body} = Req.get!("#{@base_url}/products/#{handle}.json")
+    %{body: body} = Req.get!("#{@base_url}/products/#{handle}.json", receive_timeout: 15_000)
     attrs = to_attrs(body["product"])
     Map.put(attrs, :care_html, fetch_care_guide(handle))
   end
@@ -22,8 +23,9 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
   # Fetches the product HTML page and parses the "All About" accordion sections.
   # Returns nil if the section is absent or all sections are empty.
   defp fetch_care_guide(handle) do
-    case Req.get("#{@base_url}/products/#{handle}") do
-      {:ok, %{body: html}} when is_binary(html) -> parse_care_guide(html)
+    case Req.get("#{@base_url}/products/#{handle}", receive_timeout: 15_000) do
+      {:ok, %{body: html}} when is_binary(html) ->
+        parse_care_guide(html)
       _ -> nil
     end
   end
@@ -48,15 +50,18 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
 
     content_nodes = Floki.find(container, ".content-wrap")
 
-    if Floki.text(content_nodes) |> String.trim() == "" do
+    excluded = heading in @excluded_sections
+    empty = Floki.text(content_nodes) |> String.trim() == ""
+
+    if excluded or empty do
       []
     else
-      ["<div><h4>#{heading}</h4>#{Floki.raw_html(content_nodes)}</div>"]
+      ["<div>#{Floki.raw_html(content_nodes)}</div>"]
     end
   end
 
   defp fetch_page(page, acc) do
-    %{body: body} = Req.get!("#{@base_url}/products.json?limit=250&page=#{page}")
+    %{body: body} = Req.get!("#{@base_url}/products.json?limit=250&page=#{page}", receive_timeout: 15_000)
 
     case body["products"] do
       [] ->
@@ -64,7 +69,20 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
 
       products ->
         seed_products = Enum.filter(products, &seed_product?/1)
-        fetch_page(page + 1, acc ++ Enum.map(seed_products, &to_attrs/1))
+
+        new_attrs =
+          seed_products
+          |> Task.async_stream(
+            fn product ->
+              attrs = to_attrs(product)
+              Map.put(attrs, :care_html, fetch_care_guide(attrs[:handle]))
+            end,
+            max_concurrency: 10,
+            timeout: 20_000
+          )
+          |> Enum.map(fn {:ok, attrs} -> attrs end)
+
+        fetch_page(page + 1, acc ++ new_attrs)
     end
   end
 

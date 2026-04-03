@@ -32,7 +32,10 @@ defmodule BackyardGarden.Weather.CacheTest do
   test "returns :miss after TTL has expired" do
     data = %{city: "Victoria", temp: 12.5}
     # Store with a timestamp far in the past to simulate expiry
-    :ets.insert(:weather_cache, {"Victoria", data, System.monotonic_time(:millisecond) - :timer.hours(2)})
+    :ets.insert(
+      :weather_cache,
+      {"Victoria", data, System.monotonic_time(:millisecond) - :timer.hours(2)}
+    )
 
     assert :miss = Cache.get("Victoria")
   end

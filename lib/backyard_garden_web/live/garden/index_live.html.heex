@@ -1,0 +1,231 @@
+<div class="space-y-6">
+  <%!-- Page header --%>
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-[#14532d]">My Garden</h1>
+    <button
+      phx-click="show_form"
+      class="bg-[#2d6a4f] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#1a3a2a] transition-colors"
+    >
+      + Log Planting
+    </button>
+  </div>
+
+  <%!-- Log Planting form --%>
+  <%= if @show_form do %>
+    <div class="bg-white border border-[#bbf7d0] rounded-xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-[#14532d]">Log a Planting</h2>
+        <button
+          phx-click="hide_form"
+          class="text-[#6b7280] hover:text-[#374151] transition-colors text-xl leading-none"
+          aria-label="Dismiss"
+        >
+          &times;
+        </button>
+      </div>
+
+      <.form
+        id="log-planting-form"
+        for={@form}
+        phx-submit="save_planting"
+        phx-change="validate_planting"
+        class="space-y-4"
+      >
+        <%!-- Seed selector --%>
+        <.input
+          field={@form[:seed_id]}
+          type="select"
+          label="Seed"
+          options={[{"Select a seed…", ""} | Enum.map(@seeds, &{&1.name, &1.id})]}
+          class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+        />
+
+        <%!-- Status selector --%>
+        <.input
+          field={@form[:status]}
+          type="select"
+          label="Status"
+          options={[{"Planned", "planned"}, {"Planted", "planted"}, {"Harvested", "harvested"}]}
+          class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+        />
+
+        <%!-- Date planted --%>
+        <.input
+          field={@form[:planted_at]}
+          type="date"
+          label="Date planted"
+          class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+        />
+
+        <%!-- Location --%>
+        <.input
+          field={@form[:location]}
+          type="text"
+          label="Location (optional)"
+          placeholder="e.g. east end of bed"
+          class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+        />
+
+        <%!-- Notes --%>
+        <.input
+          field={@form[:notes]}
+          type="textarea"
+          label="Notes (optional)"
+          rows="2"
+          class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+        />
+
+        <%!-- Zone selector --%>
+        <div>
+          <span class="text-[#52b788] uppercase tracking-wide text-xs font-semibold block mb-1">
+            Garden Zone
+          </span>
+          <%= if @recommended_zones == [] do %>
+            <p class="text-xs text-[#6b7280]">Select a seed to see zone recommendations.</p>
+          <% else %>
+            <.input
+              field={@form[:zone_id]}
+              type="select"
+              label="Zone"
+              options={[{"— no zone —", ""} | Enum.map(@recommended_zones, &{&1.name, &1.id})]}
+              class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+            />
+            <p class="text-xs text-[#52b788] mt-1">Sorted by best match for this seed.</p>
+          <% end %>
+        </div>
+
+        <%!-- Buttons --%>
+        <div class="flex gap-3 pt-2">
+          <button
+            type="submit"
+            class="bg-[#2d6a4f] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#1a3a2a] transition-colors"
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            phx-click="hide_form"
+            class="rounded-lg px-4 py-2 text-sm font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </.form>
+    </div>
+  <% end %>
+
+  <%!-- PLANTED section --%>
+  <div class="bg-white border border-[#bbf7d0] rounded-xl p-6">
+    <div class="flex items-center gap-2 mb-4">
+      <span class="w-2.5 h-2.5 rounded-full bg-[#2d6a4f] inline-block"></span>
+      <span class="text-[#52b788] uppercase tracking-wide text-xs font-semibold">
+        Planted ({length(@planted)})
+      </span>
+    </div>
+
+    <%= if @planted == [] do %>
+      <p class="text-sm text-[#6b7280] italic">No plantings in the ground yet.</p>
+    <% else %>
+      <ul class="space-y-3">
+        <li
+          :for={planting <- @planted}
+          class="flex items-start justify-between gap-4"
+          data-status={planting.status}
+        >
+          <div class="min-w-0">
+            <p class="font-medium text-[#14532d] truncate">{planting.seed.name}</p>
+            <p class="text-xs text-[#6b7280]">
+              Planted: {planting.planted_at}
+              <% harvest = estimated_harvest(planting) %>
+              <%= if harvest do %>
+                &middot; Est. harvest: {harvest}
+              <% end %>
+              <%= if planting.location && planting.location != "" do %>
+                &middot; {planting.location}
+              <% end %>
+            </p>
+          </div>
+          <button
+            phx-click="mark_harvested"
+            phx-value-id={planting.id}
+            class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+          >
+            Mark Harvested
+          </button>
+        </li>
+      </ul>
+    <% end %>
+  </div>
+
+  <%!-- PLANNED section --%>
+  <div class="bg-white border border-[#bbf7d0] rounded-xl p-6">
+    <div class="flex items-center gap-2 mb-4">
+      <span class="w-2.5 h-2.5 rounded-full bg-[#6b7280] inline-block"></span>
+      <span class="text-[#52b788] uppercase tracking-wide text-xs font-semibold">
+        Planned ({length(@planned)})
+      </span>
+    </div>
+
+    <%= if @planned == [] do %>
+      <p class="text-sm text-[#6b7280] italic">No plantings planned yet.</p>
+    <% else %>
+      <ul class="space-y-3">
+        <li
+          :for={planting <- @planned}
+          class="flex items-start justify-between gap-4"
+          data-status={planting.status}
+        >
+          <div class="min-w-0">
+            <p class="font-medium text-[#14532d] truncate">{planting.seed.name}</p>
+            <p class="text-xs text-[#6b7280]">
+              <%= if planting.seed.ideal_planting_time && planting.seed.ideal_planting_time != "" do %>
+                Best time: {planting.seed.ideal_planting_time}
+              <% else %>
+                No ideal planting time set
+              <% end %>
+            </p>
+          </div>
+          <button
+            phx-click="mark_planted"
+            phx-value-id={planting.id}
+            class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+          >
+            Mark Planted
+          </button>
+        </li>
+      </ul>
+    <% end %>
+  </div>
+
+  <%!-- HARVESTED section --%>
+  <div class="bg-white border border-[#bbf7d0] rounded-xl p-6">
+    <div class="flex items-center gap-2 mb-4">
+      <span class="w-2.5 h-2.5 rounded-full bg-[#bbf7d0] inline-block"></span>
+      <span class="text-[#52b788] uppercase tracking-wide text-xs font-semibold">
+        Harvested ({length(@harvested)})
+      </span>
+    </div>
+
+    <%= if @harvested == [] do %>
+      <p class="text-sm text-[#6b7280] italic">Nothing harvested yet — keep growing!</p>
+    <% else %>
+      <ul class="space-y-3">
+        <li
+          :for={planting <- @harvested}
+          class="flex items-start gap-4"
+          data-status={planting.status}
+        >
+          <div class="min-w-0">
+            <p class="font-medium text-[#14532d] truncate">{planting.seed.name}</p>
+            <p class="text-xs text-[#6b7280]">
+              <%= if planting.planted_at do %>
+                Planted: {planting.planted_at} &middot;
+              <% end %>
+              Harvested: {planting.harvested_at}
+            </p>
+          </div>
+        </li>
+      </ul>
+    <% end %>
+  </div>
+</div>

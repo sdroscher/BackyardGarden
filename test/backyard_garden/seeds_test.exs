@@ -122,6 +122,17 @@ defmodule BackyardGarden.SeedsTest do
     end
   end
 
+  describe "get_seed/1" do
+    test "returns seed by id" do
+      seed = seed_fixture()
+      assert Seeds.get_seed(seed.id).id == seed.id
+    end
+
+    test "returns nil for unknown id" do
+      assert is_nil(Seeds.get_seed(Ecto.UUID.generate()))
+    end
+  end
+
   describe "list_types/0" do
     test "returns distinct non-nil types sorted" do
       seed_fixture(%{type: "Vegetable"})
@@ -172,6 +183,26 @@ defmodule BackyardGarden.SeedsTest do
 
     test "returns error changeset when name is missing" do
       assert {:error, changeset} = Seeds.create_seed(%{})
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
+  end
+
+  describe "update_seed/2" do
+    test "updates a seed with valid attrs" do
+      seed = seed_fixture(%{sun_requirement: nil})
+      assert {:ok, updated} = Seeds.update_seed(seed, %{sun_requirement: "full_sun"})
+      assert updated.sun_requirement == "full_sun"
+    end
+
+    test "updates source_url" do
+      seed = seed_fixture()
+      assert {:ok, updated} = Seeds.update_seed(seed, %{source_url: "https://example.com"})
+      assert updated.source_url == "https://example.com"
+    end
+
+    test "returns error changeset when name is set to blank" do
+      seed = seed_fixture()
+      assert {:error, changeset} = Seeds.update_seed(seed, %{name: ""})
       assert %{name: ["can't be blank"]} = errors_on(changeset)
     end
   end

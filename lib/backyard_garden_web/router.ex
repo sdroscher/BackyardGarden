@@ -7,7 +7,11 @@ defmodule BackyardGardenWeb.Router do
     plug :fetch_live_flash
     plug :put_root_layout, html: {BackyardGardenWeb.Layouts, :root}
     plug :protect_from_forgery
-    plug :put_secure_browser_headers
+
+    plug :put_secure_browser_headers, %{
+      "content-security-policy" =>
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:"
+    }
   end
 
   pipeline :api do
@@ -21,6 +25,13 @@ defmodule BackyardGardenWeb.Router do
 
     live "/seeds", Seeds.IndexLive, :index
     live "/seeds/:id", Seeds.ShowLive, :show
+    live "/seeds/:id/edit", Seeds.EditLive, :edit
+
+    live "/garden", Garden.IndexLive, :index
+
+    live "/calendar", Calendar.IndexLive, :index
+
+    live "/settings/zones", Settings.ZonesLive, :index
   end
 
   # Other scopes may use custom stacks.

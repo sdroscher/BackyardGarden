@@ -435,23 +435,23 @@ Scrape West Coast Seeds and Metchosin Farm product catalogs (both Shopify stores
 
 **Future consideration:** Add an Oban job to run `supplier.scrape` on a weekly schedule, keeping the catalog current. A follow-up job can re-run fuzzy matching to auto-link seeds added since the last scrape.
 
-### Phase 2 — Garden & Planting Tracking
+### Phase 2 — Garden & Planting Tracking ✅ Complete
 
 **Carry-overs from Phase 1 review (address early in Phase 2):**
 - Add Content-Security-Policy header to the browser pipeline (Sobelow `Config.CSP` advisory — required before any deployment)
 - Reload type/brand/cycle filter dropdown options when seeds are created or edited (currently loaded once in `mount/3`)
 - Decide on `source_url` field: expose in seed edit form or leave for later
 
-- [ ] 2.1 My Garden page — list plantings by status
-- [ ] 2.2 Log Planting form — select seed, set date, location, notes
-- [ ] 2.3 Update planting status (planned → planted → harvested)
-- [ ] 2.4 Planting Calendar — month view, ideal window overlays
-- [ ] 2.5 Import existing plantings from CSV (`actually_planted`, `location`, `notes` columns)
-- [ ] 2.6 Seed database migration — add `sun_requirement` field
-- [ ] 2.7 Garden Zones — create default zones for simon@droscher.com (migration/seed data)
-- [ ] 2.8 Zone recommendation — show suggested zone(s) when logging a planting
-- [ ] 2.9 Seed edit form — allow setting `sun_requirement` and `source_url` per seed
-- [ ] 2.10 Zone settings page (`/settings/zones`) — add/edit/delete zones
+- [x] 2.1 My Garden page — list plantings by status
+- [x] 2.2 Log Planting form — select seed, set date, location, notes
+- [x] 2.3 Update planting status (planned → planted → harvested)
+- [x] 2.4 Planting Calendar — month view, ideal window overlays
+- [x] 2.5 Import existing plantings from CSV — skipped (only 2 rows; imported manually)
+- [x] 2.6 Seed database migration — add `sun_requirement` field (already present from Phase 1)
+- [x] 2.7 Garden Zones — create default zones for simon@droscher.com (migration/seed data)
+- [x] 2.8 Zone recommendation — show suggested zone(s) when logging a planting
+- [x] 2.9 Seed edit form — allow setting `sun_requirement` and `source_url` per seed
+- [x] 2.10 Zone settings page (`/settings/zones`) — add/edit/delete zones
 
 ### Phase 3 — Dashboard & Weather
 

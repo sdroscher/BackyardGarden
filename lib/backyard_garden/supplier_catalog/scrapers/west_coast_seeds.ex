@@ -26,7 +26,9 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
     case Req.get("#{@base_url}/products/#{handle}", receive_timeout: 15_000) do
       {:ok, %{body: html}} when is_binary(html) ->
         parse_care_guide(html)
-      _ -> nil
+
+      _ ->
+        nil
     end
   end
 
@@ -61,7 +63,8 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
   end
 
   defp fetch_page(page, acc) do
-    %{body: body} = Req.get!("#{@base_url}/products.json?limit=250&page=#{page}", receive_timeout: 15_000)
+    %{body: body} =
+      Req.get!("#{@base_url}/products.json?limit=250&page=#{page}", receive_timeout: 15_000)
 
     case body["products"] do
       [] ->

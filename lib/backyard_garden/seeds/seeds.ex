@@ -35,6 +35,16 @@ defmodule BackyardGarden.Seeds do
     |> Repo.insert()
   end
 
+  @doc "Updates a seed. Returns {:ok, seed} or {:error, changeset}."
+  def update_seed(%Seed{} = seed, attrs) do
+    seed
+    |> Seed.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc "Returns a single seed by id, or nil if not found."
+  def get_seed(id), do: Repo.get(Seed, id)
+
   @doc "Returns sorted distinct seed types present in the database."
   def list_types do
     Seed
@@ -95,7 +105,9 @@ defmodule BackyardGarden.Seeds do
   defp filter_by_search(query, ""), do: query
 
   defp filter_by_search(query, search) do
-    escaped = search |> String.downcase() |> String.replace("%", "\\%") |> String.replace("_", "\\_")
+    escaped =
+      search |> String.downcase() |> String.replace("%", "\\%") |> String.replace("_", "\\_")
+
     term = "%#{escaped}%"
 
     where(

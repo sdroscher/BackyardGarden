@@ -1,0 +1,104 @@
+<div class="space-y-6">
+  <%!-- Page header --%>
+  <h1 class="text-2xl font-bold text-[#14532d]">Planting Calendar</h1>
+
+  <%!-- Calendar card --%>
+  <div class="bg-white border border-[#bbf7d0] rounded-xl overflow-hidden">
+    <%!-- Month navigation --%>
+    <div class="px-4 py-3 border-b border-[#bbf7d0] flex items-center justify-between">
+      <button
+        phx-click="prev_month"
+        class="text-[#52b788] hover:text-[#2d6a4f] font-bold px-2 py-1 rounded hover:bg-[#f0fdf4] transition-colors"
+        aria-label="Previous month"
+      >
+        &#8249;
+      </button>
+      <h2 class="font-semibold text-[#14532d]">{@month_label}</h2>
+      <button
+        phx-click="next_month"
+        class="text-[#52b788] hover:text-[#2d6a4f] font-bold px-2 py-1 rounded hover:bg-[#f0fdf4] transition-colors"
+        aria-label="Next month"
+      >
+        &#8250;
+      </button>
+    </div>
+
+    <%!-- Day-of-week header --%>
+    <div class="grid grid-cols-7 border-b border-[#bbf7d0]">
+      <div
+        :for={day <- ~w[Mon Tue Wed Thu Fri Sat Sun]}
+        class="text-center text-xs font-medium text-[#6b7280] py-2"
+      >
+        {day}
+      </div>
+    </div>
+
+    <%!-- Calendar grid --%>
+    <div class="grid grid-cols-7">
+      <%= for week <- @weeks do %>
+        <%= for date <- week do %>
+          <%= if is_nil(date) do %>
+            <div class="min-h-[72px] p-1.5 text-xs bg-[#fafafa] border-b border-r border-[#f3f4f6]">
+            </div>
+          <% else %>
+            <div class="min-h-[72px] p-1.5 text-xs bg-white hover:bg-[#f0fdf4] border-b border-r border-[#f3f4f6] transition-colors">
+              <span class="font-medium text-[#374151]">{date.day}</span>
+
+              <%!-- Ideal window seeds shown on the 1st of the month --%>
+              <%= if date.day == 1 and @ideal_seeds != [] do %>
+                <div class="mt-0.5 space-y-0.5">
+                  <%= for seed_name <- Enum.take(@ideal_seeds, 2) do %>
+                    <div class="text-[10px] text-[#2d6a4f] bg-[#dcfce7] rounded px-1 truncate">
+                      {seed_name}
+                    </div>
+                  <% end %>
+                  <%= if length(@ideal_seeds) > 2 do %>
+                    <div class="text-[10px] text-[#6b7280]">
+                      +{length(@ideal_seeds) - 2} more
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+
+              <%!-- Event dots --%>
+              <%= if Map.has_key?(@events_by_date, date) do %>
+                <div class="flex gap-0.5 mt-0.5 flex-wrap">
+                  <%= if :planted in Map.get(@events_by_date, date, []) do %>
+                    <span class="w-2 h-2 rounded-full bg-[#3b82f6] inline-block" title="Planted">
+                    </span>
+                  <% end %>
+                  <%= if :harvest_due in Map.get(@events_by_date, date, []) do %>
+                    <span
+                      class="w-2 h-2 rounded-full bg-[#eab308] inline-block"
+                      title="Harvest due"
+                    >
+                    </span>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <%!-- Legend --%>
+  <div class="bg-white border border-[#bbf7d0] rounded-xl p-4">
+    <span class="text-[#52b788] uppercase tracking-wide text-xs font-semibold block mb-3">
+      Legend
+    </span>
+    <div class="flex flex-wrap gap-4 text-xs text-[#374151]">
+      <div class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-[#3b82f6] inline-block"></span> Planted
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-[#eab308] inline-block"></span> Harvest due
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="text-[10px] text-[#2d6a4f] bg-[#dcfce7] rounded px-1">seed</span>
+        Ideal window opens
+      </div>
+    </div>
+  </div>
+</div>

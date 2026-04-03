@@ -16,8 +16,7 @@ defmodule BackyardGarden.Seeds.Seed do
     field :source_url, :string
     field :notes, :string
 
-    belongs_to :supplier_product, BackyardGarden.SupplierCatalog.SupplierProduct,
-      type: :binary_id
+    belongs_to :supplier_product, BackyardGarden.SupplierCatalog.SupplierProduct, type: :binary_id
 
     timestamps()
   end

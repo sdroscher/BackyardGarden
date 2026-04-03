@@ -5,7 +5,7 @@ defmodule BackyardGardenWeb.Settings.ZonesLiveTest do
 
   alias BackyardGarden.GardenZones
 
-  defp zone_fixture(attrs \\ %{}) do
+  defp zone_fixture(attrs) do
     defaults = %{name: "Test Zone", sun_exposures: "full_sun"}
     {:ok, zone} = GardenZones.create_zone(Map.merge(defaults, attrs))
     zone
@@ -58,5 +58,17 @@ defmodule BackyardGardenWeb.Settings.ZonesLiveTest do
 
     assert html =~ "New Name"
     refute html =~ "Old Name"
+  end
+
+  test "shows validation error when saving zone with blank name", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/settings/zones")
+    render_click(view, "new_zone", %{})
+
+    html =
+      view
+      |> form("#zone-form", %{"zone" => %{"name" => ""}})
+      |> render_submit()
+
+    assert html =~ "can&#39;t be blank"
   end
 end

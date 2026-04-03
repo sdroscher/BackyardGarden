@@ -64,9 +64,27 @@ defmodule BackyardGardenWeb.Settings.ZonesLive do
   end
 
   @impl true
+  def handle_event("validate_zone", %{"zone" => params}, socket) do
+    changeset =
+      case socket.assigns.editing_zone do
+        nil -> GardenZone.changeset(%GardenZone{}, params)
+        zone -> GardenZone.changeset(zone, params)
+      end
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign(socket, :form, to_form(changeset, as: "zone"))}
+  end
+
+  @impl true
   def handle_event("delete_zone", %{"id" => id}, socket) do
     zone = GardenZones.get_zone!(id)
-    {:ok, _} = GardenZones.delete_zone(zone)
-    {:noreply, assign(socket, :zones, GardenZones.list_zones())}
+
+    case GardenZones.delete_zone(zone) do
+      {:ok, _} ->
+        {:noreply, assign(socket, :zones, GardenZones.list_zones())}
+
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Could not delete zone.")}
+    end
   end
 end

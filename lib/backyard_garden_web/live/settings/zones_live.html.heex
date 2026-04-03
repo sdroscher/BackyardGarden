@@ -15,37 +15,28 @@
       <h2 class="text-lg font-semibold text-[#14532d]">
         {if @editing_zone, do: "Edit Zone", else: "Add Zone"}
       </h2>
-      <.form id="zone-form" for={@form} phx-submit="save_zone" class="space-y-3">
+      <.form
+        id="zone-form"
+        for={@form}
+        phx-submit="save_zone"
+        phx-change="validate_zone"
+        class="space-y-3"
+      >
+        <.input field={@form[:name]} type="text" label="Name" />
+        <.input field={@form[:description]} type="text" label="Description" />
         <div>
-          <label class="block text-sm font-medium text-[#374151] mb-1">Name</label>
-          <.input field={@form[:name]} type="text" />
+          <.input field={@form[:sun_exposures]} type="text" label="Sun Exposures" />
+          <p class="mt-1 text-xs text-[#6b7280]">
+            Comma-separated: full_sun, partial_sun, shade_tolerant
+          </p>
         </div>
         <div>
-          <label class="block text-sm font-medium text-[#374151] mb-1">Description</label>
-          <.input field={@form[:description]} type="text" />
+          <.input field={@form[:allowed_types]} type="text" label="Allowed Types" />
+          <p class="mt-1 text-xs text-[#6b7280]">Comma-separated, or blank for any</p>
         </div>
         <div>
-          <label class="block text-sm font-medium text-[#374151] mb-1">
-            Sun Exposures
-            <span class="font-normal text-[#6b7280]">
-              (comma-separated: full_sun, partial_sun, shade_tolerant)
-            </span>
-          </label>
-          <.input field={@form[:sun_exposures]} type="text" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-[#374151] mb-1">
-            Allowed Types
-            <span class="font-normal text-[#6b7280]">(comma-separated, or blank for any)</span>
-          </label>
-          <.input field={@form[:allowed_types]} type="text" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-[#374151] mb-1">
-            Allowed Cycles
-            <span class="font-normal text-[#6b7280]">(comma-separated, or blank for any)</span>
-          </label>
-          <.input field={@form[:allowed_cycles]} type="text" />
+          <.input field={@form[:allowed_cycles]} type="text" label="Allowed Cycles" />
+          <p class="mt-1 text-xs text-[#6b7280]">Comma-separated, or blank for any</p>
         </div>
         <div class="flex gap-3">
           <button

@@ -48,6 +48,7 @@ defmodule BackyardGardenWeb.Layouts do
           <.nav_link href={~p"/seeds"} current_scope={@current_scope}>Seeds</.nav_link>
           <.nav_link href={~p"/garden"} current_scope={@current_scope}>My Garden</.nav_link>
           <.nav_link href={~p"/calendar"} current_scope={@current_scope}>Calendar</.nav_link>
+          <.nav_link href={~p"/settings/zones"} current_scope={@current_scope}>Zones</.nav_link>
         </div>
       </nav>
     </header>

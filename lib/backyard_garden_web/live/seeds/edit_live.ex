@@ -34,7 +34,10 @@ defmodule BackyardGardenWeb.Seeds.EditLive do
   def handle_event("save", %{"seed" => params}, socket) do
     case Seeds.update_seed(socket.assigns.seed, params) do
       {:ok, seed} ->
-        {:noreply, push_navigate(socket, to: ~p"/seeds/#{seed.id}")}
+        {:noreply,
+         socket
+         |> put_flash(:info, "Seed updated successfully.")
+         |> push_navigate(to: ~p"/seeds/#{seed.id}")}
 
       {:error, changeset} ->
         {:noreply, assign(socket, :form, to_form(changeset))}

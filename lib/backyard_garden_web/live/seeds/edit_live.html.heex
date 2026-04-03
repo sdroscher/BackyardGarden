@@ -37,18 +37,31 @@
         <div>
           <.input
             field={@form[:type]}
-            type="text"
+            type="select"
             label="Type"
-            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+            options={[
+              {"— not set —", ""},
+              {"Vegetable", "Vegetable"},
+              {"Herb", "Herb"},
+              {"Flower", "Flower"},
+              {"Berry", "Berry"}
+            ]}
+            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
           />
         </div>
 
         <div>
           <.input
             field={@form[:cycle]}
-            type="text"
+            type="select"
             label="Cycle"
-            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+            options={[
+              {"— not set —", ""},
+              {"Annual", "Annual"},
+              {"Biennial", "Biennial"},
+              {"Perennial", "Perennial"}
+            ]}
+            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
           />
         </div>
 
@@ -57,7 +70,12 @@
             field={@form[:sun_requirement]}
             type="select"
             label="Sun Requirement"
-            options={[{"— not set —", ""}, {"Full Sun", "full_sun"}, {"Partial Sun", "partial_sun"}, {"Shade Tolerant", "shade_tolerant"}]}
+            options={[
+              {"— not set —", ""},
+              {"Full Sun", "full_sun"},
+              {"Partial Sun", "partial_sun"},
+              {"Shade Tolerant", "shade_tolerant"}
+            ]}
             class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
           />
         </div>

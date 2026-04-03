@@ -122,6 +122,17 @@ defmodule BackyardGarden.SeedsTest do
     end
   end
 
+  describe "get_seed/1" do
+    test "returns seed by id" do
+      seed = seed_fixture()
+      assert Seeds.get_seed(seed.id).id == seed.id
+    end
+
+    test "returns nil for unknown id" do
+      assert is_nil(Seeds.get_seed(Ecto.UUID.generate()))
+    end
+  end
+
   describe "list_types/0" do
     test "returns distinct non-nil types sorted" do
       seed_fixture(%{type: "Vegetable"})

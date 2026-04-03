@@ -24,6 +24,7 @@ defmodule BackyardGardenWeb.Router do
 
     live "/seeds", Seeds.IndexLive, :index
     live "/seeds/:id", Seeds.ShowLive, :show
+    live "/seeds/:id/edit", Seeds.EditLive, :edit
   end
 
   # Other scopes may use custom stacks.

@@ -175,4 +175,24 @@ defmodule BackyardGarden.SeedsTest do
       assert %{name: ["can't be blank"]} = errors_on(changeset)
     end
   end
+
+  describe "update_seed/2" do
+    test "updates a seed with valid attrs" do
+      seed = seed_fixture(%{sun_requirement: nil})
+      assert {:ok, updated} = Seeds.update_seed(seed, %{sun_requirement: "full_sun"})
+      assert updated.sun_requirement == "full_sun"
+    end
+
+    test "updates source_url" do
+      seed = seed_fixture()
+      assert {:ok, updated} = Seeds.update_seed(seed, %{source_url: "https://example.com"})
+      assert updated.source_url == "https://example.com"
+    end
+
+    test "returns error changeset when name is set to blank" do
+      seed = seed_fixture()
+      assert {:error, changeset} = Seeds.update_seed(seed, %{name: ""})
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
+  end
 end

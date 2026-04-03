@@ -71,7 +71,10 @@ defmodule Mix.Tasks.Supplier.Match do
         |> String.split()
         |> Enum.map_join(" ", &String.capitalize/1)
 
-      Mix.shell().info(~s|  "#{seed.name}"  →  "#{product.title}" (#{supplier_label}, #{score_str})|)
+      Mix.shell().info(
+        ~s|  "#{seed.name}"  →  "#{product.title}" (#{supplier_label}, #{score_str})|
+      )
+
       Mix.shell().info(~s|    seed_id=#{seed.id}  product_id=#{product.id}|)
     end)
 

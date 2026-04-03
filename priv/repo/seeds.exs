@@ -22,8 +22,17 @@ csv_path
   # Pad to 11 columns in case trailing empty fields were stripped
   padded = row ++ List.duplicate("", 11)
 
-  [name, brand, type, cycle, _when_bought, planting_method, ideal_planting_time,
-   _actually_planted, maturity | _rest] = padded
+  [
+    name,
+    brand,
+    type,
+    cycle,
+    _when_bought,
+    planting_method,
+    ideal_planting_time,
+    _actually_planted,
+    maturity | _rest
+  ] = padded
 
   maturity_days =
     case Regex.run(~r/(\d+)/, String.trim(maturity)) do

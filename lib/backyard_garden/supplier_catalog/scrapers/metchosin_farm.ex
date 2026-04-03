@@ -19,7 +19,8 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
   end
 
   defp fetch_page(page, acc) do
-    %{body: body} = Req.get!("#{@base_url}/products.json?limit=250&page=#{page}", receive_timeout: 15_000)
+    %{body: body} =
+      Req.get!("#{@base_url}/products.json?limit=250&page=#{page}", receive_timeout: 15_000)
 
     case body["products"] do
       [] -> acc

@@ -5,7 +5,11 @@
   </div>
 
   <%!-- Filter bar --%>
-  <form id="filter-form" phx-change="filter" class="bg-white border border-[#bbf7d0] rounded-xl p-3 flex flex-wrap gap-2">
+  <form
+    id="filter-form"
+    phx-change="filter"
+    class="bg-white border border-[#bbf7d0] rounded-xl p-3 flex flex-wrap gap-2"
+  >
     <input
       type="text"
       name="search"
@@ -19,7 +23,9 @@
       class="rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
     >
       <option value="">All types</option>
-      <option :for={type <- @types} value={type} selected={@filters[:type] == type}>{type}</option>
+      <option :for={type <- @types} value={type} selected={@filters[:type] == type}>
+        {type}
+      </option>
     </select>
     <select
       name="brand"
@@ -73,22 +79,38 @@
       <thead class="bg-[#f0fdf4] text-[#14532d] text-left border-b-2 border-[#bbf7d0]">
         <tr>
           <th class="px-4 py-3 font-semibold">
-            <button phx-click="sort" phx-value-field="name" class="flex items-center gap-1 hover:text-[#2d6a4f]">
+            <button
+              phx-click="sort"
+              phx-value-field="name"
+              class="flex items-center gap-1 hover:text-[#2d6a4f]"
+            >
               Name {sort_indicator(@sort_field, @sort_dir, "name")}
             </button>
           </th>
           <th class="px-4 py-3 font-semibold">
-            <button phx-click="sort" phx-value-field="type" class="flex items-center gap-1 hover:text-[#2d6a4f]">
+            <button
+              phx-click="sort"
+              phx-value-field="type"
+              class="flex items-center gap-1 hover:text-[#2d6a4f]"
+            >
               Type {sort_indicator(@sort_field, @sort_dir, "type")}
             </button>
           </th>
           <th class="px-4 py-3 font-semibold hidden md:table-cell">
-            <button phx-click="sort" phx-value-field="brand" class="flex items-center gap-1 hover:text-[#2d6a4f]">
+            <button
+              phx-click="sort"
+              phx-value-field="brand"
+              class="flex items-center gap-1 hover:text-[#2d6a4f]"
+            >
               Brand {sort_indicator(@sort_field, @sort_dir, "brand")}
             </button>
           </th>
           <th class="px-4 py-3 font-semibold hidden md:table-cell">
-            <button phx-click="sort" phx-value-field="cycle" class="flex items-center gap-1 hover:text-[#2d6a4f]">
+            <button
+              phx-click="sort"
+              phx-value-field="cycle"
+              class="flex items-center gap-1 hover:text-[#2d6a4f]"
+            >
               Cycle {sort_indicator(@sort_field, @sort_dir, "cycle")}
             </button>
           </th>
@@ -104,9 +126,15 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-[#f0fdf4]">
-        <tr :for={seed <- @seeds} class="hover:bg-[#f0fdf4] transition-colors cursor-pointer odd:bg-white even:bg-[#fafafa]">
+        <tr
+          :for={seed <- @seeds}
+          class="hover:bg-[#f0fdf4] transition-colors cursor-pointer odd:bg-white even:bg-[#fafafa]"
+        >
           <td class="px-4 py-3">
-            <.link navigate={~p"/seeds/#{seed.id}"} class="font-semibold text-[#14532d] hover:text-[#2d6a4f] hover:underline">
+            <.link
+              navigate={~p"/seeds/#{seed.id}"}
+              class="font-semibold text-[#14532d] hover:text-[#2d6a4f] hover:underline"
+            >
               {seed.name}
             </.link>
           </td>

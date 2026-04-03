@@ -28,8 +28,7 @@ if config_env() == :prod do
     System.get_env("DATABASE_PATH") ||
       raise "environment variable DATABASE_PATH is missing."
 
-  config :backyard_garden, BackyardGarden.Repo,
-    database: database_path
+  config :backyard_garden, BackyardGarden.Repo, database: database_path
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

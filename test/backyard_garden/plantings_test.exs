@@ -64,7 +64,10 @@ defmodule BackyardGarden.PlantingsTest do
 
     test "validates status is one of planned/planted/harvested" do
       seed = seed_fixture()
-      assert {:error, changeset} = Plantings.create_planting(%{seed_id: seed.id, status: "invalid"})
+
+      assert {:error, changeset} =
+               Plantings.create_planting(%{seed_id: seed.id, status: "invalid"})
+
       assert %{status: _} = errors_on(changeset)
     end
   end
@@ -75,7 +78,10 @@ defmodule BackyardGarden.PlantingsTest do
       planting = planting_fixture(seed)
 
       assert {:ok, updated} =
-               Plantings.update_planting(planting, %{status: "planted", planted_at: ~D[2026-03-27]})
+               Plantings.update_planting(planting, %{
+                 status: "planted",
+                 planted_at: ~D[2026-03-27]
+               })
 
       assert updated.status == "planted"
       assert updated.planted_at == ~D[2026-03-27]

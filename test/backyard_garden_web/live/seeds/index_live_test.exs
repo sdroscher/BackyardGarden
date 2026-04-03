@@ -67,7 +67,12 @@ defmodule BackyardGardenWeb.Seeds.IndexLiveTest do
 
     html =
       view
-      |> form("#filter-form", %{"type" => "", "brand" => "West Coast Seeds", "cycle" => "", "search" => ""})
+      |> form("#filter-form", %{
+        "type" => "",
+        "brand" => "West Coast Seeds",
+        "cycle" => "",
+        "search" => ""
+      })
       |> render_change()
 
     assert html =~ "Carrots"
@@ -80,7 +85,12 @@ defmodule BackyardGardenWeb.Seeds.IndexLiveTest do
 
     html =
       view
-      |> form("#filter-form", %{"type" => "", "brand" => "", "cycle" => "Perennial", "search" => ""})
+      |> form("#filter-form", %{
+        "type" => "",
+        "brand" => "",
+        "cycle" => "Perennial",
+        "search" => ""
+      })
       |> render_change()
 
     assert html =~ "Echinacea"
@@ -110,7 +120,12 @@ defmodule BackyardGardenWeb.Seeds.IndexLiveTest do
 
     html =
       view
-      |> form("#filter-form", %{"type" => "", "brand" => "", "cycle" => "", "search" => "zzznomatch"})
+      |> form("#filter-form", %{
+        "type" => "",
+        "brand" => "",
+        "cycle" => "",
+        "search" => "zzznomatch"
+      })
       |> render_change()
 
     assert html =~ "0 seeds"
@@ -187,7 +202,11 @@ defmodule BackyardGardenWeb.Seeds.IndexLiveTest do
 
   test "filters by planting_method", %{conn: conn} do
     {:ok, direct_sow} =
-      Seeds.create_seed(%{name: "Direct Sow Seed", planting_method: "Direct Sow", type: "Vegetable"})
+      Seeds.create_seed(%{
+        name: "Direct Sow Seed",
+        planting_method: "Direct Sow",
+        type: "Vegetable"
+      })
 
     {:ok, seedlings} =
       Seeds.create_seed(%{name: "Seedlings Seed", planting_method: "Seedlings", type: "Herb"})

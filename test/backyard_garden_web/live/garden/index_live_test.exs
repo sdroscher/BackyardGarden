@@ -7,13 +7,13 @@ defmodule BackyardGardenWeb.Garden.IndexLiveTest do
   alias BackyardGarden.Plantings
   alias BackyardGarden.Seeds
 
-  defp seed_fixture(attrs \\ %{}) do
+  defp seed_fixture(attrs) do
     defaults = %{name: "Test Seed", type: "Vegetable", cycle: "Annual", maturity_days: 50}
     {:ok, seed} = Seeds.create_seed(Map.merge(defaults, attrs))
     seed
   end
 
-  defp planting_fixture(seed, attrs \\ %{}) do
+  defp planting_fixture(seed, attrs) do
     defaults = %{seed_id: seed.id, status: "planned"}
     {:ok, planting} = Plantings.create_planting(Map.merge(defaults, attrs))
     planting

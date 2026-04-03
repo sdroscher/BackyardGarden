@@ -74,6 +74,8 @@ defmodule BackyardGarden.Weather.Client do
   end
 
   # Group 3-hour entries by date, take the minimum temp_min per day.
+  # The condition comes from the warmest entry (max temp_max), which is the
+  # most representative daytime condition rather than an arbitrary ordering.
   defp parse_forecast(body) do
     body["list"]
     |> Enum.group_by(fn entry ->
@@ -84,11 +86,12 @@ defmodule BackyardGarden.Weather.Client do
     |> Enum.take(3)
     |> Enum.map(fn {date, entries} ->
       min_entry = Enum.min_by(entries, &get_in(&1, ["main", "temp_min"]))
+      max_entry = Enum.max_by(entries, &get_in(&1, ["main", "temp_max"]))
 
       %{
         date: date,
         min_temp: get_in(min_entry, ["main", "temp_min"]),
-        condition: get_in(hd(entries), ["weather", Access.at(0), "main"])
+        condition: get_in(max_entry, ["weather", Access.at(0), "main"])
       }
     end)
   end

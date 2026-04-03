@@ -28,6 +28,8 @@ defmodule BackyardGardenWeb.Router do
     live "/seeds/:id/edit", Seeds.EditLive, :edit
 
     live "/garden", Garden.IndexLive, :index
+
+    live "/calendar", Calendar.IndexLive, :index
   end
 
   # Other scopes may use custom stacks.

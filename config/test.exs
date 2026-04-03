@@ -34,3 +34,10 @@ config :phoenix_live_view,
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
   sort_verified_routes_query_params: true
+
+config :backyard_garden, :weather,
+  base_url: "https://api.openweathermap.org",
+  api_key: "test_key",
+  req_options: [plug: {Req.Test, BackyardGarden.WeatherClientTest}]
+
+config :backyard_garden, :default_location, "Victoria, BC"

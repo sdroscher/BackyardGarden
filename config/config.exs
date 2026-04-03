@@ -55,6 +55,12 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+config :backyard_garden, :weather,
+  base_url: "https://api.openweathermap.org",
+  api_key: System.get_env("OPENWEATHERMAP_API_KEY", "")
+
+config :backyard_garden, :default_location, System.get_env("DEFAULT_LOCATION", "Victoria, BC")
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

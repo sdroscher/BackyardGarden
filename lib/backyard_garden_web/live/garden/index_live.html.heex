@@ -32,103 +32,65 @@
         class="space-y-4"
       >
         <%!-- Seed selector --%>
-        <div>
-          <label class="text-[#52b788] uppercase tracking-wide text-xs font-semibold block mb-1">
-            Seed
-          </label>
-          <select
-            name="planting[seed_id]"
-            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white text-[#374151]"
-          >
-            <option value="">Select a seed…</option>
-            <option
-              :for={seed <- @seeds}
-              value={seed.id}
-              selected={@form[:seed_id].value == seed.id}
-            >
-              {seed.name}
-            </option>
-          </select>
-          <%= if @form[:seed_id].errors != [] do %>
-            <p class="text-xs text-red-600 mt-1">Please select a seed.</p>
-          <% end %>
-        </div>
+        <.input
+          field={@form[:seed_id]}
+          type="select"
+          label="Seed"
+          options={[{"Select a seed…", ""} | Enum.map(@seeds, &{&1.name, &1.id})]}
+          class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+        />
 
         <%!-- Status selector --%>
-        <div>
-          <label class="text-[#52b788] uppercase tracking-wide text-xs font-semibold block mb-1">
-            Status
-          </label>
-          <select
-            name="planting[status]"
-            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white text-[#374151]"
-          >
-            <option value="planned" selected={@form[:status].value == "planned"}>Planned</option>
-            <option value="planted" selected={@form[:status].value == "planted"}>Planted</option>
-            <option value="harvested" selected={@form[:status].value == "harvested"}>
-              Harvested
-            </option>
-          </select>
-        </div>
+        <.input
+          field={@form[:status]}
+          type="select"
+          label="Status"
+          options={[{"Planned", "planned"}, {"Planted", "planted"}, {"Harvested", "harvested"}]}
+          class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+        />
 
         <%!-- Date planted --%>
-        <div>
-          <label class="text-[#52b788] uppercase tracking-wide text-xs font-semibold block mb-1">
-            Date Planted
-          </label>
-          <input
-            type="date"
-            name="planting[planted_at]"
-            value={@form[:planted_at].value}
-            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none text-[#374151]"
-          />
-        </div>
+        <.input
+          field={@form[:planted_at]}
+          type="date"
+          label="Date planted"
+          class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+        />
 
         <%!-- Location --%>
-        <div>
-          <label class="text-[#52b788] uppercase tracking-wide text-xs font-semibold block mb-1">
-            Location <span class="text-[#6b7280] normal-case font-normal">(optional)</span>
-          </label>
-          <input
-            type="text"
-            name="planting[location]"
-            value={@form[:location].value}
-            placeholder="e.g. Raised bed #2"
-            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none text-[#374151]"
-          />
-        </div>
+        <.input
+          field={@form[:location]}
+          type="text"
+          label="Location (optional)"
+          placeholder="e.g. east end of bed"
+          class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+        />
 
         <%!-- Notes --%>
-        <div>
-          <label class="text-[#52b788] uppercase tracking-wide text-xs font-semibold block mb-1">
-            Notes <span class="text-[#6b7280] normal-case font-normal">(optional)</span>
-          </label>
-          <textarea
-            name="planting[notes]"
-            rows="3"
-            placeholder="Any notes about this planting…"
-            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none text-[#374151]"
-          >{@form[:notes].value}</textarea>
-        </div>
+        <.input
+          field={@form[:notes]}
+          type="textarea"
+          label="Notes (optional)"
+          rows="2"
+          class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+        />
 
         <%!-- Zone selector --%>
         <div>
-          <label class="text-[#52b788] uppercase tracking-wide text-xs font-semibold block mb-1">
+          <span class="text-[#52b788] uppercase tracking-wide text-xs font-semibold block mb-1">
             Garden Zone
-          </label>
+          </span>
           <%= if @recommended_zones == [] do %>
-            <p class="text-sm text-[#6b7280] italic">
-              Select a seed to see zone recommendations.
-            </p>
+            <p class="text-xs text-[#6b7280]">Select a seed to see zone recommendations.</p>
           <% else %>
-            <select
-              name="planting[zone_id]"
-              class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white text-[#374151]"
-            >
-              <option value="">— no zone —</option>
-              <option :for={zone <- @recommended_zones} value={zone.id}>{zone.name}</option>
-            </select>
-            <p class="text-xs text-[#6b7280] mt-1">Sorted by best match for this seed.</p>
+            <.input
+              field={@form[:zone_id]}
+              type="select"
+              label="Zone"
+              options={[{"— no zone —", ""} | Enum.map(@recommended_zones, &{&1.name, &1.id})]}
+              class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+            />
+            <p class="text-xs text-[#52b788] mt-1">Sorted by best match for this seed.</p>
           <% end %>
         </div>
 
@@ -174,8 +136,9 @@
             <p class="font-medium text-[#14532d] truncate">{planting.seed.name}</p>
             <p class="text-xs text-[#6b7280]">
               Planted: {planting.planted_at}
-              <%= if estimated_harvest(planting) do %>
-                &middot; Est. harvest: {estimated_harvest(planting)}
+              <% harvest = estimated_harvest(planting) %>
+              <%= if harvest do %>
+                &middot; Est. harvest: {harvest}
               <% end %>
               <%= if planting.location && planting.location != "" do %>
                 &middot; {planting.location}

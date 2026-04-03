@@ -40,11 +40,18 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 **Data layer:**
 - `BackyardGarden.Seeds.Seed` — Ecto schema (UUID primary keys, fields: name, brand, type, cycle, planting_method, ideal_planting_time, maturity_days, sun_requirement, source_url, notes)
 - `BackyardGarden.Seeds` — context module with `list_seeds/1` (accepts filter map), `get_seed!/1`, `create_seed/1`, and distinct list helpers
+- `BackyardGarden.Plantings` — context for plantings (CRUD + `list_plantings_for_month/1`)
+- `BackyardGarden.GardenZones` — context for zones (CRUD + `recommend_zones/1` scoring engine)
+- `BackyardGarden.PlantingCalendar` — parses `ideal_planting_time` text → `{start_month, end_month}` tuples; builds week grids
 
 **Web layer:**
 - `Seeds.IndexLive` — live browse/filter page at `/seeds`; handles `"filter"` events, rebuilds query in real-time
 - `Seeds.ShowLive` — seed detail page at `/seeds/:id`
-- Router: `GET /` → PageController, `/seeds` → IndexLive, `/seeds/:id` → ShowLive
+- `Seeds.EditLive` — seed edit form at `/seeds/:id/edit`
+- `Garden.IndexLive` — My Garden page at `/garden`; log plantings, update status, zone recommendations
+- `Calendar.IndexLive` — Planting calendar at `/calendar`; month grid with planted/harvest/ideal markers
+- `Settings.ZonesLive` — Zone settings at `/settings/zones`; add/edit/delete zones
+- Router: `GET /` → PageController, plus LiveViews above
 
 **Seed data:** 62 seeds imported from CSV via `priv/repo/seeds.exs` using NimbleCSV.
 
@@ -56,6 +63,11 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 - **Binary IDs (UUIDs)** are the default primary key type — set in generator config.
 - **UTC timestamps** are the default.
 - Tests use `async: true` with the SQL sandbox for LiveView tests.
+- **Forms use `<.input field={@form[:x]} label="Label" />`** — never wrap in a manual `<label>`; `<.input>` renders its own label. Hint text goes in a `<p>` sibling below the component.
+- **`to_form/2` needs `as:` when schema name ≠ param key** — e.g. `GardenZone` changeset needs `to_form(changeset, as: "zone")` so params arrive as `zone[name]` not `garden_zone[name]`.
+- **Forms need both `phx-submit` and `phx-change`** — the change handler rebuilds the changeset with `|> Map.put(:action, :validate)` to show inline errors while typing.
+- **Test fixture helpers: omit default args** — write `defp fixture(attrs)` not `defp fixture(attrs \\ %{})` unless a call site actually omits the argument. Unused defaults produce compiler warnings.
+- **SQLite async test flakiness** — `async: true` tests can intermittently fail with "Database busy" under high concurrency. Re-run to confirm; it is not a test bug.
 
 ## Code Quality
 

@@ -12,8 +12,7 @@ defmodule BackyardGarden.Application do
       BackyardGarden.Repo,
       {DNSCluster, query: Application.get_env(:backyard_garden, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: BackyardGarden.PubSub},
-      # Start a worker by calling: BackyardGarden.Worker.start_link(arg)
-      # {BackyardGarden.Worker, arg},
+      BackyardGarden.Weather.Cache,
       # Start to serve requests, typically the last entry
       BackyardGardenWeb.Endpoint
     ]

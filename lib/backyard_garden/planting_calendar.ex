@@ -21,6 +21,10 @@ defmodule BackyardGarden.PlantingCalendar do
   @doc """
   Parses an `ideal_planting_time` string into a `{start_month, end_month}` tuple (1-12).
   Returns nil for unrecognised or empty input.
+
+  Note: when `end_month < start_month` (e.g. `{11, 2}` for "winter"), the window
+  wraps across the year boundary. Callers that check whether a given month falls
+  inside the window must account for this wrap-around.
   """
   def parse_ideal_months(nil), do: nil
   def parse_ideal_months(""), do: nil

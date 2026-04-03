@@ -27,6 +27,11 @@ defmodule BackyardGarden.Plantings do
   @doc """
   Returns plantings relevant to the given month — either planted in that month,
   or with a harvest due date (planted_at + seed.maturity_days) in that month.
+
+  The harvest-due filter is applied in Elixir (not SQL) because it requires
+  `seed.maturity_days` from the preloaded association — pushing this into a
+  SQL expression would require a join-based computed column, which is impractical
+  with the current schema.
   """
   def list_plantings_for_month(%Date{} = first_day) do
     last_day = Date.end_of_month(first_day)

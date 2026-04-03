@@ -6,7 +6,7 @@ defmodule BackyardGardenWeb.Calendar.IndexLiveTest do
   alias BackyardGarden.Seeds
   alias BackyardGarden.Plantings
 
-  defp seed_fixture(attrs \\ %{}) do
+  defp seed_fixture(attrs) do
     defaults = %{name: "Basil", type: "Herb", cycle: "Annual", maturity_days: 60}
     {:ok, seed} = Seeds.create_seed(Map.merge(defaults, attrs))
     seed
@@ -57,7 +57,8 @@ defmodule BackyardGardenWeb.Calendar.IndexLiveTest do
       })
 
     {:ok, _view, html} = live(conn, ~p"/calendar")
-    # The planted dot should appear (blue dot rendered for today's month)
-    assert html =~ "3b82f6"
+
+    # The planted dot should appear (title attribute only present on calendar cell dots, not the legend)
+    assert html =~ ~s(title="Planted")
   end
 end

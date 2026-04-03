@@ -30,6 +30,8 @@ defmodule BackyardGardenWeb.Router do
     live "/garden", Garden.IndexLive, :index
 
     live "/calendar", Calendar.IndexLive, :index
+
+    live "/settings/zones", Settings.ZonesLive, :index
   end
 
   # Other scopes may use custom stacks.

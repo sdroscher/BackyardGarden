@@ -1,0 +1,127 @@
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-[#14532d]">Garden Zones</h1>
+    <button
+      phx-click="new_zone"
+      class="bg-[#2d6a4f] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#1a3a2a] transition-colors"
+    >
+      + Add Zone
+    </button>
+  </div>
+
+  <%!-- Add/Edit form --%>
+  <%= if @show_form do %>
+    <div class="bg-white border border-[#bbf7d0] rounded-xl p-6 space-y-4">
+      <h2 class="text-lg font-semibold text-[#14532d]">
+        {if @editing_zone, do: "Edit Zone", else: "Add Zone"}
+      </h2>
+      <.form id="zone-form" for={@form} phx-submit="save_zone" class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-[#374151] mb-1">Name</label>
+          <.input field={@form[:name]} type="text" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[#374151] mb-1">Description</label>
+          <.input field={@form[:description]} type="text" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[#374151] mb-1">
+            Sun Exposures
+            <span class="font-normal text-[#6b7280]">
+              (comma-separated: full_sun, partial_sun, shade_tolerant)
+            </span>
+          </label>
+          <.input field={@form[:sun_exposures]} type="text" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[#374151] mb-1">
+            Allowed Types
+            <span class="font-normal text-[#6b7280]">(comma-separated, or blank for any)</span>
+          </label>
+          <.input field={@form[:allowed_types]} type="text" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[#374151] mb-1">
+            Allowed Cycles
+            <span class="font-normal text-[#6b7280]">(comma-separated, or blank for any)</span>
+          </label>
+          <.input field={@form[:allowed_cycles]} type="text" />
+        </div>
+        <div class="flex gap-3">
+          <button
+            type="submit"
+            class="bg-[#2d6a4f] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#1a3a2a] transition-colors"
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            phx-click="cancel_form"
+            class="rounded-lg px-4 py-2 text-sm font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </.form>
+    </div>
+  <% end %>
+
+  <%!-- Zone cards --%>
+  <%= if Enum.empty?(@zones) do %>
+    <p class="text-sm text-[#6b7280]">No zones yet. Add one to get started.</p>
+  <% else %>
+    <div class="space-y-3">
+      <%= for zone <- @zones do %>
+        <div class="bg-white border border-[#bbf7d0] rounded-xl p-4">
+          <div class="flex items-start justify-between gap-4">
+            <div class="space-y-1">
+              <p class="font-semibold text-[#14532d]">{zone.name}</p>
+              <%= if zone.description && zone.description != "" do %>
+                <p class="text-sm text-[#6b7280]">{zone.description}</p>
+              <% end %>
+              <div class="flex flex-wrap gap-3 text-xs text-[#374151] mt-1">
+                <span>
+                  <span class="text-[#52b788] uppercase tracking-wide font-semibold">Sun:</span>
+                  {if zone.sun_exposures && zone.sun_exposures != "",
+                    do: zone.sun_exposures,
+                    else: "Any"}
+                </span>
+                <span>
+                  <span class="text-[#52b788] uppercase tracking-wide font-semibold">Types:</span>
+                  {if zone.allowed_types && zone.allowed_types != "",
+                    do: zone.allowed_types,
+                    else: "Any"}
+                </span>
+                <span>
+                  <span class="text-[#52b788] uppercase tracking-wide font-semibold">
+                    Cycles:
+                  </span>
+                  {if zone.allowed_cycles && zone.allowed_cycles != "",
+                    do: zone.allowed_cycles,
+                    else: "Any"}
+                </span>
+              </div>
+            </div>
+            <div class="flex gap-2 shrink-0">
+              <button
+                phx-click="edit_zone"
+                phx-value-id={zone.id}
+                class="text-xs rounded-lg border border-[#bbf7d0] px-3 py-1.5 text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+              >
+                Edit
+              </button>
+              <button
+                phx-click="delete_zone"
+                phx-value-id={zone.id}
+                data-confirm="Delete this zone?"
+                class="text-xs rounded-lg border border-red-200 px-3 py-1.5 text-red-600 hover:bg-red-50 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

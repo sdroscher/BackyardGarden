@@ -1,5 +1,5 @@
 defmodule BackyardGardenWeb.Calendar.IndexLiveTest do
-  use BackyardGardenWeb.ConnCase, async: true
+  use BackyardGardenWeb.ConnCase, async: false
 
   import Phoenix.LiveViewTest
 

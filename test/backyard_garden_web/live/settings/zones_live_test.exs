@@ -1,5 +1,5 @@
 defmodule BackyardGardenWeb.Settings.ZonesLiveTest do
-  use BackyardGardenWeb.ConnCase, async: true
+  use BackyardGardenWeb.ConnCase, async: false
 
   import Phoenix.LiveViewTest
 

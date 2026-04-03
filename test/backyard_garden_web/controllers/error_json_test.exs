@@ -1,5 +1,5 @@
 defmodule BackyardGardenWeb.ErrorJSONTest do
-  use BackyardGardenWeb.ConnCase, async: true
+  use BackyardGardenWeb.ConnCase, async: false
 
   test "renders 404" do
     assert BackyardGardenWeb.ErrorJSON.render("404.json", %{}) == %{

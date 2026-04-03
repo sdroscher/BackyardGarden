@@ -62,7 +62,7 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 - **SQL wildcard escaping:** `%` and `_` in search strings must be escaped before LIKE queries — see `Seeds.filter_by_search/2`.
 - **Binary IDs (UUIDs)** are the default primary key type — set in generator config.
 - **UTC timestamps** are the default.
-- Tests use `async: true` with the SQL sandbox for LiveView tests.
+- **LiveView/controller tests use `async: false`** — SQLite only allows one concurrent writer; `async: true` causes intermittent "Database busy" failures. Only pure computation tests (no DB) may use `async: true`.
 - **Forms use `<.input field={@form[:x]} label="Label" />`** — never wrap in a manual `<label>`; `<.input>` renders its own label. Hint text goes in a `<p>` sibling below the component.
 - **`to_form/2` needs `as:` when schema name ≠ param key** — e.g. `GardenZone` changeset needs `to_form(changeset, as: "zone")` so params arrive as `zone[name]` not `garden_zone[name]`.
 - **Forms need both `phx-submit` and `phx-change`** — the change handler rebuilds the changeset with `|> Map.put(:action, :validate)` to show inline errors while typing.

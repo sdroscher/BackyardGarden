@@ -1,5 +1,5 @@
 defmodule BackyardGardenWeb.Seeds.IndexLiveTest do
-  use BackyardGardenWeb.ConnCase, async: true
+  use BackyardGardenWeb.ConnCase, async: false
 
   import Phoenix.LiveViewTest
 

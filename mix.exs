@@ -67,6 +67,7 @@ defmodule BackyardGarden.MixProject do
       {:bandit, "~> 1.5"},
       {:req, "~> 0.5"},
       {:floki, "~> 0.37"},
+      {:dotenvy, "~> 0.8", only: [:dev, :test]},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false}
     ]

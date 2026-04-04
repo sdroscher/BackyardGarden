@@ -32,8 +32,8 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
 
   test "renders weather widget when weather is available", %{conn: conn} do
     {:ok, _view, html} = live(conn, ~p"/")
-    # WeatherClientStub returns temp 12.5 for "Victoria, BC"
-    assert html =~ "12.5"
+    # WeatherClientStub returns temp 12.5 for "Victoria, BC"; the UI rounds to nearest integer (13°)
+    assert html =~ "13"
     assert html =~ "Victoria"
   end
 

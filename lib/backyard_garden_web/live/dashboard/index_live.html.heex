@@ -1,127 +1,206 @@
-<div class="space-y-6">
-  <h1 class="text-2xl font-bold text-[#14532d]">Dashboard</h1>
-  <%!-- Weather banner (hidden when weather unavailable) --%>
-  <%= if @weather do %>
-    <div class="bg-white border border-[#bbf7d0] rounded-xl p-6">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <span class="text-[#52b788] uppercase tracking-wide text-xs font-semibold">
+<div class="space-y-0">
+  <%!-- Greeting --%>
+  <h1 class="text-3xl font-extrabold text-[#14532d] tracking-tight mb-5">
+    {@greeting}
+    <%= if @weather do %>
+      <span class="text-2xl ml-1">
+        {if String.contains?(String.downcase(@weather.condition), ["rain", "drizzle"]), do: "🌧️",
+         else: if(String.contains?(String.downcase(@weather.condition), "cloud"), do: "🌤️", else: "☀️")}
+      </span>
+    <% end %>
+  </h1>
+
+  <%!-- Bento grid: 2-col desktop, stacked tablet/mobile --%>
+  <div class="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-4 items-start">
+
+    <%!-- Main column --%>
+    <div class="flex flex-col gap-4">
+
+      <%!-- Weather card --%>
+      <%= if @weather do %>
+        <div class="rounded-[22px] p-7 relative overflow-hidden"
+             style="background: linear-gradient(150deg, #ecfdf5, #d1fae5);">
+          <div class="absolute right-6 top-5 text-7xl opacity-40 pointer-events-none select-none">
+            {if String.contains?(String.downcase(@weather.condition), ["rain", "drizzle"]), do: "🌧️",
+             else: if(String.contains?(String.downcase(@weather.condition), "cloud"), do: "🌤️", else: "☀️")}
+          </div>
+          <div class="text-[11px] font-bold tracking-widest uppercase text-[#2d6a4f] mb-2">
             {@weather.city}
-          </span>
-          <div class="flex items-baseline gap-3 mt-1">
-            <span class="text-4xl font-bold text-[#14532d]">
-              {Float.round(@weather.temp, 1)}°C
-            </span>
-            <span class="text-[#374151] text-lg">{@weather.condition}</span>
           </div>
-        </div>
-        <%= if Enum.any?(@weather_tips, &(not String.contains?(&1, "Frost"))) do %>
-          <div class="max-w-xs">
-            <span class="text-[#52b788] uppercase tracking-wide text-xs font-semibold">
-              Today's Tip
-            </span>
-            <p class="mt-1 text-sm text-[#374151] italic">
-              {Enum.find(@weather_tips, &(not String.contains?(&1, "Frost")))}
-            </p>
+          <div class="text-6xl font-black text-[#14532d] leading-none tracking-tight">
+            {Float.round(@weather.temp, 0) |> trunc()}°
           </div>
-        <% end %>
-      </div>
-      <%!-- Frost warning shown prominently if present --%>
-      <%= if Enum.any?(@weather_tips, &String.contains?(&1, "Frost")) do %>
-        <div class="mt-4 flex items-center gap-2 rounded-lg bg-[#fef3c7] border border-[#fcd34d] px-4 py-2">
-          <span class="text-[#92400e] text-sm font-medium">
-            {Enum.find(@weather_tips, &String.contains?(&1, "Frost"))}
-          </span>
+          <div class="text-base text-[#52b788] font-medium mt-1 mb-5">
+            {@weather.condition} · feels like {Float.round(@weather.feels_like, 0) |> trunc()}°
+          </div>
+          <%= if @weather_message do %>
+            <div class="bg-white rounded-2xl px-5 py-4 shadow-sm text-sm text-[#374151] leading-relaxed italic">
+              "{@weather_message}"
+            </div>
+          <% end %>
+          <%= if Enum.any?(@weather_tips, &String.contains?(&1, "Frost")) do %>
+            <div class="mt-4 flex items-center gap-2 rounded-xl bg-[#fef3c7] border border-[#fcd34d] px-4 py-3">
+              <span class="text-base">🌡️</span>
+              <span class="text-[#92400e] text-sm font-medium">
+                {Enum.find(@weather_tips, &String.contains?(&1, "Frost"))}
+              </span>
+            </div>
+          <% end %>
         </div>
       <% end %>
-    </div>
-  <% end %>
 
-  <%!-- Two-column: Plant Now + Recently Planted --%>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <%!-- Plant Now --%>
-    <div class="bg-white border border-[#bbf7d0] rounded-xl p-6">
-      <span class="text-[#52b788] uppercase tracking-wide text-xs font-semibold">
-        Plant Now
-      </span>
-      <%= if @plant_now == [] do %>
-        <p class="mt-3 text-sm text-[#6b7280]">
-          No seeds are in their ideal window right now.
-        </p>
-      <% else %>
-        <ul class="mt-3 space-y-2">
-          <%= for seed <- @plant_now do %>
-            <li class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-[#2d6a4f] shrink-0"></span>
-                <a
-                  href={~p"/seeds/#{seed.id}"}
-                  class="text-[#14532d] font-medium hover:underline"
-                >
+      <%!-- Plant Now card --%>
+      <div class="rounded-[22px] overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
+        <div class="px-6 py-4 flex items-center justify-between"
+             style="background: linear-gradient(135deg, #2d6a4f, #52b788);">
+          <span class="text-white text-base font-bold">🌱 Plant Now</span>
+          <span class="bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full">
+            {length(@plant_now)} seeds
+          </span>
+        </div>
+        <div class="bg-white px-6 pb-4">
+          <%= if @plant_now == [] do %>
+            <p class="pt-4 text-sm text-[#6b7280] italic">
+              No seeds are in their ideal window right now.
+            </p>
+          <% else %>
+            <%= for seed <- @plant_now do %>
+              <div class="border-b border-[#f3f4f6] last:border-0">
+                <div class="flex items-center gap-3 py-3">
+                  <div class="flex-1 min-w-0">
+                    <a href={~p"/seeds/#{seed.id}"}
+                       class="text-sm font-semibold text-[#111] hover:text-[#2d6a4f] truncate block">
+                      {seed.name}
+                    </a>
+                    <div class="text-xs text-[#9ca3af] mt-0.5">{seed.type}</div>
+                  </div>
+                  <button
+                    phx-click="expand_quick_log"
+                    phx-value-id={seed.id}
+                    class={[
+                      "text-xs font-bold px-4 py-2 rounded-full transition-colors flex-shrink-0",
+                      if(@expanded_seed_id == seed.id,
+                        do: "bg-[#f0fdf4] text-[#2d6a4f] border border-[#bbf7d0]",
+                        else: "text-white"
+                      )
+                    ]}
+                    style={if @expanded_seed_id != seed.id, do: "background: linear-gradient(135deg, #2d6a4f, #52b788);"}
+                  >
+                    {if @expanded_seed_id == seed.id, do: "▲ Cancel", else: "Log it"}
+                  </button>
+                </div>
+
+                <%!-- Inline quick-log form (wired up in Task 5) --%>
+                <%= if @expanded_seed_id == seed.id do %>
+                  <div class="bg-[#f0fdf4] rounded-xl p-4 mb-3">
+                    <.form
+                      id={"quick-log-form-#{seed.id}"}
+                      for={@quick_log_form}
+                      phx-submit="save_quick_log"
+                      phx-change="validate_quick_log"
+                      class="space-y-3"
+                    >
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <.input field={@quick_log_form[:date_planted]} type="date" label="Date planted" />
+                        <.input
+                          field={@quick_log_form[:status]}
+                          type="select"
+                          label="Status"
+                          options={[{"Planted", "planted"}, {"Planned", "planned"}]}
+                        />
+                        <div>
+                          <.input
+                            field={@quick_log_form[:zone_id]}
+                            type="select"
+                            label="Garden zone"
+                            options={[{"— no zone —", ""} | Enum.map(@quick_log_zones, &{"#{if(&1.score && &1.score > 0, do: "★ ", else: "")}#{&1.name}", &1.id})]}
+                          />
+                          <%= if @quick_log_zones != [] do %>
+                            <p class="text-xs text-[#52b788] mt-1">Sorted by best match.</p>
+                          <% end %>
+                        </div>
+                        <.input field={@quick_log_form[:location]} type="text" label="Location" placeholder="e.g. raised bed 2" />
+                      </div>
+                      <.input field={@quick_log_form[:notes]} type="textarea" label="Notes" rows="2" />
+                      <div class="flex items-center gap-3 pt-1">
+                        <button
+                          type="submit"
+                          class="text-white text-sm font-bold px-5 py-2 rounded-full"
+                          style="background: linear-gradient(135deg, #2d6a4f, #52b788);"
+                        >
+                          Save Planting
+                        </button>
+                        <span class="text-xs text-[#6b7280]">
+                          {seed.name} · {Phoenix.HTML.Form.input_value(@quick_log_form, :status)} · today
+                        </span>
+                      </div>
+                    </.form>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+
+    </div>
+
+    <%!-- Aside column --%>
+    <div class="flex flex-col gap-4">
+
+      <%!-- Recently Planted card --%>
+      <div class="rounded-[22px] overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
+        <div class="px-6 py-4"
+             style="background: linear-gradient(135deg, #7c3aed, #a78bfa);">
+          <span class="text-white text-base font-bold">✅ Recently Planted</span>
+        </div>
+        <div class="bg-white px-6 pb-4">
+          <%= if @recently_planted == [] do %>
+            <p class="pt-4 text-sm text-[#6b7280] italic">Nothing planted yet.</p>
+          <% else %>
+            <%= for planting <- @recently_planted do %>
+              <div class="flex items-center justify-between py-3 border-b border-[#f3f4f6] last:border-0">
+                <a href={~p"/seeds/#{planting.seed.id}"}
+                   class="text-sm font-semibold text-[#14532d] hover:underline truncate">
+                  {planting.seed.name}
+                </a>
+                <span class="text-xs font-semibold bg-[#f0fdf4] text-[#2d6a4f] px-3 py-1 rounded-full ml-3 flex-shrink-0">
+                  {Calendar.strftime(planting.planted_at, "%b %d")}
+                </span>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+
+      <%!-- Coming Up card --%>
+      <div class="rounded-[22px] overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
+        <div class="px-6 py-4"
+             style="background: linear-gradient(135deg, #d97706, #fbbf24);">
+          <span class="text-white text-base font-bold">📅 Coming Up</span>
+        </div>
+        <div class="bg-white px-6 pb-4">
+          <%= if @upcoming == [] do %>
+            <p class="pt-4 text-sm text-[#6b7280] italic">
+              No upcoming windows in the next 60 days.
+            </p>
+          <% else %>
+            <%= for {seed, open_date} <- @upcoming do %>
+              <div class="flex items-center gap-3 py-3 border-b border-[#f3f4f6] last:border-0">
+                <span class="text-xs font-bold text-[#9ca3af] w-11 flex-shrink-0">
+                  {Calendar.strftime(open_date, "%b %d")}
+                </span>
+                <a href={~p"/seeds/#{seed.id}"}
+                   class="text-sm font-semibold text-[#111] hover:text-[#2d6a4f] flex-1 truncate">
                   {seed.name}
                 </a>
+                <BackyardGardenWeb.Layouts.type_badge type={seed.type} />
               </div>
-              <BackyardGardenWeb.Layouts.type_badge type={seed.type} />
-            </li>
+            <% end %>
           <% end %>
-        </ul>
-      <% end %>
-    </div>
-
-    <%!-- Recently Planted --%>
-    <div class="bg-white border border-[#bbf7d0] rounded-xl p-6">
-      <span class="text-[#52b788] uppercase tracking-wide text-xs font-semibold">
-        Recently Planted
-      </span>
-      <%= if @recently_planted == [] do %>
-        <p class="mt-3 text-sm text-[#6b7280]">Nothing planted yet.</p>
-      <% else %>
-        <ul class="mt-3 space-y-2">
-          <%= for planting <- @recently_planted do %>
-            <li class="flex items-center justify-between">
-              <a
-                href={~p"/seeds/#{planting.seed.id}"}
-                class="text-[#374151] hover:text-[#14532d] hover:underline"
-              >
-                {planting.seed.name}
-              </a>
-              <span class="text-[#6b7280] text-sm">
-                {Calendar.strftime(planting.planted_at, "%b %d")}
-              </span>
-            </li>
-          <% end %>
-        </ul>
-      <% end %>
-    </div>
-  </div>
-
-  <%!-- Upcoming Schedule (full width) --%>
-  <div class="bg-white border border-[#bbf7d0] rounded-xl p-6">
-    <span class="text-[#52b788] uppercase tracking-wide text-xs font-semibold">
-      Coming Up
-    </span>
-    <%= if @upcoming == [] do %>
-      <p class="mt-3 text-sm text-[#6b7280]">
-        No upcoming planting windows in the next 60 days.
-      </p>
-    <% else %>
-      <div class="mt-3 divide-y divide-[#f0fdf4]">
-        <%= for {seed, open_date} <- @upcoming do %>
-          <div class="flex items-center gap-4 py-2">
-            <span class="text-[#6b7280] text-sm w-14 shrink-0">
-              {Calendar.strftime(open_date, "%b %d")}
-            </span>
-            <a
-              href={~p"/seeds/#{seed.id}"}
-              class="text-[#374151] font-medium hover:text-[#14532d] hover:underline flex-1"
-            >
-              {seed.name}
-            </a>
-            <BackyardGardenWeb.Layouts.type_badge type={seed.type} />
-            <span class="text-[#6b7280] text-xs hidden sm:block">ideal window opens</span>
-          </div>
-        <% end %>
+        </div>
       </div>
-    <% end %>
+
+    </div>
   </div>
 </div>

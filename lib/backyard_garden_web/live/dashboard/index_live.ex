@@ -11,9 +11,28 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
     {:ok,
      socket
      |> assign(:page_title, "Dashboard")
+     |> assign(:greeting, greeting())
      |> assign(:weather_message, nil)
+     |> assign(:expanded_seed_id, nil)
+     |> assign(:quick_log_form, nil)
+     |> assign(:quick_log_zones, [])
      |> load_dashboard()
      |> load_weather()}
+  end
+
+  defp greeting do
+    day = Date.utc_today() |> Calendar.strftime("%A")
+    "Good #{time_of_day()}, happy #{day}"
+  end
+
+  defp time_of_day do
+    hour = DateTime.utc_now().hour
+
+    cond do
+      hour < 12 -> "morning"
+      hour < 17 -> "afternoon"
+      true -> "evening"
+    end
   end
 
   defp load_dashboard(socket) do

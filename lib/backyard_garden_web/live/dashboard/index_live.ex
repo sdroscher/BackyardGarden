@@ -26,7 +26,8 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
   end
 
   defp time_of_day do
-    hour = DateTime.utc_now().hour
+    tz = Application.get_env(:backyard_garden, :timezone, "America/Vancouver")
+    hour = DateTime.now!(tz).hour
 
     cond do
       hour < 12 -> "morning"

@@ -34,6 +34,8 @@ config :backyard_garden, :weather,
 
 config :backyard_garden, :default_location, System.get_env("DEFAULT_LOCATION", "Victoria, BC")
 
+config :backyard_garden, :timezone, System.get_env("TIMEZONE", "America/Vancouver")
+
 if config_env() == :prod do
   database_path =
     System.get_env("DATABASE_PATH") ||

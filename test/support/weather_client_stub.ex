@@ -18,6 +18,7 @@ defmodule BackyardGarden.WeatherClientStub do
      }}
   end
 
+  # Reserved for dashboard LiveView tests that exercise the frost-warning tip display path
   def fetch_weather("FrostCity") do
     {:ok,
      %{

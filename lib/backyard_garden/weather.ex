@@ -31,7 +31,7 @@ defmodule BackyardGarden.Weather do
 
   def get_weather(_), do: {:error, :invalid_city}
 
-  # Allows swapping in a stub via config :backyard_garden, :weather_client
+  # Injected via config so tests never touch the real HTTP client
   defp client do
     Application.get_env(:backyard_garden, :weather_client, BackyardGarden.Weather.Client)
   end

@@ -21,7 +21,7 @@ defmodule BackyardGarden.Weather.TipsTest do
   test "returns a list of tip strings" do
     tips = Tips.generate(weather(), false)
     assert is_list(tips)
-    assert length(tips) > 0
+    refute Enum.empty?(tips)
     assert Enum.all?(tips, &is_binary/1)
   end
 

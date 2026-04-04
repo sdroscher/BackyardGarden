@@ -4,25 +4,32 @@
     {@greeting}
     <%= if @weather do %>
       <span class="text-2xl ml-1">
-        {if String.contains?(String.downcase(@weather.condition), ["rain", "drizzle"]), do: "🌧️",
-         else: if(String.contains?(String.downcase(@weather.condition), "cloud"), do: "🌤️", else: "☀️")}
+        {if String.contains?(String.downcase(@weather.condition), ["rain", "drizzle"]),
+          do: "🌧️",
+          else:
+            if(String.contains?(String.downcase(@weather.condition), "cloud"), do: "🌤️", else: "☀️")}
       </span>
     <% end %>
   </h1>
 
   <%!-- Bento grid: 2-col desktop, stacked tablet/mobile --%>
   <div class="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-4 items-start">
-
     <%!-- Main column --%>
     <div class="flex flex-col gap-4">
-
       <%!-- Weather card --%>
       <%= if @weather do %>
-        <div class="rounded-[22px] p-7 relative overflow-hidden"
-             style="background: linear-gradient(150deg, #ecfdf5, #d1fae5);">
+        <div
+          class="rounded-[22px] p-7 relative overflow-hidden"
+          style="background: linear-gradient(150deg, #ecfdf5, #d1fae5);"
+        >
           <div class="absolute right-6 top-5 text-7xl opacity-40 pointer-events-none select-none">
-            {if String.contains?(String.downcase(@weather.condition), ["rain", "drizzle"]), do: "🌧️",
-             else: if(String.contains?(String.downcase(@weather.condition), "cloud"), do: "🌤️", else: "☀️")}
+            {if String.contains?(String.downcase(@weather.condition), ["rain", "drizzle"]),
+              do: "🌧️",
+              else:
+                if(String.contains?(String.downcase(@weather.condition), "cloud"),
+                  do: "🌤️",
+                  else: "☀️"
+                )}
           </div>
           <div class="text-[11px] font-bold tracking-widest uppercase text-[#2d6a4f] mb-2">
             {@weather.city}
@@ -51,14 +58,16 @@
 
       <%!-- Plant Now card --%>
       <div class="rounded-[22px] overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
-        <div class="px-6 py-4 flex items-center justify-between"
-             style="background: linear-gradient(135deg, #2d6a4f, #52b788);">
+        <div
+          class="px-6 py-4 flex items-center justify-between"
+          style="background: linear-gradient(135deg, #2d6a4f, #52b788);"
+        >
           <span class="text-white text-base font-bold">🌱 Plant Now</span>
           <span class="bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full">
             {length(@plant_now)} seeds
           </span>
         </div>
-        <div class="bg-white px-6 pb-4">
+        <div class="bg-white px-6 pb-4 max-h-[420px] overflow-y-auto">
           <%= if @plant_now == [] do %>
             <p class="pt-4 text-sm text-[#6b7280] italic">
               No seeds are in their ideal window right now.
@@ -68,8 +77,10 @@
               <div class="border-b border-[#f3f4f6] last:border-0">
                 <div class="flex items-center gap-3 py-3">
                   <div class="flex-1 min-w-0">
-                    <a href={~p"/seeds/#{seed.id}"}
-                       class="text-sm font-semibold text-[#111] hover:text-[#2d6a4f] truncate block">
+                    <a
+                      href={~p"/seeds/#{seed.id}"}
+                      class="text-sm font-semibold text-[#111] hover:text-[#2d6a4f] truncate block"
+                    >
                       {seed.name}
                     </a>
                     <div class="text-xs text-[#9ca3af] mt-0.5">{seed.type}</div>
@@ -84,7 +95,10 @@
                         else: "text-white"
                       )
                     ]}
-                    style={if @expanded_seed_id != seed.id, do: "background: linear-gradient(135deg, #2d6a4f, #52b788);"}
+                    style={
+                      if @expanded_seed_id != seed.id,
+                        do: "background: linear-gradient(135deg, #2d6a4f, #52b788);"
+                    }
                   >
                     {if @expanded_seed_id == seed.id, do: "▲ Cancel", else: "Log it"}
                   </button>
@@ -100,9 +114,17 @@
                       phx-change="validate_quick_log"
                       class="space-y-3"
                     >
-                      <input type="hidden" name="planting[seed_id]" value={Phoenix.HTML.Form.input_value(@quick_log_form, :seed_id)} />
+                      <input
+                        type="hidden"
+                        name="planting[seed_id]"
+                        value={Phoenix.HTML.Form.input_value(@quick_log_form, :seed_id)}
+                      />
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <.input field={@quick_log_form[:date_planted]} type="date" label="Date planted" />
+                        <.input
+                          field={@quick_log_form[:date_planted]}
+                          type="date"
+                          label="Date planted"
+                        />
                         <.input
                           field={@quick_log_form[:status]}
                           type="select"
@@ -114,15 +136,32 @@
                             field={@quick_log_form[:zone_id]}
                             type="select"
                             label="Garden zone"
-                            options={[{"— no zone —", ""} | Enum.map(@quick_log_zones, &{"#{if(&1.score && &1.score > 0, do: "★ ", else: "")}#{&1.name}", &1.id})]}
+                            options={[
+                              {"— no zone —", ""}
+                              | Enum.map(
+                                  @quick_log_zones,
+                                  &{"#{if(&1.score && &1.score > 0, do: "★ ", else: "")}#{&1.name}",
+                                   &1.id}
+                                )
+                            ]}
                           />
                           <%= if @quick_log_zones != [] do %>
                             <p class="text-xs text-[#52b788] mt-1">Sorted by best match.</p>
                           <% end %>
                         </div>
-                        <.input field={@quick_log_form[:location]} type="text" label="Location" placeholder="e.g. raised bed 2" />
+                        <.input
+                          field={@quick_log_form[:location]}
+                          type="text"
+                          label="Location"
+                          placeholder="e.g. raised bed 2"
+                        />
                       </div>
-                      <.input field={@quick_log_form[:notes]} type="textarea" label="Notes" rows="2" />
+                      <.input
+                        field={@quick_log_form[:notes]}
+                        type="textarea"
+                        label="Notes"
+                        rows="2"
+                      />
                       <div class="flex items-center gap-3 pt-1">
                         <button
                           type="submit"
@@ -143,16 +182,16 @@
           <% end %>
         </div>
       </div>
-
     </div>
 
     <%!-- Aside column --%>
     <div class="flex flex-col gap-4">
-
       <%!-- Recently Planted card --%>
       <div class="rounded-[22px] overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
-        <div class="px-6 py-4"
-             style="background: linear-gradient(135deg, #7c3aed, #a78bfa);">
+        <div
+          class="px-6 py-4"
+          style="background: linear-gradient(135deg, #7c3aed, #a78bfa);"
+        >
           <span class="text-white text-base font-bold">✅ Recently Planted</span>
         </div>
         <div class="bg-white px-6 pb-4">
@@ -161,8 +200,10 @@
           <% else %>
             <%= for planting <- @recently_planted do %>
               <div class="flex items-center justify-between py-3 border-b border-[#f3f4f6] last:border-0">
-                <a href={~p"/seeds/#{planting.seed.id}"}
-                   class="text-sm font-semibold text-[#14532d] hover:underline truncate">
+                <a
+                  href={~p"/seeds/#{planting.seed.id}"}
+                  class="text-sm font-semibold text-[#14532d] hover:underline truncate"
+                >
                   {planting.seed.name}
                 </a>
                 <span class="text-xs font-semibold bg-[#f0fdf4] text-[#2d6a4f] px-3 py-1 rounded-full ml-3 flex-shrink-0">
@@ -176,8 +217,10 @@
 
       <%!-- Coming Up card --%>
       <div class="rounded-[22px] overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
-        <div class="px-6 py-4"
-             style="background: linear-gradient(135deg, #d97706, #fbbf24);">
+        <div
+          class="px-6 py-4"
+          style="background: linear-gradient(135deg, #d97706, #fbbf24);"
+        >
           <span class="text-white text-base font-bold">📅 Coming Up</span>
         </div>
         <div class="bg-white px-6 pb-4">
@@ -191,8 +234,10 @@
                 <span class="text-xs font-bold text-[#9ca3af] w-11 flex-shrink-0">
                   {Calendar.strftime(open_date, "%b %d")}
                 </span>
-                <a href={~p"/seeds/#{seed.id}"}
-                   class="text-sm font-semibold text-[#111] hover:text-[#2d6a4f] flex-1 truncate">
+                <a
+                  href={~p"/seeds/#{seed.id}"}
+                  class="text-sm font-semibold text-[#111] hover:text-[#2d6a4f] flex-1 truncate"
+                >
                   {seed.name}
                 </a>
                 <BackyardGardenWeb.Layouts.type_badge type={seed.type} />
@@ -201,7 +246,6 @@
           <% end %>
         </div>
       </div>
-
     </div>
   </div>
 </div>

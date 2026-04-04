@@ -23,6 +23,12 @@ end
 config :backyard_garden, BackyardGardenWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+config :backyard_garden, :weather,
+  base_url: "https://api.openweathermap.org",
+  api_key: System.get_env("OPENWEATHERMAP_API_KEY", "")
+
+config :backyard_garden, :default_location, System.get_env("DEFAULT_LOCATION", "Victoria, BC")
+
 if config_env() == :prod do
   database_path =
     System.get_env("DATABASE_PATH") ||

@@ -121,10 +121,21 @@ Add a **Weather** section to README.md covering:
 
 Replace the current flat/boxy card style with a warmer, more characterful design across all pages. The green colour palette is unchanged; the changes are to shape, depth, and layout.
 
+**Sizing note:** The HTML mockups look correct at ~125% browser zoom, meaning the implementation should be scaled up from the mockup values. Treat the mockup as the right *proportions* but increase font sizes and padding by roughly 15% throughout — see specific values below.
+
 **Page & layout:**
 - Page background: `#fafdf9` (near-white with a hint of green, replaces `bg-[#f0fdf4]`)
 - Page content capped at `max-width: 1280px`, centred with `padding: 28px 32px` (scales down to `20px 16px` on mobile)
 - A personalised greeting replaces the bare `<h1>` on the dashboard: "Good morning, happy Saturday 🌤" (day + weather icon derived from current conditions)
+
+**Typography scale (Tailwind equivalents):**
+- Row item names: `text-sm` (14px) — not `text-xs`
+- Sub-labels / metadata: `text-xs` (12px)
+- Card header titles: `text-base font-bold` (16px)
+- Dashboard greeting: `text-3xl font-extrabold` (30px)
+- Weather temperature: `text-6xl font-black` (60px)
+- Card body padding: `p-5` or `p-6` — not `p-4`
+- Row padding: `py-3` — not `py-2`
 
 **Cards:**
 - Border radius: `22px` (up from `12px`)

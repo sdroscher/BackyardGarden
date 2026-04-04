@@ -41,3 +41,5 @@ config :backyard_garden, :weather,
   req_options: [plug: {Req.Test, BackyardGarden.WeatherClientTest}]
 
 config :backyard_garden, :default_location, "Victoria, BC"
+
+config :backyard_garden, :weather_client, BackyardGarden.WeatherClientStub

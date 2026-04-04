@@ -54,6 +54,31 @@ Visit [http://localhost:4000](http://localhost:4000).
 mix test
 ```
 
+## Weather Integration
+
+The dashboard shows current conditions and a contextual planting tip powered by [OpenWeatherMap](https://openweathermap.org/api).
+
+**Setup:**
+
+1. Sign up for a free account at openweathermap.org and copy your API key.
+2. Set the environment variable before starting the server:
+   ```bash
+   export OPENWEATHERMAP_API_KEY=your_key_here
+   ```
+   Or add it to a `.env` file (if you use `direnv` or similar):
+   ```
+   OPENWEATHERMAP_API_KEY=your_key_here
+   ```
+
+**Configuration:**
+
+The default location is `"Victoria, BC"`. To change it, add to `config/dev.exs`:
+```elixir
+config :backyard_garden, :default_location, "Your City, Country"
+```
+
+**If the API key is missing:** the weather card is silently hidden — the rest of the app works normally.
+
 ## Project Structure
 
 ```

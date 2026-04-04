@@ -203,7 +203,9 @@
                   {planting.seed.name}
                 </a>
                 <span class="text-xs font-semibold bg-[#f0fdf4] text-[#2d6a4f] px-3 py-1 rounded-full ml-3 flex-shrink-0">
-                  {Calendar.strftime(planting.planted_at, "%b %d")}
+                  {if planting.planted_at,
+                    do: Calendar.strftime(planting.planted_at, "%b %d"),
+                    else: "—"}
                 </span>
               </div>
             <% end %>

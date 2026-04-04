@@ -21,8 +21,8 @@ defmodule BackyardGarden.Dashboard do
   @doc "Returns the `limit` most recently planted plantings with seed preloaded."
   def recently_planted(limit \\ 5) do
     Planting
-    |> where([p], p.status == "planted" and not is_nil(p.planted_at))
-    |> order_by([p], desc: p.planted_at)
+    |> where([p], p.status == "planted")
+    |> order_by([p], desc: fragment("coalesce(?, ?)", p.planted_at, p.inserted_at))
     |> limit(^limit)
     |> preload(:seed)
     |> Repo.all()

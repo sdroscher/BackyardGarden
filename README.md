@@ -15,11 +15,14 @@ Built with **Elixir + Phoenix LiveView**, deployed to **fly.io**.
 - Fuzzy name matching links seeds to supplier products (`mix supplier.scrape`, `mix supplier.match`, `mix supplier.link`)
 - Seed detail page shows "From the Supplier" section with care HTML and link to product page
 
-**Phase 2+ — Planned**
-- Planting schedule tracking — planned, planted, harvested
+**Phase 2 — Complete**
+- Dashboard with Plant Now list, Recently Planted, Coming Up schedule, and weather card
+- Planting schedule tracking — planned, planted, harvested (My Garden page)
 - Garden zone recommendations based on plant type, cycle, and sun requirements
 - Monthly planting calendar with ideal window overlays
 - Weather-aware planting tips via OpenWeatherMap
+
+**Phase 3+ — Planned**
 - iOS push notifications via [Prowl](https://www.prowlapp.com/)
 - Auth0 login (Google, Apple, email)
 
@@ -36,13 +39,24 @@ asdf plugin add elixir && asdf install elixir 1.18.2-otp-27
 mix archive.install hex phx_new
 ```
 
+### Environment Variables
+
+Create a `.env` file in the project root (auto-loaded in dev via dotenvy):
+
+```
+OPENWEATHERMAP_API_KEY=your_key_here
+DEFAULT_LOCATION=Victoria,CA        # format: City,CountryCode
+TIMEZONE=America/Vancouver          # IANA timezone name
+```
+
+`DEFAULT_LOCATION` and `TIMEZONE` have sensible defaults if omitted. The weather card is silently hidden if `OPENWEATHERMAP_API_KEY` is missing.
+
 ### Setup
 
 ```bash
-mix deps.get
-mix ecto.create
-mix ecto.migrate
-mix run priv/repo/seeds.exs   # imports seeds from Seed Planting 2026.csv
+# Install deps, create & migrate DB, import seed data, build assets
+mix setup
+
 mix phx.server
 ```
 
@@ -58,26 +72,7 @@ mix test
 
 The dashboard shows current conditions and a contextual planting tip powered by [OpenWeatherMap](https://openweathermap.org/api).
 
-**Setup:**
-
-1. Sign up for a free account at openweathermap.org and copy your API key.
-2. Set the environment variable before starting the server:
-   ```bash
-   export OPENWEATHERMAP_API_KEY=your_key_here
-   ```
-   Or add it to a `.env` file (if you use `direnv` or similar):
-   ```
-   OPENWEATHERMAP_API_KEY=your_key_here
-   ```
-
-**Configuration:**
-
-The default location is `"Victoria, BC"`. To change it, add to `config/dev.exs`:
-```elixir
-config :backyard_garden, :default_location, "Your City, Country"
-```
-
-**If the API key is missing:** the weather card is silently hidden — the rest of the app works normally.
+Set `OPENWEATHERMAP_API_KEY` in `.env` (auto-loaded in dev). Location format must be `City,CountryCode` (e.g. `Victoria,CA`) — province/state names are not supported by the API. The weather card is silently hidden if the key is missing.
 
 ## Project Structure
 

@@ -11,6 +11,9 @@ BackyardGarden is a Phoenix LiveView web app for managing planting schedules. Ph
 ## Commands
 
 ```bash
+# Debug interactively (safe for dev DB queries)
+iex -S mix
+
 # Start dev server
 mix phx.server
 
@@ -43,8 +46,12 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 - `BackyardGarden.Plantings` — context for plantings (CRUD + `list_plantings_for_month/1`)
 - `BackyardGarden.GardenZones` — context for zones (CRUD + `recommend_zones/1` scoring engine)
 - `BackyardGarden.PlantingCalendar` — parses `ideal_planting_time` text → `{start_month, end_month}` tuples; builds week grids
+- `BackyardGarden.Dashboard` — query functions for the dashboard (plant_now_seeds, recently_planted, upcoming_schedule)
+- `BackyardGarden.Weather` / `Weather.Client` / `Weather.Cache` / `Weather.Tips` — weather facade, HTTP client, ETS cache, and contextual tip generation
 
 **Web layer:**
+- `Dashboard.IndexLive` — dashboard page at `/`; bento grid with Plant Now quick-log, Recently Planted, Coming Up, weather card
+- `BackyardGardenWeb.NavHooks` — `on_mount` hook assigning `current_path` for active nav highlighting
 - `Seeds.IndexLive` — live browse/filter page at `/seeds`; handles `"filter"` events, rebuilds query in real-time
 - `Seeds.ShowLive` — seed detail page at `/seeds/:id`
 - `Seeds.EditLive` — seed edit form at `/seeds/:id/edit`
@@ -57,6 +64,10 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 
 ## Key Conventions
 
+- **`mix run -e` targets the dev DB** — never use for throwaway queries; use `iex -S mix` instead.
+- **Env vars loaded via dotenvy** — `.env` is auto-loaded in dev via `config/runtime.exs`; never put secrets in committed config files. API key: `OPENWEATHERMAP_API_KEY=...`, location: `DEFAULT_LOCATION=Victoria,CA` (format: `City,CountryCode`).
+- **`GardenZones.recommend_zones/1` returns plain structs** — no `.score` field; all returned zones are already filtered to compatible matches, sorted by quality.
+- **Planting date field is `planted_at`** — the `Planting` schema field is `:planted_at`, not `:date_planted`.
 - **Credo strict mode is on.** `TODO` comments fail the build (exit_status 2). Max line length: 120.
 - **`@moduledoc` must come before `use`** in LiveView modules (enforced by credo).
 - **SQL wildcard escaping:** `%` and `_` in search strings must be escaped before LIKE queries — see `Seeds.filter_by_search/2`.

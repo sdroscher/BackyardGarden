@@ -19,33 +19,39 @@ defmodule BackyardGarden.Weather.Tips do
   garden state (how many seeds are ready to plant right now).
   """
   def contextual_message(%{temp: temp, condition: condition}, plant_now_count) do
-    cond do
-      rainy?(condition) && plant_now_count > 0 ->
-        "Good moisture in the soil today — perfect for transplanting seedlings. " <>
-          "You have #{plant_now_count} #{pluralise(plant_now_count, "seed")} ready to go in."
-
-      rainy?(condition) ->
-        "Soil moisture is good today — great conditions for transplanting or weeding."
-
-      temp >= 25 ->
-        "Hot day — water any new seedlings well and avoid planting in afternoon sun."
-
-      temp >= 15 && plant_now_count > 0 ->
-        "Beautiful planting weather — mild and dry all day. " <>
-          "You have #{plant_now_count} #{pluralise(plant_now_count, "seed")} ready to go in the ground."
-
-      temp >= 15 ->
-        "Great day to be outside. Check your garden for watering or weeding."
-
-      temp >= 5 ->
-        "Cool conditions — ideal for brassicas, greens, and root vegetables."
-
-      true ->
-        "Too cold for most seeds today — stick to cold-hardy crops like kale and spinach."
+    if rainy?(condition) do
+      rainy_message(plant_now_count)
+    else
+      temp_message(temp, plant_now_count)
     end
   end
 
   # --- private ---
+
+  defp rainy_message(0),
+    do: "Soil moisture is good today — great conditions for transplanting or weeding."
+
+  defp rainy_message(count),
+    do:
+      "Good moisture in the soil today — perfect for transplanting seedlings. " <>
+        "You have #{count} #{pluralise(count, "seed")} ready to go in."
+
+  defp temp_message(temp, _count) when temp >= 25,
+    do: "Hot day — water any new seedlings well and avoid planting in afternoon sun."
+
+  defp temp_message(temp, 0) when temp >= 15,
+    do: "Great day to be outside. Check your garden for watering or weeding."
+
+  defp temp_message(temp, count) when temp >= 15,
+    do:
+      "Beautiful planting weather — mild and dry all day. " <>
+        "You have #{count} #{pluralise(count, "seed")} ready to go in the ground."
+
+  defp temp_message(temp, _count) when temp >= 5,
+    do: "Cool conditions — ideal for brassicas, greens, and root vegetables."
+
+  defp temp_message(_temp, _count),
+    do: "Too cold for most seeds today — stick to cold-hardy crops like kale and spinach."
 
   defp maybe_frost_warning(tips, forecast, true) do
     if Enum.any?(forecast, fn %{min_temp: t} -> t < 2.0 end) do

@@ -89,4 +89,12 @@ defmodule BackyardGarden.Weather.ClientTest do
 
     assert {:error, :invalid_api_key} = Client.fetch_weather("Victoria")
   end
+
+  test "returns {:http_error, status} for unexpected HTTP status codes" do
+    Req.Test.stub(BackyardGarden.WeatherClientTest, fn conn ->
+      Plug.Conn.send_resp(conn, 503, "Service Unavailable")
+    end)
+
+    assert {:error, {:http_error, 503}} = Client.fetch_weather("Victoria")
+  end
 end

@@ -1,6 +1,8 @@
 defmodule BackyardGarden.WeatherClientStub do
   @moduledoc "Deterministic stub for Weather.Client used in tests."
 
+  @behaviour BackyardGarden.Weather.Client
+
   def fetch_weather("Victoria, BC") do
     {:ok,
      %{

@@ -1,6 +1,8 @@
 defmodule BackyardGarden.Weather.Client do
   @moduledoc "HTTP client for the OpenWeatherMap API."
 
+  @callback fetch_weather(String.t()) :: {:ok, map()} | {:error, atom() | {atom(), integer()}}
+
   @doc """
   Fetches current conditions and a 3-day forecast for `city`.
 

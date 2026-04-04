@@ -71,4 +71,18 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
     {:ok, _view, html} = live(conn, ~p"/")
     assert html =~ "May Beans"
   end
+
+  test "shows frost warning banner when forecast has sub-zero temperatures", %{conn: conn} do
+    # WeatherClientStub returns sub-zero forecast for "FrostCity"
+    original = Application.get_env(:backyard_garden, :default_location)
+    Application.put_env(:backyard_garden, :default_location, "FrostCity")
+    on_exit(fn -> Application.put_env(:backyard_garden, :default_location, original) end)
+
+    # has_planted must be true for frost warning to appear
+    seed = seed_fixture(%{name: "Frost Test Seed"})
+    planting_fixture(seed, %{status: "planted", planted_at: ~D[2026-03-27]})
+
+    {:ok, _view, html} = live(conn, ~p"/")
+    assert html =~ "Frost"
+  end
 end

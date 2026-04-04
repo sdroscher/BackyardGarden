@@ -15,13 +15,13 @@
             <span class="text-[#374151] text-lg">{@weather.condition}</span>
           </div>
         </div>
-        <%= if @weather_tips != [] do %>
+        <%= if Enum.any?(@weather_tips, &(not String.contains?(&1, "Frost"))) do %>
           <div class="max-w-xs">
             <span class="text-[#52b788] uppercase tracking-wide text-xs font-semibold">
               Today's Tip
             </span>
             <p class="mt-1 text-sm text-[#374151] italic">
-              {List.first(@weather_tips)}
+              {Enum.find(@weather_tips, &(not String.contains?(&1, "Frost")))}
             </p>
           </div>
         <% end %>

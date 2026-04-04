@@ -123,12 +123,16 @@
               Plant in {sort_indicator(@sort_field, @sort_dir, "ideal_planting_time")}
             </button>
           </th>
+          <th class="px-4 py-3 font-semibold">Status</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-[#f0fdf4]">
         <tr
-          :for={seed <- @seeds}
-          class="hover:bg-[#f0fdf4] transition-colors cursor-pointer odd:bg-white even:bg-[#fafafa]"
+          :for={{seed, status} <- @seeds_with_status}
+          class={[
+            "hover:bg-[#f0fdf4] transition-colors cursor-pointer",
+            if(status == :in_season, do: "bg-[#f0fdf4]", else: "odd:bg-white even:bg-[#fafafa]")
+          ]}
         >
           <td class="px-4 py-3">
             <.link
@@ -144,6 +148,20 @@
           <td class="px-4 py-3 text-[#6b7280] hidden md:table-cell">{seed.brand}</td>
           <td class="px-4 py-3 text-[#6b7280] hidden md:table-cell">{seed.cycle}</td>
           <td class="px-4 py-3 text-[#374151]">{seed.ideal_planting_time}</td>
+          <td class="px-4 py-3">
+            <%= case status do %>
+              <% :in_season -> %>
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#dcfce7] text-[#16a34a] border border-[#86efac]">
+                  🌱 In season
+                </span>
+              <% {:coming_soon, weeks} -> %>
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#fef3c7] text-[#92400e] border border-[#fcd34d]">
+                  ⏳ In {weeks} {if weeks == 1, do: "week", else: "weeks"}
+                </span>
+              <% :out_of_season -> %>
+                <span class="text-[#d1d5db] text-sm">—</span>
+            <% end %>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -152,7 +170,7 @@
   <%!-- Mobile card grid (hidden on sm+) --%>
   <div class="grid grid-cols-2 gap-3 sm:hidden">
     <.link
-      :for={seed <- @seeds}
+      :for={{seed, status} <- @seeds_with_status}
       navigate={~p"/seeds/#{seed.id}"}
       class={[
         "bg-white border border-[#bbf7d0] rounded-xl p-3 space-y-1.5 hover:bg-[#f0fdf4] transition-colors",
@@ -162,7 +180,18 @@
       <p class="font-bold text-[#14532d] text-sm leading-tight">{seed.name}</p>
       <Layouts.type_badge type={seed.type} />
       <p class="text-xs text-[#6b7280]">{seed.brand}</p>
-      <p class="text-xs text-[#374151] font-medium">🌱 {seed.ideal_planting_time}</p>
+      <%= case status do %>
+        <% :in_season -> %>
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#16a34a]">
+            🌱 In season
+          </span>
+        <% {:coming_soon, weeks} -> %>
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#fef3c7] text-[#92400e]">
+            ⏳ In {weeks}w
+          </span>
+        <% :out_of_season -> %>
+          <p class="text-xs text-[#374151]">{seed.ideal_planting_time}</p>
+      <% end %>
     </.link>
   </div>
 </div>

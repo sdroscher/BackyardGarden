@@ -1,5 +1,10 @@
 import Config
 
+if config_env() == :dev do
+  {:ok, env} = Dotenvy.source([".env", System.get_env()])
+  System.put_env(env)
+end
+
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
 # system starts, so it is typically used to load production configuration
@@ -22,6 +27,14 @@ end
 
 config :backyard_garden, BackyardGardenWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
+
+config :backyard_garden, :weather,
+  base_url: "https://api.openweathermap.org",
+  api_key: System.get_env("OPENWEATHERMAP_API_KEY", "")
+
+config :backyard_garden, :default_location, System.get_env("DEFAULT_LOCATION", "Victoria, BC")
+
+config :backyard_garden, :timezone, System.get_env("TIMEZONE", "America/Vancouver")
 
 if config_env() == :prod do
   database_path =

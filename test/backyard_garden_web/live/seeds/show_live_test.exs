@@ -92,4 +92,49 @@ defmodule BackyardGardenWeb.Seeds.ShowLiveTest do
     {:ok, _view, html} = live(conn, ~p"/seeds/#{seed.id}")
     refute html =~ "From the Supplier"
   end
+
+  test "shows in-season badge when seed window includes current month", %{conn: conn} do
+    today = Date.utc_today()
+    month_name = Calendar.strftime(today, "%B") |> String.downcase()
+
+    {:ok, seed} =
+      Seeds.create_seed(%{name: "In Season Herb", type: "Herb", ideal_planting_time: month_name})
+
+    {:ok, _view, html} = live(conn, ~p"/seeds/#{seed.id}")
+    assert html =~ "In season"
+  end
+
+  test "shows Log Planting button", %{conn: conn, seed: seed} do
+    {:ok, _view, html} = live(conn, ~p"/seeds/#{seed.id}")
+    assert html =~ "Log Planting"
+  end
+
+  test "clicking Log Planting shows the inline form", %{conn: conn, seed: seed} do
+    {:ok, view, _html} = live(conn, ~p"/seeds/#{seed.id}")
+    html = render_click(view, "show_log_form", %{})
+    assert html =~ "Save Planting"
+    assert html =~ "Date planted"
+  end
+
+  test "submitting log form creates a planting", %{conn: conn, seed: seed} do
+    {:ok, view, _html} = live(conn, ~p"/seeds/#{seed.id}")
+    render_click(view, "show_log_form", %{})
+
+    view
+    |> form("[id=log-planting-form]", %{
+      "planting" => %{
+        "seed_id" => seed.id,
+        "status" => "planted",
+        "planted_at" => to_string(Date.utc_today()),
+        "location" => "",
+        "notes" => "",
+        "zone_id" => ""
+      }
+    })
+    |> render_submit()
+
+    # Flash appears — check the response
+    html = render(view)
+    assert html =~ "Planting logged"
+  end
 end

@@ -57,9 +57,13 @@ config :phoenix, :json_library, Jason
 
 config :backyard_garden, :weather,
   base_url: "https://api.openweathermap.org",
-  api_key: System.get_env("OPENWEATHERMAP_API_KEY", "")
+  api_key: ""
 
-config :backyard_garden, :default_location, System.get_env("DEFAULT_LOCATION", "Victoria, BC")
+config :backyard_garden, :default_location, "Victoria, BC"
+
+config :backyard_garden, :timezone, "America/Vancouver"
+
+config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

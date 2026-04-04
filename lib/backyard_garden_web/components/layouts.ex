@@ -11,61 +11,24 @@ defmodule BackyardGardenWeb.Layouts do
   # and other static content.
   embed_templates "layouts/*"
 
-  @doc """
-  Renders your app layout.
-
-  This function is typically invoked from every template,
-  and it often contains your application menu, sidebar,
-  or similar.
-
-  ## Examples
-
-      <Layouts.app flash={@flash}>
-        <h1>Content</h1>
-      </Layouts.app>
-
-  """
-  attr :flash, :map, required: true, doc: "the map of flash messages"
-
-  attr :current_scope, :map,
-    default: nil,
-    doc: "the current [scope](https://hexdocs.pm/phoenix/scopes.html)"
-
-  slot :inner_block, required: true
-
-  def app(assigns) do
-    ~H"""
-    <header style="background: linear-gradient(90deg, #1a3a2a 0%, #2d6a4f 100%);" class="shadow-md">
-      <nav
-        aria-label="Main navigation"
-        class="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between"
-      >
-        <a href="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <span class="text-xl">🌿</span>
-          <span class="text-[#d8f3dc] text-lg font-bold tracking-tight">BackyardGarden</span>
-        </a>
-        <div class="flex items-center gap-6 text-sm font-medium">
-          <.nav_link href={~p"/"} current_scope={@current_scope}>Dashboard</.nav_link>
-          <.nav_link href={~p"/seeds"} current_scope={@current_scope}>Seeds</.nav_link>
-          <.nav_link href={~p"/garden"} current_scope={@current_scope}>My Garden</.nav_link>
-          <.nav_link href={~p"/calendar"} current_scope={@current_scope}>Calendar</.nav_link>
-          <.nav_link href={~p"/settings/zones"} current_scope={@current_scope}>Zones</.nav_link>
-        </div>
-      </nav>
-    </header>
-
-    <main class="mx-auto max-w-5xl px-4 py-8">
-      <.flash_group flash={@flash} />
-      {render_slot(@inner_block)}
-    </main>
-    """
-  end
-
   defp nav_link(assigns) do
+    active =
+      String.starts_with?(assigns.current_path, assigns.href) and
+        ((assigns.href == "/" and assigns.current_path == "/") or assigns.href != "/")
+
+    assigns = assign(assigns, :active, active)
+
     ~H"""
     <a
       href={@href}
-      class="text-[#95d5b2] border-b-2 border-[#52b788] pb-0.5 hover:text-white transition-colors"
+      aria-current={if @active, do: "page", else: false}
+      class={[
+        "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+        if(@active,
+          do: "bg-white/10 text-white font-semibold",
+          else: "text-[#95d5b2] hover:text-white hover:bg-white/5"
+        )
+      ]}
     >
       {render_slot(@inner_block)}
     </a>

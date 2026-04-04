@@ -200,6 +200,37 @@ defmodule BackyardGardenWeb.Seeds.IndexLiveTest do
     assert html =~ "sun_requirement"
   end
 
+  test "shows in-season badge for seed whose window includes today", %{conn: conn} do
+    today = Date.utc_today()
+    month_name = Calendar.strftime(today, "%B") |> String.downcase()
+
+    Seeds.create_seed(%{
+      name: "In Season Now",
+      type: "Vegetable",
+      ideal_planting_time: month_name
+    })
+
+    {:ok, _view, html} = live(conn, ~p"/seeds")
+    assert html =~ "In season"
+  end
+
+  test "shows coming-soon badge for seed whose window opens within 30 days", %{conn: conn} do
+    # Use the last day of the current month + 1 to get the first day of next month,
+    # guaranteeing the seed's window starts in the next month (within 30 days from now).
+    today = Date.utc_today()
+    next_month_start = today |> Date.end_of_month() |> Date.add(1)
+    month_name = Calendar.strftime(next_month_start, "%B") |> String.downcase()
+
+    Seeds.create_seed(%{
+      name: "Coming Soon Seed",
+      type: "Vegetable",
+      ideal_planting_time: month_name
+    })
+
+    {:ok, _view, html} = live(conn, ~p"/seeds")
+    assert html =~ "week"
+  end
+
   test "filters by planting_method", %{conn: conn} do
     {:ok, direct_sow} =
       Seeds.create_seed(%{

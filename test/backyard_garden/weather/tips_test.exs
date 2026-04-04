@@ -69,4 +69,39 @@ defmodule BackyardGarden.Weather.TipsTest do
     tips = Tips.generate(weather(%{temp: 3.0}), false)
     assert Enum.any?(tips, &String.contains?(&1, "cold-hardy"))
   end
+
+  describe "contextual_message/2" do
+    test "warm + dry + seeds ready" do
+      msg = Tips.contextual_message(%{temp: 18.0, condition: "Clear"}, 5)
+      assert msg =~ "5 seeds"
+      assert msg =~ ~r/planting|ground/i
+    end
+
+    test "warm + dry + no seeds ready" do
+      msg = Tips.contextual_message(%{temp: 18.0, condition: "Clear"}, 0)
+      assert msg =~ ~r/outside|garden/i
+      refute msg =~ "seeds ready"
+    end
+
+    test "rainy day" do
+      msg = Tips.contextual_message(%{temp: 16.0, condition: "Rain"}, 3)
+      assert msg =~ ~r/transplant|rain|moisture/i
+    end
+
+    test "cold day" do
+      msg = Tips.contextual_message(%{temp: 3.0, condition: "Clear"}, 0)
+      assert msg =~ ~r/cold|hardy/i
+    end
+
+    test "hot day" do
+      msg = Tips.contextual_message(%{temp: 30.0, condition: "Clear"}, 2)
+      assert msg =~ ~r/water|heat|hot/i
+    end
+
+    test "singular pluralisation — 1 seed ready produces '1 seed' not '1 seeds'" do
+      msg = Tips.contextual_message(%{temp: 18.0, condition: "Clear"}, 1)
+      assert msg =~ "1 seed"
+      refute msg =~ "1 seeds"
+    end
+  end
 end

@@ -32,8 +32,9 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
 
   test "renders weather widget when weather is available", %{conn: conn} do
     {:ok, _view, html} = live(conn, ~p"/")
-    # WeatherClientStub returns temp 12.5 for "Victoria, BC"
-    assert html =~ "12.5"
+
+    # WeatherClientStub returns temp 12.5 for "Victoria, BC"; the UI rounds to nearest integer (13°)
+    assert html =~ "13"
     assert html =~ "Victoria"
   end
 
@@ -84,5 +85,38 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
 
     {:ok, _view, html} = live(conn, ~p"/")
     assert html =~ "Frost"
+  end
+
+  test "expand_quick_log shows inline form for that seed", %{conn: conn} do
+    seed = seed_fixture(%{name: "Quick Log Seed", type: "Herb", ideal_planting_time: "spring"})
+    {:ok, view, _} = live(conn, ~p"/")
+    html = render_click(view, "expand_quick_log", %{"id" => seed.id})
+    assert html =~ "Save Planting"
+    assert html =~ "Date planted"
+  end
+
+  test "save_quick_log creates a planting and removes seed from Plant Now", %{conn: conn} do
+    seed = seed_fixture(%{name: "Log It Now", type: "Herb", ideal_planting_time: "spring"})
+
+    {:ok, view, _html} = live(conn, ~p"/")
+    render_click(view, "expand_quick_log", %{"id" => seed.id})
+
+    html =
+      view
+      |> form("[id^=quick-log-form]", %{
+        "planting" => %{
+          "seed_id" => seed.id,
+          "status" => "planted",
+          "planted_at" => to_string(Date.utc_today()),
+          "location" => "",
+          "notes" => "",
+          "zone_id" => ""
+        }
+      })
+      |> render_submit()
+
+    # Seed moves to Recently Planted, no longer in the Plant Now list
+    assert html =~ "Planting logged!"
+    assert html =~ "No seeds are in their ideal window right now."
   end
 end

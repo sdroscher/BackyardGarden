@@ -50,9 +50,11 @@ defmodule BackyardGardenWeb.Calendar.IndexLive do
 
     events_by_date =
       Enum.reduce(plantings, %{}, fn planting, acc ->
+        name = planting.seed.name
+
         acc
-        |> maybe_add_event(planting.planted_at, :planted)
-        |> maybe_add_event(harvest_date(planting), :harvest_due)
+        |> maybe_add_event(planting.planted_at, {:planted, name})
+        |> maybe_add_event(harvest_date(planting), {:harvest_due, name})
       end)
 
     ideal_seeds =
@@ -69,6 +71,7 @@ defmodule BackyardGardenWeb.Calendar.IndexLive do
     |> assign(:weeks, weeks)
     |> assign(:events_by_date, events_by_date)
     |> assign(:ideal_seeds, ideal_seeds)
+    |> assign(:today, Date.utc_today())
     |> assign(:month_label, Calendar.strftime(month, "%B %Y"))
   end
 

@@ -1,0 +1,26 @@
+<header
+  style="background: linear-gradient(90deg, #0f1f15 0%, #1a3a2a 60%, #2d6a4f 100%);"
+  class="shadow-lg sticky top-0 z-50"
+>
+  <nav
+    aria-label="Main navigation"
+    class="px-8 flex items-center justify-between h-14"
+  >
+    <a href="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+      <span class="text-xl">🌿</span>
+      <span class="text-[#d8f3dc] text-base font-bold tracking-tight">BackyardGarden</span>
+    </a>
+    <div class="flex items-center gap-1 text-sm font-medium">
+      <.nav_link href={~p"/"} current_path={@current_path}>Dashboard</.nav_link>
+      <.nav_link href={~p"/seeds"} current_path={@current_path}>Seeds</.nav_link>
+      <.nav_link href={~p"/garden"} current_path={@current_path}>My Garden</.nav_link>
+      <.nav_link href={~p"/calendar"} current_path={@current_path}>Calendar</.nav_link>
+      <.nav_link href={~p"/settings/zones"} current_path={@current_path}>Zones</.nav_link>
+    </div>
+  </nav>
+</header>
+
+<main class="mx-auto max-w-[1280px] px-8 py-7">
+  <.flash_group flash={@flash} />
+  {@inner_content}
+</main>

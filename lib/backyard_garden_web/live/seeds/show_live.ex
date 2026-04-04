@@ -5,16 +5,103 @@ defmodule BackyardGardenWeb.Seeds.ShowLive do
 
   use BackyardGardenWeb, :live_view
 
-  alias BackyardGarden.Seeds
+  alias BackyardGarden.{Seeds, Plantings, GardenZones}
+  alias BackyardGarden.PlantingCalendar
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
     seed = Seeds.get_seed_with_supplier!(id)
-    {:ok, assign(socket, :seed, seed)}
+    status = season_status(seed)
+    zones = GardenZones.recommend_zones(seed)
+
+    {:ok,
+     socket
+     |> assign(:seed, seed)
+     |> assign(:season_status, status)
+     |> assign(:show_log_form, false)
+     |> assign(:log_form, nil)
+     |> assign(:log_zones, zones)}
   end
 
   @impl true
   def handle_params(_params, _uri, socket) do
     {:noreply, assign(socket, :page_title, socket.assigns.seed.name)}
+  end
+
+  @impl true
+  def handle_event("show_log_form", _params, socket) do
+    seed = socket.assigns.seed
+
+    form =
+      %Plantings.Planting{}
+      |> Plantings.change_planting(%{
+        seed_id: seed.id,
+        planted_at: Date.utc_today(),
+        status: "planted"
+      })
+      |> to_form(as: "planting")
+
+    {:noreply, socket |> assign(:show_log_form, true) |> assign(:log_form, form)}
+  end
+
+  @impl true
+  def handle_event("hide_log_form", _params, socket) do
+    {:noreply, socket |> assign(:show_log_form, false) |> assign(:log_form, nil)}
+  end
+
+  @impl true
+  def handle_event("validate_planting", %{"planting" => params}, socket) do
+    form =
+      %Plantings.Planting{}
+      |> Plantings.change_planting(normalise_params(params))
+      |> Map.put(:action, :validate)
+      |> to_form(as: "planting")
+
+    {:noreply, assign(socket, :log_form, form)}
+  end
+
+  @impl true
+  def handle_event("save_planting", %{"planting" => params}, socket) do
+    case Plantings.create_planting(normalise_params(params)) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> assign(:show_log_form, false)
+         |> assign(:log_form, nil)
+         |> put_flash(:info, "Planting logged!")}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, :log_form, to_form(changeset, as: "planting"))}
+    end
+  end
+
+  defp normalise_params(params) do
+    params
+    |> Map.update("zone_id", nil, fn v -> if v == "", do: nil, else: v end)
+    |> Map.update("planted_at", nil, fn v ->
+      case Date.from_iso8601(v) do
+        {:ok, d} -> d
+        _ -> nil
+      end
+    end)
+  end
+
+  defp season_status(seed) do
+    today = Date.utc_today()
+
+    case PlantingCalendar.parse_ideal_months(seed.ideal_planting_time) do
+      nil ->
+        :out_of_season
+
+      {start_m, end_m} ->
+        m = today.month
+
+        in_window =
+          if start_m <= end_m,
+            do: m >= start_m and m <= end_m,
+            else: m >= start_m or m <= end_m
+
+        if in_window, do: :in_season, else: :out_of_season
+    end
   end
 end

@@ -41,8 +41,19 @@
             <div class="min-h-[72px] p-1.5 text-xs bg-[#fafafa] border-b border-r border-[#f3f4f6]">
             </div>
           <% else %>
-            <div class="min-h-[72px] p-1.5 text-xs bg-white hover:bg-[#f0fdf4] border-b border-r border-[#f3f4f6] transition-colors">
-              <span class="font-medium text-[#374151]">{date.day}</span>
+            <div class={[
+              "min-h-[72px] p-1.5 text-xs border-b border-r border-[#f3f4f6] transition-colors",
+              if(date == @today,
+                do: "bg-[#f0fdf4] ring-2 ring-inset ring-[#52b788]",
+                else: "bg-white hover:bg-[#f0fdf4]"
+              )
+            ]}>
+              <span class={[
+                "font-medium",
+                if(date == @today, do: "text-[#14532d] font-bold", else: "text-[#374151]")
+              ]}>
+                {date.day}{if date == @today, do: " ★"}
+              </span>
 
               <%!-- Ideal window seeds shown on the 1st of the month --%>
               <%= if date.day == 1 and @ideal_seeds != [] do %>
@@ -60,19 +71,25 @@
                 </div>
               <% end %>
 
-              <%!-- Event dots --%>
+              <%!-- Named event chips --%>
               <%= if Map.has_key?(@events_by_date, date) do %>
-                <div class="flex gap-0.5 mt-0.5 flex-wrap">
-                  <%= if :planted in Map.get(@events_by_date, date, []) do %>
-                    <span class="w-2 h-2 rounded-full bg-[#3b82f6] inline-block" title="Planted">
-                    </span>
+                <div class="mt-0.5 space-y-0.5">
+                  <%= for event <- Enum.take(Map.get(@events_by_date, date, []), 2) do %>
+                    <%= case event do %>
+                      <% {:planted, name} -> %>
+                        <div class="text-[10px] bg-[#dbeafe] text-[#1d4ed8] rounded px-1 truncate">
+                          ✓ {name}
+                        </div>
+                      <% {:harvest_due, name} -> %>
+                        <div class="text-[10px] bg-[#fef9c3] text-[#854d0e] rounded px-1 truncate">
+                          ⚡ {name}
+                        </div>
+                    <% end %>
                   <% end %>
-                  <%= if :harvest_due in Map.get(@events_by_date, date, []) do %>
-                    <span
-                      class="w-2 h-2 rounded-full bg-[#eab308] inline-block"
-                      title="Harvest due"
-                    >
-                    </span>
+                  <%= if length(Map.get(@events_by_date, date, [])) > 2 do %>
+                    <div class="text-[10px] text-[#6b7280]">
+                      +{length(Map.get(@events_by_date, date, [])) - 2} more
+                    </div>
                   <% end %>
                 </div>
               <% end %>
@@ -90,14 +107,18 @@
     </span>
     <div class="flex flex-wrap gap-4 text-xs text-[#374151]">
       <div class="flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-[#3b82f6] inline-block"></span> Planted
+        <span class="text-[10px] bg-[#dbeafe] text-[#1d4ed8] rounded px-1">✓ name</span> Planted
       </div>
       <div class="flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-[#eab308] inline-block"></span> Harvest due
+        <span class="text-[10px] bg-[#fef9c3] text-[#854d0e] rounded px-1">⚡ name</span>
+        Harvest due
       </div>
       <div class="flex items-center gap-1.5">
         <span class="text-[10px] text-[#2d6a4f] bg-[#dcfce7] rounded px-1">seed</span>
         Ideal window opens
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="bg-[#f0fdf4] ring-2 ring-[#52b788] rounded px-1 text-[10px]">★</span> Today
       </div>
     </div>
   </div>

@@ -42,6 +42,73 @@
         </div>
       </dl>
 
+      <%= if @season_status == :in_season do %>
+        <div class="pt-1">
+          <span class="text-xs font-semibold px-3 py-1 rounded-full bg-[#dcfce7] text-[#16a34a] border border-[#86efac]">
+            🌱 In season now
+          </span>
+        </div>
+      <% end %>
+
+      <button
+        phx-click={if @show_log_form, do: "hide_log_form", else: "show_log_form"}
+        class="mt-2 w-full text-sm font-bold py-2.5 rounded-xl text-white transition-colors"
+        style="background: linear-gradient(135deg, #2d6a4f, #52b788);"
+      >
+        {if @show_log_form, do: "✕ Cancel", else: "+ Log Planting"}
+      </button>
+
+      <%= if @show_log_form do %>
+        <div class="mt-3 bg-[#f0fdf4] rounded-xl p-4">
+          <.form
+            id="log-planting-form"
+            for={@log_form}
+            phx-submit="save_planting"
+            phx-change="validate_planting"
+            class="space-y-3"
+          >
+            <input type="hidden" name="planting[seed_id]" value={@seed.id} />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <.input field={@log_form[:planted_at]} type="date" label="Date planted" />
+              <.input
+                field={@log_form[:status]}
+                type="select"
+                label="Status"
+                options={[{"Planted", "planted"}, {"Planned", "planned"}]}
+              />
+              <div>
+                <.input
+                  field={@log_form[:zone_id]}
+                  type="select"
+                  label="Garden zone"
+                  options={[
+                    {"— no zone —", ""}
+                    | Enum.map(
+                        @log_zones,
+                        &{"#{if(&1.score && &1.score > 0, do: "★ ", else: "")}#{&1.name}", &1.id}
+                      )
+                  ]}
+                />
+              </div>
+              <.input
+                field={@log_form[:location]}
+                type="text"
+                label="Location"
+                placeholder="e.g. raised bed 2"
+              />
+            </div>
+            <.input field={@log_form[:notes]} type="textarea" label="Notes" rows="2" />
+            <button
+              type="submit"
+              class="w-full text-white text-sm font-bold py-2.5 rounded-xl"
+              style="background: linear-gradient(135deg, #2d6a4f, #52b788);"
+            >
+              Save Planting
+            </button>
+          </.form>
+        </div>
+      <% end %>
+
       <%= if @seed.supplier_product do %>
         <a
           href={@seed.supplier_product.url}

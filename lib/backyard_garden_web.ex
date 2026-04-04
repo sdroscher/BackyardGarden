@@ -50,7 +50,10 @@ defmodule BackyardGardenWeb do
 
   def live_view do
     quote do
-      use Phoenix.LiveView
+      use Phoenix.LiveView,
+        layout: {BackyardGardenWeb.Layouts, :app}
+
+      on_mount BackyardGardenWeb.NavHooks
 
       unquote(html_helpers())
     end

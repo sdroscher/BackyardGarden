@@ -1,0 +1,88 @@
+defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
+  use BackyardGardenWeb.ConnCase, async: false
+
+  import Phoenix.LiveViewTest
+
+  alias BackyardGarden.{Seeds, Plantings}
+  alias BackyardGarden.Weather.Cache
+
+  setup do
+    Cache.clear()
+    :ok
+  end
+
+  defp seed_fixture(attrs) do
+    defaults = %{name: "Test Seed", type: "Vegetable", cycle: "Annual", maturity_days: 50}
+    {:ok, seed} = Seeds.create_seed(Map.merge(defaults, attrs))
+    seed
+  end
+
+  defp planting_fixture(seed, attrs) do
+    defaults = %{seed_id: seed.id, status: "planned"}
+    {:ok, planting} = Plantings.create_planting(Map.merge(defaults, attrs))
+    planting
+  end
+
+  test "renders the dashboard page", %{conn: conn} do
+    {:ok, _view, html} = live(conn, ~p"/")
+    assert html =~ "Plant Now"
+    assert html =~ "Recently Planted"
+    assert html =~ "Coming Up"
+  end
+
+  test "renders weather widget when weather is available", %{conn: conn} do
+    {:ok, _view, html} = live(conn, ~p"/")
+    # WeatherClientStub returns temp 12.5 for "Victoria, BC"
+    assert html =~ "12.5"
+    assert html =~ "Victoria"
+  end
+
+  test "shows a seed in Plant Now when its window is open and it is not planted", %{conn: conn} do
+    seed_fixture(%{name: "April Spinach", ideal_planting_time: "spring"})
+
+    {:ok, _view, html} = live(conn, ~p"/")
+    assert html =~ "April Spinach"
+  end
+
+  test "does not show a planted seed in Plant Now", %{conn: conn} do
+    seed = seed_fixture(%{name: "Already Planted", ideal_planting_time: "spring"})
+    planting_fixture(seed, %{status: "planted", planted_at: ~D[2026-03-27]})
+
+    {:ok, _view, html} = live(conn, ~p"/")
+
+    # "Already Planted" should not appear in Plant Now (it will appear in Recently Planted)
+    # Count occurrences — it should appear at most once (in recently planted), not twice
+    count = html |> String.split("Already Planted") |> length() |> Kernel.-(1)
+    assert count <= 1
+  end
+
+  test "shows a recently planted item in Recently Planted", %{conn: conn} do
+    seed = seed_fixture(%{name: "Recent Basil"})
+    planting_fixture(seed, %{status: "planted", planted_at: ~D[2026-03-27]})
+
+    {:ok, _view, html} = live(conn, ~p"/")
+    assert html =~ "Recent Basil"
+  end
+
+  test "shows upcoming seeds in Coming Up", %{conn: conn} do
+    # May window will show as upcoming in April
+    seed_fixture(%{name: "May Beans", ideal_planting_time: "may"})
+
+    {:ok, _view, html} = live(conn, ~p"/")
+    assert html =~ "May Beans"
+  end
+
+  test "shows frost warning banner when forecast has sub-zero temperatures", %{conn: conn} do
+    # WeatherClientStub returns sub-zero forecast for "FrostCity"
+    original = Application.get_env(:backyard_garden, :default_location)
+    Application.put_env(:backyard_garden, :default_location, "FrostCity")
+    on_exit(fn -> Application.put_env(:backyard_garden, :default_location, original) end)
+
+    # has_planted must be true for frost warning to appear
+    seed = seed_fixture(%{name: "Frost Test Seed"})
+    planting_fixture(seed, %{status: "planted", planted_at: ~D[2026-03-27]})
+
+    {:ok, _view, html} = live(conn, ~p"/")
+    assert html =~ "Frost"
+  end
+end

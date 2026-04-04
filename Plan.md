@@ -453,12 +453,12 @@ Scrape West Coast Seeds and Metchosin Farm product catalogs (both Shopify stores
 - [x] 2.9 Seed edit form — allow setting `sun_requirement` and `source_url` per seed
 - [x] 2.10 Zone settings page (`/settings/zones`) — add/edit/delete zones
 
-### Phase 3 — Dashboard & Weather
+### Phase 3 — Dashboard & Weather ✅ Complete
 
-- [ ] 3.1 Dashboard page — plant-now list, recently planted, upcoming schedule
-- [ ] 3.2 OpenWeatherMap integration — current conditions widget
-- [ ] 3.3 Weather caching (ETS, 1-hour TTL)
-- [ ] 3.4 Weather-aware planting tips (frost warning, soil temp guidance)
+- [x] 3.1 Dashboard page — plant-now list, recently planted, upcoming schedule
+- [x] 3.2 OpenWeatherMap integration — current conditions widget
+- [x] 3.3 Weather caching (ETS, 1-hour TTL)
+- [x] 3.4 Weather-aware planting tips (frost warning, soil temp guidance)
 
 ### Phase 4 — Notifications
 

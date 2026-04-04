@@ -117,11 +117,62 @@ Add a **Weather** section to README.md covering:
 - Default location is `"Victoria, BC"` — override with `config :backyard_garden, :default_location, "Your City"` in `config/dev.exs`
 - Without the key the weather card is silently hidden — this is intentional
 
+### 8. Visual redesign — Garden Journal aesthetic
+
+Replace the current flat/boxy card style with a warmer, more characterful design across all pages. The green colour palette is unchanged; the changes are to shape, depth, and layout.
+
+**Page & layout:**
+- Page background: `#fafdf9` (near-white with a hint of green, replaces `bg-[#f0fdf4]`)
+- Page content capped at `max-width: 1280px`, centred with `padding: 28px 32px` (scales down to `20px 16px` on mobile)
+- A personalised greeting replaces the bare `<h1>` on the dashboard: "Good morning, happy Saturday 🌤" (day + weather icon derived from current conditions)
+
+**Cards:**
+- Border radius: `22px` (up from `12px`)
+- White background with `box-shadow: 0 2px 20px rgba(0,0,0,0.07)` — no border
+- Each card has a coloured gradient header bar containing the section title in white:
+  - Plant Now / in-season elements: `linear-gradient(135deg, #2d6a4f, #52b788)`
+  - Recently Planted: `linear-gradient(135deg, #7c3aed, #a78bfa)`
+  - Coming Up: `linear-gradient(135deg, #d97706, #fbbf24)`
+  - Settings/neutral sections: `linear-gradient(135deg, #374151, #6b7280)`
+- The weather card is not a white card — it uses `linear-gradient(150deg, #ecfdf5, #d1fae5)` with a large faded weather emoji as decoration and a white inset tip box
+
+**Buttons:**
+- Primary action buttons (Log it, Save, etc.): pill shape (`border-radius: 999px`), `background: linear-gradient(135deg, #2d6a4f, #52b788)`
+- Secondary/cancel buttons: white background, `border: 1px solid #e5e7eb`, standard border-radius
+
+**Nav:**
+- Dark gradient: `linear-gradient(90deg, #0f1f15, #1a3a2a, #2d6a4f)`, full width
+- Active link: `background: rgba(255,255,255,0.12)`, `color: white`, `border-radius: 9px`
+- Inactive links: `color: rgba(255,255,255,0.45)`, no underline
+- On screens < 540px: non-active nav links hidden (hamburger menu out of scope for this phase)
+
+**Dashboard layout (responsive grid):**
+
+All four dashboard cards sit directly in a CSS grid (no nested wrappers):
+
+```
+Desktop (>780px):   [ weather (2fr)   ] [ recently planted (1fr) ]
+                    [ plant now (2fr) ] [ coming up (1fr)        ]
+
+Tablet (440–780px): [ weather (full width)    ]
+                    [ plant now (full width)  ]
+                    [ recently planted ] [ coming up ]
+
+Mobile (<440px):    single column, all stacked
+```
+
+Grid stretches cards in the same row to equal height, so row tops always align.
+
+**Other pages (Seeds, My Garden, Calendar, Zones):**
+- Same card shell (22px radius, shadow, gradient header bar) applied consistently
+- Table rows: hover state `bg-[#f0fdf4]`, no change to column structure
+- Forms: inputs keep existing border style; submit buttons use the new pill gradient style
+
 ## Out of Scope
 
 - Zone management UI changes (existing `/settings/zones` page is sufficient; nav active state makes it discoverable)
 - Auth, mobile app, iOS notifications (future phases)
-- Any visual design language changes (Botanical & Lush spec already in place)
+- Hamburger/drawer mobile nav (non-active links hidden on small screens is sufficient for this phase)
 
 ## Affected Files
 
@@ -139,3 +190,6 @@ Add a **Weather** section to README.md covering:
 | `lib/backyard_garden_web/live/calendar/index_live.ex` | events_by_date tuple format |
 | `lib/backyard_garden_web/live/calendar/index_live.html.heex` | Named chips, today highlight, legend |
 | `README.md` | Weather setup section |
+| `lib/backyard_garden_web/components/layouts/app.html.heex` | Nav dark gradient, active state, pill links |
+| `lib/backyard_garden_web/components/layouts/root.html.heex` | Page background colour |
+| All `*.html.heex` templates | Card shells, gradient headers, pill buttons, responsive grid |

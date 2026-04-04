@@ -182,9 +182,13 @@
       <p class="text-xs text-[#6b7280]">{seed.brand}</p>
       <%= case status do %>
         <% :in_season -> %>
-          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#16a34a]">🌱 In season</span>
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#16a34a]">
+            🌱 In season
+          </span>
         <% {:coming_soon, weeks} -> %>
-          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#fef3c7] text-[#92400e]">⏳ In {weeks}w</span>
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#fef3c7] text-[#92400e]">
+            ⏳ In {weeks}w
+          </span>
         <% :out_of_season -> %>
           <p class="text-xs text-[#374151]">{seed.ideal_planting_time}</p>
       <% end %>

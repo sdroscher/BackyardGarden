@@ -69,8 +69,10 @@
     <div class="space-y-3">
       <%= for zone <- @zones do %>
         <div class="rounded-[22px] overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
-          <div class="px-6 py-4 flex items-center gap-3"
-               style="background: linear-gradient(135deg, #2d6a4f, #52b788);">
+          <div
+            class="px-6 py-4 flex items-center gap-3"
+            style="background: linear-gradient(135deg, #2d6a4f, #52b788);"
+          >
             <span class="text-white text-base font-bold">{zone.name}</span>
           </div>
           <div class="bg-white px-6 pb-4 pt-4">
@@ -87,7 +89,9 @@
                       else: "Any"}
                   </span>
                   <span>
-                    <span class="text-[#52b788] uppercase tracking-wide font-semibold">Types:</span>
+                    <span class="text-[#52b788] uppercase tracking-wide font-semibold">
+                      Types:
+                    </span>
                     {if zone.allowed_types && zone.allowed_types != "",
                       do: zone.allowed_types,
                       else: "Any"}

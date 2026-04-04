@@ -69,7 +69,7 @@
           >
             <input type="hidden" name="planting[seed_id]" value={@seed.id} />
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <.input field={@log_form[:date_planted]} type="date" label="Date planted" />
+              <.input field={@log_form[:planted_at]} type="date" label="Date planted" />
               <.input
                 field={@log_form[:status]}
                 type="select"
@@ -81,7 +81,13 @@
                   field={@log_form[:zone_id]}
                   type="select"
                   label="Garden zone"
-                  options={[{"— no zone —", ""} | Enum.map(@log_zones, &{"#{if(&1.score && &1.score > 0, do: "★ ", else: "")}#{&1.name}", &1.id})]}
+                  options={[
+                    {"— no zone —", ""}
+                    | Enum.map(
+                        @log_zones,
+                        &{"#{if(&1.score && &1.score > 0, do: "★ ", else: "")}#{&1.name}", &1.id}
+                      )
+                  ]}
                 />
               </div>
               <.input

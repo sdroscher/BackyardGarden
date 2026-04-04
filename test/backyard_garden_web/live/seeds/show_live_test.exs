@@ -125,7 +125,7 @@ defmodule BackyardGardenWeb.Seeds.ShowLiveTest do
       "planting" => %{
         "seed_id" => seed.id,
         "status" => "planted",
-        "date_planted" => to_string(Date.utc_today()),
+        "planted_at" => to_string(Date.utc_today()),
         "location" => "",
         "notes" => "",
         "zone_id" => ""

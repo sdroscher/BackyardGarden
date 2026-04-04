@@ -32,6 +32,7 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
 
   test "renders weather widget when weather is available", %{conn: conn} do
     {:ok, _view, html} = live(conn, ~p"/")
+
     # WeatherClientStub returns temp 12.5 for "Victoria, BC"; the UI rounds to nearest integer (13°)
     assert html =~ "13"
     assert html =~ "Victoria"
@@ -106,7 +107,7 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
         "planting" => %{
           "seed_id" => seed.id,
           "status" => "planted",
-          "date_planted" => to_string(Date.utc_today()),
+          "planted_at" => to_string(Date.utc_today()),
           "location" => "",
           "notes" => "",
           "zone_id" => ""
@@ -114,6 +115,8 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
       })
       |> render_submit()
 
-    refute html =~ "Log It Now"
+    # Seed moves to Recently Planted, no longer in the Plant Now list
+    assert html =~ "Planting logged!"
+    assert html =~ "No seeds are in their ideal window right now."
   end
 end

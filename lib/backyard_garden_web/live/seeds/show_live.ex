@@ -36,7 +36,7 @@ defmodule BackyardGardenWeb.Seeds.ShowLive do
       %Plantings.Planting{}
       |> Plantings.change_planting(%{
         seed_id: seed.id,
-        date_planted: Date.utc_today(),
+        planted_at: Date.utc_today(),
         status: "planted"
       })
       |> to_form(as: "planting")
@@ -78,7 +78,7 @@ defmodule BackyardGardenWeb.Seeds.ShowLive do
   defp normalise_params(params) do
     params
     |> Map.update("zone_id", nil, fn v -> if v == "", do: nil, else: v end)
-    |> Map.update("date_planted", nil, fn v ->
+    |> Map.update("planted_at", nil, fn v ->
       case Date.from_iso8601(v) do
         {:ok, d} -> d
         _ -> nil

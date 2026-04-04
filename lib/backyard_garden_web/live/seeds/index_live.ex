@@ -73,40 +73,45 @@ defmodule BackyardGardenWeb.Seeds.IndexLive do
     today = Date.utc_today()
 
     case BackyardGarden.PlantingCalendar.parse_ideal_months(seed.ideal_planting_time) do
-      nil ->
-        :out_of_season
+      nil -> :out_of_season
+      {start_m, end_m} -> classify_season(today, start_m, end_m)
+    end
+  end
 
-      {start_m, end_m} ->
-        m = today.month
+  defp classify_season(today, start_m, end_m) do
+    m = today.month
 
-        in_window =
-          if start_m <= end_m do
-            m >= start_m and m <= end_m
-          else
-            m >= start_m or m <= end_m
-          end
+    in_window =
+      if start_m <= end_m do
+        m >= start_m and m <= end_m
+      else
+        m >= start_m or m <= end_m
+      end
 
-        if in_window do
-          :in_season
-        else
-          this_year_open = %{today | month: start_m, day: 1}
+    if in_window do
+      :in_season
+    else
+      days_until_open(today, start_m)
+    end
+  end
 
-          open_date =
-            if Date.compare(this_year_open, today) == :gt do
-              this_year_open
-            else
-              %{this_year_open | year: today.year + 1}
-            end
+  defp days_until_open(today, start_m) do
+    this_year_open = %{today | month: start_m, day: 1}
 
-          days = Date.diff(open_date, today)
+    open_date =
+      if Date.compare(this_year_open, today) == :gt do
+        this_year_open
+      else
+        %{this_year_open | year: today.year + 1}
+      end
 
-          if days <= 30 do
-            weeks = max(1, div(days, 7))
-            {:coming_soon, weeks}
-          else
-            :out_of_season
-          end
-        end
+    days = Date.diff(open_date, today)
+
+    if days <= 30 do
+      weeks = max(1, div(days, 7))
+      {:coming_soon, weeks}
+    else
+      :out_of_season
     end
   end
 

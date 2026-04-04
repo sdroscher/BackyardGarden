@@ -16,14 +16,28 @@ The app has functional data and pages but several UX gaps make it frustrating to
 
 ## Design
 
-### 1. Navigation active state
+### 1. Navigation — wire up and add active state
 
-The `nav_link` component in `Layouts.app/1` currently renders all links identically. Add active state detection using the current request path:
+`Layouts.app/1` contains a fully-written nav, but the `live_view/0` definition in `backyard_garden_web.ex` never sets a default layout, so the nav is never rendered. Every LiveView currently gets only the bare `root.html.heex` skeleton.
+
+**Step 1 — wire up the layout.** Add `layout: {BackyardGardenWeb.Layouts, :app}` to `live_view/0` in `backyard_garden_web.ex`:
+
+```elixir
+def live_view do
+  quote do
+    use Phoenix.LiveView,
+      layout: {BackyardGardenWeb.Layouts, :app}
+    ...
+  end
+end
+```
+
+**Step 2 — add active state.** The `nav_link` component currently renders all links identically. Update it to highlight the current page:
 
 - Active link: `text-white border-b-2 border-white` (bright white underline)
-- Inactive link: `text-[#95d5b2] border-b-2 border-transparent hover:text-white` (current style, transparent border to maintain height)
+- Inactive link: `text-[#95d5b2] border-b-2 border-transparent hover:text-white` (transparent border maintains height)
 
-The `LiveView` assigns `@current_path` (or use `URI.parse(@url).path` from the socket) to detect the active route. Prefix matching is sufficient: `/seeds` matches `/seeds`, `/seeds/:id`, `/seeds/:id/edit`.
+Pass `@uri.path` (automatically available in LiveView assigns) into the layout via the `current_scope` slot or a new `current_path` attr. Prefix matching is sufficient: `/seeds` matches `/seeds`, `/seeds/:id`, `/seeds/:id/edit`.
 
 ### 2. Dashboard — weather card with contextual messaging
 
@@ -113,6 +127,7 @@ Add a **Weather** section to README.md covering:
 
 | File | Change |
 |---|---|
+| `lib/backyard_garden_web.ex` | Wire up `Layouts.app` as default LiveView layout |
 | `lib/backyard_garden_web/components/layouts.ex` | Nav active state |
 | `lib/backyard_garden_web/live/dashboard/index_live.ex` | Quick-log assigns + events |
 | `lib/backyard_garden_web/live/dashboard/index_live.html.heex` | Weather message, Plant Now rows + inline form |

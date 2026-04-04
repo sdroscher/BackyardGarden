@@ -4,6 +4,12 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
   import Phoenix.LiveViewTest
 
   alias BackyardGarden.{Seeds, Plantings}
+  alias BackyardGarden.Weather.Cache
+
+  setup do
+    Cache.clear()
+    :ok
+  end
 
   defp seed_fixture(attrs) do
     defaults = %{name: "Test Seed", type: "Vegetable", cycle: "Annual", maturity_days: 50}

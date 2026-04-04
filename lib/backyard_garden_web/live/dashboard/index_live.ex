@@ -3,7 +3,7 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
 
   use BackyardGardenWeb, :live_view
 
-  alias BackyardGarden.{Dashboard, Weather}
+  alias BackyardGarden.{Dashboard, Weather, Plantings, GardenZones}
   alias BackyardGarden.Weather.Tips
 
   @impl true
@@ -33,6 +33,72 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
       hour < 17 -> "afternoon"
       true -> "evening"
     end
+  end
+
+  @impl true
+  def handle_event("expand_quick_log", %{"id" => seed_id}, socket) do
+    if socket.assigns.expanded_seed_id == seed_id do
+      {:noreply,
+       socket
+       |> assign(:expanded_seed_id, nil)
+       |> assign(:quick_log_form, nil)
+       |> assign(:quick_log_zones, [])}
+    else
+      zones = GardenZones.recommend_zones(%{id: seed_id})
+      form =
+        %Plantings.Planting{}
+        |> Plantings.change_planting(%{
+          seed_id: seed_id,
+          date_planted: Date.utc_today(),
+          status: "planted"
+        })
+        |> to_form(as: "planting")
+
+      {:noreply,
+       socket
+       |> assign(:expanded_seed_id, seed_id)
+       |> assign(:quick_log_form, form)
+       |> assign(:quick_log_zones, zones)}
+    end
+  end
+
+  @impl true
+  def handle_event("validate_quick_log", %{"planting" => params}, socket) do
+    form =
+      %Plantings.Planting{}
+      |> Plantings.change_planting(normalise_planting_params(params))
+      |> Map.put(:action, :validate)
+      |> to_form(as: "planting")
+
+    {:noreply, assign(socket, :quick_log_form, form)}
+  end
+
+  @impl true
+  def handle_event("save_quick_log", %{"planting" => params}, socket) do
+    case Plantings.create_planting(normalise_planting_params(params)) do
+      {:ok, _planting} ->
+        {:noreply,
+         socket
+         |> assign(:expanded_seed_id, nil)
+         |> assign(:quick_log_form, nil)
+         |> assign(:quick_log_zones, [])
+         |> load_dashboard()
+         |> put_flash(:info, "Planting logged!")}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, :quick_log_form, to_form(changeset, as: "planting"))}
+    end
+  end
+
+  defp normalise_planting_params(params) do
+    params
+    |> Map.update("zone_id", nil, fn v -> if v == "", do: nil, else: v end)
+    |> Map.update("date_planted", nil, fn v ->
+      case Date.from_iso8601(v) do
+        {:ok, d} -> d
+        _ -> nil
+      end
+    end)
   end
 
   defp load_dashboard(socket) do

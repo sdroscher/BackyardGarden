@@ -100,6 +100,7 @@
                       phx-change="validate_quick_log"
                       class="space-y-3"
                     >
+                      <input type="hidden" name="planting[seed_id]" value={Phoenix.HTML.Form.input_value(@quick_log_form, :seed_id)} />
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <.input field={@quick_log_form[:date_planted]} type="date" label="Date planted" />
                         <.input

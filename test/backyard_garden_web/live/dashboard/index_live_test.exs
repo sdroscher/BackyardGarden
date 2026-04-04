@@ -85,4 +85,35 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
     {:ok, _view, html} = live(conn, ~p"/")
     assert html =~ "Frost"
   end
+
+  test "expand_quick_log shows inline form for that seed", %{conn: conn} do
+    seed = seed_fixture(%{name: "Quick Log Seed", type: "Herb", ideal_planting_time: "spring"})
+    {:ok, view, _} = live(conn, ~p"/")
+    html = render_click(view, "expand_quick_log", %{"id" => seed.id})
+    assert html =~ "Save Planting"
+    assert html =~ "Date planted"
+  end
+
+  test "save_quick_log creates a planting and removes seed from Plant Now", %{conn: conn} do
+    seed = seed_fixture(%{name: "Log It Now", type: "Herb", ideal_planting_time: "spring"})
+
+    {:ok, view, _html} = live(conn, ~p"/")
+    render_click(view, "expand_quick_log", %{"id" => seed.id})
+
+    html =
+      view
+      |> form("[id^=quick-log-form]", %{
+        "planting" => %{
+          "seed_id" => seed.id,
+          "status" => "planted",
+          "date_planted" => to_string(Date.utc_today()),
+          "location" => "",
+          "notes" => "",
+          "zone_id" => ""
+        }
+      })
+      |> render_submit()
+
+    refute html =~ "Log It Now"
+  end
 end

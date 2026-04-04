@@ -21,7 +21,7 @@ defmodule BackyardGardenWeb.Router do
   scope "/", BackyardGardenWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", Dashboard.IndexLive, :index
 
     live "/seeds", Seeds.IndexLive, :index
     live "/seeds/:id", Seeds.ShowLive, :show

@@ -1,0 +1,29 @@
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold text-[#14532d]">Dashboard</h1>
+
+  <p>Plant Now</p>
+  <p>Recently Planted</p>
+  <p>Coming Up</p>
+
+  <%= if @weather do %>
+    <p>{@weather.city} {@weather.temp}</p>
+  <% end %>
+
+  <ul>
+    <%= for seed <- @plant_now do %>
+      <li>{seed.name}</li>
+    <% end %>
+  </ul>
+
+  <ul>
+    <%= for planting <- @recently_planted do %>
+      <li>{planting.seed.name}</li>
+    <% end %>
+  </ul>
+
+  <ul>
+    <%= for {seed, _date} <- @upcoming do %>
+      <li>{seed.name}</li>
+    <% end %>
+  </ul>
+</div>

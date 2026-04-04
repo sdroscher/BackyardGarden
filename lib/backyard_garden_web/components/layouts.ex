@@ -45,6 +45,7 @@ defmodule BackyardGardenWeb.Layouts do
           <span class="text-[#d8f3dc] text-lg font-bold tracking-tight">BackyardGarden</span>
         </a>
         <div class="flex items-center gap-6 text-sm font-medium">
+          <.nav_link href={~p"/"} current_scope={@current_scope}>Dashboard</.nav_link>
           <.nav_link href={~p"/seeds"} current_scope={@current_scope}>Seeds</.nav_link>
           <.nav_link href={~p"/garden"} current_scope={@current_scope}>My Garden</.nav_link>
           <.nav_link href={~p"/calendar"} current_scope={@current_scope}>Calendar</.nav_link>

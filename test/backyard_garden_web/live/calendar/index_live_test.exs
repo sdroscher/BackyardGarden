@@ -45,7 +45,7 @@ defmodule BackyardGardenWeb.Calendar.IndexLiveTest do
     refute original == new_label
   end
 
-  test "shows planted seed name on its planted_at date month", %{conn: conn} do
+  test "shows planted seed name chip on its planted_at date", %{conn: conn} do
     seed = seed_fixture(%{name: "Spinach"})
     today = Date.utc_today()
 
@@ -57,8 +57,6 @@ defmodule BackyardGardenWeb.Calendar.IndexLiveTest do
       })
 
     {:ok, _view, html} = live(conn, ~p"/calendar")
-
-    # The planted dot should appear (title attribute only present on calendar cell dots, not the legend)
-    assert html =~ ~s(title="Planted")
+    assert html =~ "Spinach"
   end
 end

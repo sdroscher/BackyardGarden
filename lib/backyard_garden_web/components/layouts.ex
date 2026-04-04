@@ -11,19 +11,17 @@ defmodule BackyardGardenWeb.Layouts do
   # and other static content.
   embed_templates "layouts/*"
 
-  attr :href, :string, required: true
-  attr :current_path, :string, required: true
-  slot :inner_block, required: true
-
   defp nav_link(assigns) do
-    active = String.starts_with?(assigns.current_path, assigns.href) and
-               (assigns.href == "/" and assigns.current_path == "/" or assigns.href != "/")
+    active =
+      String.starts_with?(assigns.current_path, assigns.href) and
+        ((assigns.href == "/" and assigns.current_path == "/") or assigns.href != "/")
 
     assigns = assign(assigns, :active, active)
 
     ~H"""
     <a
       href={@href}
+      aria-current={if @active, do: "page", else: false}
       class={[
         "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
         if(@active,

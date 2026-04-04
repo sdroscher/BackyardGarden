@@ -138,11 +138,7 @@
                             label="Garden zone"
                             options={[
                               {"— no zone —", ""}
-                              | Enum.map(
-                                  @quick_log_zones,
-                                  &{"#{if(&1.score && &1.score > 0, do: "★ ", else: "")}#{&1.name}",
-                                   &1.id}
-                                )
+                              | Enum.map(@quick_log_zones, &{"★ #{&1.name}", &1.id})
                             ]}
                           />
                           <%= if @quick_log_zones != [] do %>

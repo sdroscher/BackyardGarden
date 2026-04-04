@@ -60,10 +60,54 @@ defmodule BackyardGardenWeb.Seeds.IndexLive do
         })
       )
 
+    seeds_with_status = Enum.map(seeds, fn s -> {s, season_status(s)} end)
+
     socket
     |> assign(:seeds, seeds)
+    |> assign(:seeds_with_status, seeds_with_status)
     |> assign(:seed_count, length(seeds))
     |> assign(:filters, filters)
+  end
+
+  defp season_status(seed) do
+    today = Date.utc_today()
+
+    case BackyardGarden.PlantingCalendar.parse_ideal_months(seed.ideal_planting_time) do
+      nil ->
+        :out_of_season
+
+      {start_m, end_m} ->
+        m = today.month
+
+        in_window =
+          if start_m <= end_m do
+            m >= start_m and m <= end_m
+          else
+            m >= start_m or m <= end_m
+          end
+
+        if in_window do
+          :in_season
+        else
+          this_year_open = %{today | month: start_m, day: 1}
+
+          open_date =
+            if Date.compare(this_year_open, today) == :gt do
+              this_year_open
+            else
+              %{this_year_open | year: today.year + 1}
+            end
+
+          days = Date.diff(open_date, today)
+
+          if days <= 30 do
+            weeks = max(1, div(days, 7))
+            {:coming_soon, weeks}
+          else
+            :out_of_season
+          end
+        end
+    end
   end
 
   defp sort_indicator(sort_field, sort_dir, field) do

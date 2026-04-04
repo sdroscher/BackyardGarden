@@ -12,7 +12,7 @@ defmodule BackyardGardenWeb.Seeds.ShowLive do
   def mount(%{"id" => id}, _session, socket) do
     seed = Seeds.get_seed_with_supplier!(id)
     status = season_status(seed)
-    zones = GardenZones.recommend_zones(%{id: seed.id})
+    zones = GardenZones.recommend_zones(seed)
 
     {:ok,
      socket

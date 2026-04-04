@@ -11,6 +11,7 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
     {:ok,
      socket
      |> assign(:page_title, "Dashboard")
+     |> assign(:weather_message, nil)
      |> load_dashboard()
      |> load_weather()}
   end
@@ -29,15 +30,19 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
       {:ok, weather} ->
         has_planted = socket.assigns.recently_planted != []
         tips = Tips.generate(weather, has_planted)
+        plant_now_count = length(socket.assigns.plant_now)
+        message = Tips.contextual_message(weather, plant_now_count)
 
         socket
         |> assign(:weather, weather)
         |> assign(:weather_tips, tips)
+        |> assign(:weather_message, message)
 
       {:error, _reason} ->
         socket
         |> assign(:weather, nil)
         |> assign(:weather_tips, [])
+        |> assign(:weather_message, nil)
     end
   end
 end

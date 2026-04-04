@@ -14,6 +14,37 @@ defmodule BackyardGarden.Weather.Tips do
     |> add_condition_tip(condition)
   end
 
+  @doc """
+  Returns a single natural-language sentence combining current weather with
+  garden state (how many seeds are ready to plant right now).
+  """
+  def contextual_message(%{temp: temp, condition: condition}, plant_now_count) do
+    cond do
+      rainy?(condition) && plant_now_count > 0 ->
+        "Good moisture in the soil today — perfect for transplanting seedlings. " <>
+          "You have #{plant_now_count} #{pluralise(plant_now_count, "seed")} ready to go in."
+
+      rainy?(condition) ->
+        "Soil moisture is good today — great conditions for transplanting or weeding."
+
+      temp >= 25 ->
+        "Hot day — water any new seedlings well and avoid planting in afternoon sun."
+
+      temp >= 15 && plant_now_count > 0 ->
+        "Beautiful planting weather — mild and dry all day. " <>
+          "You have #{plant_now_count} #{pluralise(plant_now_count, "seed")} ready to go in the ground."
+
+      temp >= 15 ->
+        "Great day to be outside. Check your garden for watering or weeding."
+
+      temp >= 5 ->
+        "Cool conditions — ideal for brassicas, greens, and root vegetables."
+
+      true ->
+        "Too cold for most seeds today — stick to cold-hardy crops like kale and spinach."
+    end
+  end
+
   # --- private ---
 
   defp maybe_frost_warning(tips, forecast, true) do
@@ -52,6 +83,9 @@ defmodule BackyardGarden.Weather.Tips do
       tips
     end
   end
+
+  defp pluralise(1, word), do: word
+  defp pluralise(_, word), do: word <> "s"
 
   defp rainy?(condition) do
     String.contains?(String.downcase(condition || ""), ["rain", "drizzle", "shower"])

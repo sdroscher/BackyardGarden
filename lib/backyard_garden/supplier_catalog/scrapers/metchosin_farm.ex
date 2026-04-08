@@ -14,19 +14,32 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
 
   @doc "Fetches a single product by handle and returns its attribute map."
   def fetch_product(handle) do
-    %{body: body} = Req.get!("#{@base_url}/products/#{handle}.json", receive_timeout: 15_000)
-    to_attrs(body["product"])
+    case Req.get("#{@base_url}/products/#{handle}.json", receive_timeout: 15_000, headers: user_agent_header()) do
+      {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
+        to_attrs(body["product"])
+
+      _ ->
+        raise "Failed to fetch product #{handle}"
+    end
   end
 
   defp fetch_page(page, acc) do
-    %{body: body} =
-      Req.get!("#{@base_url}/products.json?limit=250&page=#{page}", receive_timeout: 15_000)
+    case Req.get("#{@base_url}/products.json?limit=250&page=#{page}", receive_timeout: 15_000, headers: user_agent_header()) do
+      {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
+        case body["products"] do
+          [] -> acc
+          products ->
+            Process.sleep(500)  # Rate limiting: 500ms delay between pages
+            fetch_page(page + 1, acc ++ Enum.map(products, &to_attrs/1))
+        end
 
-    case body["products"] do
-      [] -> acc
-      products ->
-        Process.sleep(500)  # Rate limiting: 500ms delay between pages
-        fetch_page(page + 1, acc ++ Enum.map(products, &to_attrs/1))
+      {:ok, %{status: status}} ->
+        Mix.shell().error("Metchosin Farm API returned status #{status}, stopping scrape")
+        acc
+
+      {:error, reason} ->
+        Mix.shell().error("Metchosin Farm API error: #{inspect(reason)}, stopping scrape")
+        acc
     end
   end
 
@@ -47,4 +60,9 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
   # Shopify returns tags as a list; store as a comma-separated string.
   defp normalize_tags(tags) when is_list(tags), do: Enum.join(tags, ", ")
   defp normalize_tags(tags), do: tags
+
+  # User-agent header to avoid Cloudflare blocks
+  defp user_agent_header do
+    [{"user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}]
+  end
 end

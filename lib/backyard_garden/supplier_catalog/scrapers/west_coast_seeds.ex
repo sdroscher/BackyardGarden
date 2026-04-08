@@ -15,21 +15,31 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
 
   @doc "Fetches a single product by handle, including the care guide scraped from the product page."
   def fetch_product(handle) do
-    %{body: body} = Req.get!("#{@base_url}/products/#{handle}.json", receive_timeout: 15_000)
-    attrs = to_attrs(body["product"])
-    Map.put(attrs, :care_html, fetch_care_guide(handle))
+    case Req.get("#{@base_url}/products/#{handle}.json", receive_timeout: 15_000, headers: user_agent_header()) do
+      {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
+        attrs = to_attrs(body["product"])
+        Map.put(attrs, :care_html, fetch_care_guide(handle))
+
+      _ ->
+        raise "Failed to fetch product #{handle}"
+    end
   end
 
   # Fetches the product HTML page and parses the "All About" accordion sections.
   # Returns nil if the section is absent or all sections are empty.
   defp fetch_care_guide(handle) do
-    case Req.get("#{@base_url}/products/#{handle}", receive_timeout: 15_000) do
+    case Req.get("#{@base_url}/products/#{handle}", receive_timeout: 15_000, headers: user_agent_header()) do
       {:ok, %{body: html}} when is_binary(html) ->
         parse_care_guide(html)
 
       _ ->
         nil
     end
+  end
+
+  # User-agent header to avoid Cloudflare blocks
+  defp user_agent_header do
+    [{"user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}]
   end
 
   defp parse_care_guide(html) do
@@ -63,30 +73,36 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
   end
 
   defp fetch_page(page, acc) do
-    %{body: body} =
-      Req.get!("#{@base_url}/products.json?limit=250&page=#{page}", receive_timeout: 15_000)
+    case Req.get("#{@base_url}/products.json?limit=250&page=#{page}", receive_timeout: 15_000, headers: user_agent_header()) do
+      {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
+        case body["products"] do
+          [] ->
+            acc
 
-    case body["products"] do
-      [] ->
+          products ->
+            seed_products = Enum.filter(products, &seed_product?/1)
+
+            new_attrs =
+              seed_products
+              |> Task.async_stream(
+                fn product ->
+                  attrs = to_attrs(product)
+                  Map.put(attrs, :care_html, fetch_care_guide(attrs[:handle]))
+                end,
+                max_concurrency: 3,
+                timeout: 20_000
+              )
+              |> Enum.map(fn {:ok, attrs} -> attrs end)
+
+            Process.sleep(500)  # Rate limiting: respect supplier's server
+            fetch_page(page + 1, acc ++ new_attrs)
+        end
+
+      {:ok, %{status: _status}} ->
         acc
 
-      products ->
-        seed_products = Enum.filter(products, &seed_product?/1)
-
-        new_attrs =
-          seed_products
-          |> Task.async_stream(
-            fn product ->
-              attrs = to_attrs(product)
-              Map.put(attrs, :care_html, fetch_care_guide(attrs[:handle]))
-            end,
-            max_concurrency: 3,
-            timeout: 20_000
-          )
-          |> Enum.map(fn {:ok, attrs} -> attrs end)
-
-        Process.sleep(500)  # Rate limiting: respect supplier's server
-        fetch_page(page + 1, acc ++ new_attrs)
+      {:error, _reason} ->
+        acc
     end
   end
 

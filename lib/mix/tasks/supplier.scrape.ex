@@ -22,16 +22,22 @@ defmodule Mix.Tasks.Supplier.Scrape do
 
   @impl Mix.Task
   def run([url]) do
+    suppress_debug_logs()
     Mix.Task.run("app.start")
     import_single_product(url)
     Mix.shell().info("Done.")
   end
 
   def run(_args) do
+    suppress_debug_logs()
     Mix.Task.run("app.start")
 #    scrape("West Coast Seeds", &WestCoastSeeds.fetch_all_products/0)
     scrape("Metchosin Farm", &MetchosinFarm.fetch_all_products/0)
     Mix.shell().info("Done.")
+  end
+
+  defp suppress_debug_logs do
+    Logger.configure(level: :info)
   end
 
   defp import_single_product(url) do

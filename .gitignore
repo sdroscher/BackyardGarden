@@ -52,3 +52,4 @@ cover/
 .dialyzer_cache/
 priv/plts/
 .superpowers/
+.worktrees/

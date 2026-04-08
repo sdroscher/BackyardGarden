@@ -17,7 +17,8 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
     case Req.get("#{@base_url}/products/#{handle}.json",
       receive_timeout: 15_000,
       headers: user_agent_header(),
-      retry: false
+      retry: false,
+      pool: false
     ) do
       {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
         to_attrs(body["product"])
@@ -40,7 +41,8 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
     case Req.get("#{@base_url}/products.json?limit=250&page=#{page}",
       receive_timeout: 15_000,
       headers: user_agent_header(),
-      retry: false
+      retry: false,
+      pool: false
     ) do
       {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
         case body["products"] do

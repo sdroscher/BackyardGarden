@@ -86,9 +86,11 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
   defp user_agent_header do
     [
       {"user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"},
-      {"accept", "application/json"},
+      {"accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"},
       {"accept-encoding", "gzip, deflate"},
       {"accept-language", "en-US,en;q=0.9"},
+      {"cache-control", "max-age=0"},
+      {"priority", "u=0, i"},
       {"sec-ch-ua", "\"Chromium\";v=\"146\", \"Not-A.Brand\";v=\"24\", \"Google Chrome\";v=\"146\""},
       {"sec-ch-ua-mobile", "?0"},
       {"sec-ch-ua-platform", "\"macOS\""},

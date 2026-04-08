@@ -41,14 +41,20 @@ defmodule Mix.Tasks.Supplier.Scrape do
 
     handle = url |> String.replace_prefix(base_url <> "/products/", "") |> URI.decode()
     Mix.shell().info("Importing #{name} product: #{handle}...")
-    attrs = scraper.fetch_product(handle)
 
-    case SupplierCatalog.upsert_supplier_product(attrs) do
-      {:ok, product} ->
-        Mix.shell().info(~s|Imported "#{product.title}" (#{product.id})|)
+    try do
+      attrs = scraper.fetch_product(handle)
 
-      {:error, changeset} ->
-        Mix.shell().error("Failed: #{inspect(changeset.errors)}")
+      case SupplierCatalog.upsert_supplier_product(attrs) do
+        {:ok, product} ->
+          Mix.shell().info(~s|Imported "#{product.title}" (#{product.id})|)
+
+        {:error, changeset} ->
+          Mix.shell().error("Failed: #{inspect(changeset.errors)}")
+      end
+    rescue
+      e in RuntimeError ->
+        Mix.shell().error("Failed: #{e.message}")
     end
   end
 

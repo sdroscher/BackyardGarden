@@ -28,7 +28,7 @@ defmodule Mix.Tasks.Supplier.Link do
 
   @impl Mix.Task
   def run([seed_id, product_ref]) do
-    suppress_debug_logs()
+    Logger.configure(level: :info)
     Mix.Task.run("app.start")
     seed = Seeds.get_seed!(seed_id)
     product = resolve_product!(product_ref)
@@ -42,10 +42,6 @@ defmodule Mix.Tasks.Supplier.Link do
 
   def run(_) do
     Mix.raise("Usage: mix supplier.link <seed_id> <product_id|handle|url>")
-  end
-
-  defp suppress_debug_logs do
-    Logger.configure(level: :info)
   end
 
   # Accept a UUID, a full product URL, or a bare handle.

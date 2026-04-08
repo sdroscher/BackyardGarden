@@ -14,11 +14,11 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
 
   @doc "Fetches a single product by handle and returns its attribute map."
   def fetch_product(handle) do
+    Process.sleep(1000)  # Delay before request to avoid hammering server
     case Req.get("#{@base_url}/products/#{handle}.json",
       receive_timeout: 15_000,
       headers: user_agent_header(),
-      retry: false,
-      pool: false
+      retry: false
     ) do
       {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
         to_attrs(body["product"])
@@ -41,14 +41,13 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
     case Req.get("#{@base_url}/products.json?limit=250&page=#{page}",
       receive_timeout: 15_000,
       headers: user_agent_header(),
-      retry: false,
-      pool: false
+      retry: false
     ) do
       {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
         case body["products"] do
           [] -> acc
           products ->
-            Process.sleep(2000)  # Rate limiting: 2s delay between pages
+            Process.sleep(5000)  # Rate limiting: 5s delay between pages
             fetch_page(page + 1, acc ++ Enum.map(products, &to_attrs/1))
         end
 

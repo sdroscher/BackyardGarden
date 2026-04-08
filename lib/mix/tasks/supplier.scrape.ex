@@ -29,7 +29,7 @@ defmodule Mix.Tasks.Supplier.Scrape do
 
   def run(_args) do
     Mix.Task.run("app.start")
-    scrape("West Coast Seeds", &WestCoastSeeds.fetch_all_products/0)
+#    scrape("West Coast Seeds", &WestCoastSeeds.fetch_all_products/0)
     scrape("Metchosin Farm", &MetchosinFarm.fetch_all_products/0)
     Mix.shell().info("Done.")
   end

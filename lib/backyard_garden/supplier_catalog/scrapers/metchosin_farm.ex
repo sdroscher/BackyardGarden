@@ -22,8 +22,17 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
       {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
         to_attrs(body["product"])
 
-      _ ->
-        raise "Failed to fetch product #{handle}"
+      {:ok, %{status: 429}} ->
+        raise "Metchosin Farm rate limited (429) — try again later"
+
+      {:ok, %{status: 404}} ->
+        raise "Product not found on Metchosin Farm (404)"
+
+      {:ok, %{status: status}} ->
+        raise "Metchosin Farm returned status #{status}"
+
+      {:error, reason} ->
+        raise "Metchosin Farm connection error: #{inspect(reason)}"
     end
   end
 

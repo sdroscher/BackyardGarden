@@ -24,8 +24,17 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
         attrs = to_attrs(body["product"])
         Map.put(attrs, :care_html, fetch_care_guide(handle))
 
-      _ ->
-        raise "Failed to fetch product #{handle}"
+      {:ok, %{status: 429}} ->
+        raise "West Coast Seeds rate limited (429) — try again later"
+
+      {:ok, %{status: 404}} ->
+        raise "Product not found on West Coast Seeds (404)"
+
+      {:ok, %{status: status}} ->
+        raise "West Coast Seeds returned status #{status}"
+
+      {:error, reason} ->
+        raise "West Coast Seeds connection error: #{inspect(reason)}"
     end
   end
 

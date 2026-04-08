@@ -24,7 +24,9 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
 
     case body["products"] do
       [] -> acc
-      products -> fetch_page(page + 1, acc ++ Enum.map(products, &to_attrs/1))
+      products ->
+        Process.sleep(500)  # Rate limiting: 500ms delay between pages
+        fetch_page(page + 1, acc ++ Enum.map(products, &to_attrs/1))
     end
   end
 

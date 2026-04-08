@@ -80,11 +80,12 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
               attrs = to_attrs(product)
               Map.put(attrs, :care_html, fetch_care_guide(attrs[:handle]))
             end,
-            max_concurrency: 10,
+            max_concurrency: 3,
             timeout: 20_000
           )
           |> Enum.map(fn {:ok, attrs} -> attrs end)
 
+        Process.sleep(500)  # Rate limiting: respect supplier's server
         fetch_page(page + 1, acc ++ new_attrs)
     end
   end

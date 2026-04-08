@@ -7,6 +7,11 @@ config :backyard_garden, BackyardGarden.Repo,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
 
+config :backyard_garden, Oban,
+  testing: :manual,
+  queues: [default: 10, notifications: 5],
+  plugins: []
+
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #

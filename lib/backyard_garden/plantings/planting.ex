@@ -20,16 +20,27 @@ defmodule BackyardGarden.Plantings.Planting do
 
     belongs_to :seed, BackyardGarden.Seeds.Seed
     belongs_to :zone, BackyardGarden.GardenZones.GardenZone
+    belongs_to :user, BackyardGarden.Users.User
 
     timestamps()
   end
 
   def changeset(planting, attrs) do
     planting
-    |> cast(attrs, [:seed_id, :zone_id, :status, :planted_at, :harvested_at, :location, :notes])
+    |> cast(attrs, [
+      :user_id,
+      :seed_id,
+      :zone_id,
+      :status,
+      :planted_at,
+      :harvested_at,
+      :location,
+      :notes
+    ])
     |> validate_required([:seed_id, :status])
     |> validate_inclusion(:status, @valid_statuses)
     |> foreign_key_constraint(:seed_id)
     |> foreign_key_constraint(:zone_id)
+    |> foreign_key_constraint(:user_id)
   end
 end

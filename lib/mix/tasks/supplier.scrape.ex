@@ -22,18 +22,23 @@ defmodule Mix.Tasks.Supplier.Scrape do
 
   @impl Mix.Task
   def run([url]) do
-    Logger.configure(level: :info)
+    configure_logging()
     Mix.Task.run("app.start")
     import_single_product(url)
     Mix.shell().info("Done.")
   end
 
   def run(_args) do
-    Logger.configure(level: :info)
+    configure_logging()
     Mix.Task.run("app.start")
     scrape("West Coast Seeds", &WestCoastSeeds.fetch_all_products/0)
     scrape("Metchosin Farm", &MetchosinFarm.fetch_all_products/0)
     Mix.shell().info("Done.")
+  end
+
+  defp configure_logging do
+    Logger.configure(level: :info)
+    Logger.put_module_level(Ecto.SQL, :info)
   end
 
   defp import_single_product(url) do

@@ -15,7 +15,11 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
 
   @doc "Fetches a single product by handle, including the care guide scraped from the product page."
   def fetch_product(handle) do
-    case Req.get("#{@base_url}/products/#{handle}.json", receive_timeout: 15_000, headers: user_agent_header()) do
+    case Req.get("#{@base_url}/products/#{handle}.json",
+      receive_timeout: 15_000,
+      headers: user_agent_header(),
+      retry: false
+    ) do
       {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
         attrs = to_attrs(body["product"])
         Map.put(attrs, :care_html, fetch_care_guide(handle))
@@ -28,7 +32,11 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
   # Fetches the product HTML page and parses the "All About" accordion sections.
   # Returns nil if the section is absent or all sections are empty.
   defp fetch_care_guide(handle) do
-    case Req.get("#{@base_url}/products/#{handle}", receive_timeout: 15_000, headers: user_agent_header()) do
+    case Req.get("#{@base_url}/products/#{handle}",
+      receive_timeout: 15_000,
+      headers: user_agent_header(),
+      retry: false
+    ) do
       {:ok, %{body: html}} when is_binary(html) ->
         parse_care_guide(html)
 
@@ -73,7 +81,11 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
   end
 
   defp fetch_page(page, acc) do
-    case Req.get("#{@base_url}/products.json?limit=250&page=#{page}", receive_timeout: 15_000, headers: user_agent_header()) do
+    case Req.get("#{@base_url}/products.json?limit=250&page=#{page}",
+      receive_timeout: 15_000,
+      headers: user_agent_header(),
+      retry: false
+    ) do
       {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
         case body["products"] do
           [] ->
@@ -89,14 +101,17 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
                   attrs = to_attrs(product)
                   Map.put(attrs, :care_html, fetch_care_guide(attrs[:handle]))
                 end,
-                max_concurrency: 3,
+                max_concurrency: 2,
                 timeout: 20_000
               )
               |> Enum.map(fn {:ok, attrs} -> attrs end)
 
-            Process.sleep(500)  # Rate limiting: respect supplier's server
+            Process.sleep(3000)  # Rate limiting: 3s delay between pages
             fetch_page(page + 1, acc ++ new_attrs)
         end
+
+      {:ok, %{status: 429}} ->
+        acc
 
       {:ok, %{status: _status}} ->
         acc

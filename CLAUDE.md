@@ -68,6 +68,7 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 
 ## Key Conventions
 
+- **Always backup before destructive DB operations** — Before running `mix ecto.reset`, `mix ecto.drop`, or deleting database files, first create a backup: `cp priv/repo/backyard_garden_dev.db priv/repo/backyard_garden_dev.db.backup`. Never delete data without a backup in place.
 - **Phase completion checklist** — Before finishing a phase, run `git status` and ensure all files are committed. Update `Plan.md` (mark items complete) and `README.md` (document new features). No uncommitted files allowed.
 - **`mix run -e` targets the dev DB** — never use for throwaway queries; use `iex -S mix` instead.
 - **Env vars loaded via dotenvy** — `.env` is auto-loaded in dev via `config/runtime.exs`; never put secrets in committed config files. Weather: `OPENWEATHERMAP_API_KEY=...`, location: `DEFAULT_LOCATION=Victoria,CA` (format: `City,CountryCode`). Prowl notifications: set `PROWL_API_KEY` in `.env` OR configure via `/settings/notifications` page (stored in database).

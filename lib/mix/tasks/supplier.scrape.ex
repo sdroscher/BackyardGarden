@@ -22,16 +22,23 @@ defmodule Mix.Tasks.Supplier.Scrape do
 
   @impl Mix.Task
   def run([url]) do
+    configure_logging()
     Mix.Task.run("app.start")
     import_single_product(url)
     Mix.shell().info("Done.")
   end
 
   def run(_args) do
+    configure_logging()
     Mix.Task.run("app.start")
     scrape("West Coast Seeds", &WestCoastSeeds.fetch_all_products/0)
     scrape("Metchosin Farm", &MetchosinFarm.fetch_all_products/0)
     Mix.shell().info("Done.")
+  end
+
+  defp configure_logging do
+    Logger.configure(level: :info)
+    Logger.put_module_level(Ecto.SQL, :info)
   end
 
   defp import_single_product(url) do
@@ -41,14 +48,20 @@ defmodule Mix.Tasks.Supplier.Scrape do
 
     handle = url |> String.replace_prefix(base_url <> "/products/", "") |> URI.decode()
     Mix.shell().info("Importing #{name} product: #{handle}...")
-    attrs = scraper.fetch_product(handle)
 
-    case SupplierCatalog.upsert_supplier_product(attrs) do
-      {:ok, product} ->
-        Mix.shell().info(~s|Imported "#{product.title}" (#{product.id})|)
+    try do
+      attrs = scraper.fetch_product(handle)
 
-      {:error, changeset} ->
-        Mix.shell().error("Failed: #{inspect(changeset.errors)}")
+      case SupplierCatalog.upsert_supplier_product(attrs) do
+        {:ok, product} ->
+          Mix.shell().info(~s|Imported "#{product.title}" (#{product.id})|)
+
+        {:error, changeset} ->
+          Mix.shell().error("Failed: #{inspect(changeset.errors)}")
+      end
+    rescue
+      e in RuntimeError ->
+        Mix.shell().error("Failed: #{e.message}")
     end
   end
 

@@ -15,21 +15,63 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
 
   @doc "Fetches a single product by handle, including the care guide scraped from the product page."
   def fetch_product(handle) do
-    %{body: body} = Req.get!("#{@base_url}/products/#{handle}.json", receive_timeout: 15_000)
-    attrs = to_attrs(body["product"])
-    Map.put(attrs, :care_html, fetch_care_guide(handle))
+    case Req.get("#{@base_url}/products/#{handle}.json",
+           receive_timeout: 15_000,
+           headers: user_agent_header(),
+           retry: false
+         ) do
+      {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
+        attrs = to_attrs(body["product"])
+        Map.put(attrs, :care_html, fetch_care_guide(handle))
+
+      {:ok, %{status: 429}} ->
+        raise "West Coast Seeds rate limited (429) — try again later"
+
+      {:ok, %{status: 404}} ->
+        raise "Product not found on West Coast Seeds (404)"
+
+      {:ok, %{status: status}} ->
+        raise "West Coast Seeds returned status #{status}"
+
+      {:error, reason} ->
+        raise "West Coast Seeds connection error: #{inspect(reason)}"
+    end
   end
 
   # Fetches the product HTML page and parses the "All About" accordion sections.
   # Returns nil if the section is absent or all sections are empty.
   defp fetch_care_guide(handle) do
-    case Req.get("#{@base_url}/products/#{handle}", receive_timeout: 15_000) do
+    case Req.get("#{@base_url}/products/#{handle}",
+           receive_timeout: 15_000,
+           headers: user_agent_header(),
+           retry: false
+         ) do
       {:ok, %{body: html}} when is_binary(html) ->
         parse_care_guide(html)
 
       _ ->
         nil
     end
+  end
+
+  # Browser-like headers to avoid bot detection and rate limiting
+  defp user_agent_header do
+    [
+      {"user-agent",
+       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"},
+      {"accept", "application/json"},
+      {"accept-encoding", "gzip, deflate"},
+      {"accept-language", "en-US,en;q=0.9"},
+      {"sec-ch-ua",
+       "\"Chromium\";v=\"146\", \"Not-A.Brand\";v=\"24\", \"Google Chrome\";v=\"146\""},
+      {"sec-ch-ua-mobile", "?0"},
+      {"sec-ch-ua-platform", "\"macOS\""},
+      {"sec-fetch-dest", "document"},
+      {"sec-fetch-mode", "navigate"},
+      {"sec-fetch-site", "none"},
+      {"sec-fetch-user", "?1"},
+      {"upgrade-insecure-requests", "1"}
+    ]
   end
 
   defp parse_care_guide(html) do
@@ -63,30 +105,46 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
   end
 
   defp fetch_page(page, acc) do
-    %{body: body} =
-      Req.get!("#{@base_url}/products.json?limit=250&page=#{page}", receive_timeout: 15_000)
+    case Req.get("#{@base_url}/products.json?limit=250&page=#{page}",
+           receive_timeout: 15_000,
+           headers: user_agent_header(),
+           retry: false
+         ) do
+      {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
+        case body["products"] do
+          [] ->
+            acc
 
-    case body["products"] do
-      [] ->
+          products ->
+            new_attrs = process_products(products)
+            Process.sleep(3000)
+            fetch_page(page + 1, acc ++ new_attrs)
+        end
+
+      {:ok, %{status: 429}} ->
         acc
 
-      products ->
-        seed_products = Enum.filter(products, &seed_product?/1)
+      {:ok, %{status: _status}} ->
+        acc
 
-        new_attrs =
-          seed_products
-          |> Task.async_stream(
-            fn product ->
-              attrs = to_attrs(product)
-              Map.put(attrs, :care_html, fetch_care_guide(attrs[:handle]))
-            end,
-            max_concurrency: 10,
-            timeout: 20_000
-          )
-          |> Enum.map(fn {:ok, attrs} -> attrs end)
-
-        fetch_page(page + 1, acc ++ new_attrs)
+      {:error, _reason} ->
+        acc
     end
+  end
+
+  defp process_products(products) do
+    seed_products = Enum.filter(products, &seed_product?/1)
+
+    seed_products
+    |> Task.async_stream(
+      fn product ->
+        attrs = to_attrs(product)
+        Map.put(attrs, :care_html, fetch_care_guide(attrs[:handle]))
+      end,
+      max_concurrency: 2,
+      timeout: 20_000
+    )
+    |> Enum.map(fn {:ok, attrs} -> attrs end)
   end
 
   # West Coast Seeds sells non-seed products (books, tools, soil amendments, etc.).

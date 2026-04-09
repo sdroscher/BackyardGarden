@@ -15,6 +15,21 @@ config :backyard_garden, BackyardGarden.Repo,
   database: Path.expand("../priv/repo/backyard_garden.db", __DIR__),
   pool_size: 5
 
+config :backyard_garden, Oban,
+  repo: BackyardGarden.Repo,
+  engine: Oban.Engines.Basic,
+  peer: {Oban.Peers.Isolated, []},
+  stage_interval: 1000,
+  plugins: [
+    {Oban.Plugins.Cron,
+     crons: [
+       daily_check: [
+         schedule: "0 7 * * *",
+         worker: "BackyardGarden.Workers.DailyCheckWorker"
+       ]
+     ]}
+  ]
+
 # Configure the endpoint
 config :backyard_garden, BackyardGardenWeb.Endpoint,
   url: [host: "localhost"],

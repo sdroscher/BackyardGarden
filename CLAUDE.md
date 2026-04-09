@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 BackyardGarden is a Phoenix LiveView web app for managing planting schedules. Phase 1 (seed library with browsing, filtering, and detail pages) is complete. Future phases add planting schedules, garden zones, weather integration, iOS notifications (Prowl), and Auth0 login.
 
+**Progress:** Phase 1 ✅, Phase 1.5 (Supplier Catalog) ✅, Phase 2 (Garden & Plantings) ✅, Phase 3 (Dashboard & Weather) ✅, Phase 4 (Notifications) ✅. Phase 5 (Auth0) coming next.
+
 **Stack:** Elixir + Phoenix 1.8 + Phoenix LiveView + Ecto + SQLite3 + Tailwind CSS
 
 ## Commands
@@ -43,6 +45,8 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 **Data layer:**
 - `BackyardGarden.Seeds.Seed` — Ecto schema (UUID primary keys, fields: name, brand, type, cycle, planting_method, ideal_planting_time, maturity_days, sun_requirement, source_url, notes)
 - `BackyardGarden.Seeds` — context module with `list_seeds/1` (accepts filter map), `get_seed!/1`, `create_seed/1`, and distinct list helpers
+- `BackyardGarden.Users` — User schema (email, timezone, prowl_api_key, notifications_enabled) and CRUD (Phase 4)
+- `BackyardGarden.Notifications` — Notification schema (type, message, scheduled_at, sent_at) and delivery tracking (Phase 4)
 - `BackyardGarden.Plantings` — context for plantings (CRUD + `list_plantings_for_month/1`)
 - `BackyardGarden.GardenZones` — context for zones (CRUD + `recommend_zones/1` scoring engine)
 - `BackyardGarden.PlantingCalendar` — parses `ideal_planting_time` text → `{start_month, end_month}` tuples; builds week grids
@@ -64,11 +68,14 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 
 ## Key Conventions
 
+- **Always backup before destructive DB operations** — Before running `mix ecto.reset`, `mix ecto.drop`, or deleting database files, first create a backup: `cp priv/repo/backyard_garden_dev.db priv/repo/backyard_garden_dev.db.backup`. Never delete data without a backup in place.
+- **Phase completion checklist** — Before finishing a phase, run `git status` and ensure all files are committed. Update `Plan.md` (mark items complete) and `README.md` (document new features). No uncommitted files allowed.
 - **`mix run -e` targets the dev DB** — never use for throwaway queries; use `iex -S mix` instead.
-- **Env vars loaded via dotenvy** — `.env` is auto-loaded in dev via `config/runtime.exs`; never put secrets in committed config files. API key: `OPENWEATHERMAP_API_KEY=...`, location: `DEFAULT_LOCATION=Victoria,CA` (format: `City,CountryCode`).
+- **Env vars loaded via dotenvy** — `.env` is auto-loaded in dev via `config/runtime.exs`; never put secrets in committed config files. Weather: `OPENWEATHERMAP_API_KEY=...`, location: `DEFAULT_LOCATION=Victoria,CA` (format: `City,CountryCode`). Prowl notifications: set `PROWL_API_KEY` in `.env` OR configure via `/settings/notifications` page (stored in database).
 - **`GardenZones.recommend_zones/1` returns plain structs** — no `.score` field; all returned zones are already filtered to compatible matches, sorted by quality.
 - **Planting date field is `planted_at`** — the `Planting` schema field is `:planted_at`, not `:date_planted`.
 - **Credo strict mode is on.** `TODO` comments fail the build (exit_status 2). Max line length: 120.
+- **Oban + SQLite in testing mode** — Oban supervisor startup is complex with SQLite. Workaround: comment out supervisor in `application.ex` for dev/test, uncomment for Postgres (Phase 6+). Core Oban infrastructure (workers, jobs, config) works fine; issue is runtime notifier/engine configuration.
 - **`@moduledoc` must come before `use`** in LiveView modules (enforced by credo).
 - **SQL wildcard escaping:** `%` and `_` in search strings must be escaped before LIKE queries — see `Seeds.filter_by_search/2`.
 - **Binary IDs (UUIDs)** are the default primary key type — set in generator config.
@@ -79,6 +86,10 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 - **Forms need both `phx-submit` and `phx-change`** — the change handler rebuilds the changeset with `|> Map.put(:action, :validate)` to show inline errors while typing.
 - **Test fixture helpers: omit default args** — write `defp fixture(attrs)` not `defp fixture(attrs \\ %{})` unless a call site actually omits the argument. Unused defaults produce compiler warnings.
 - **SQLite async test flakiness** — `async: true` tests can intermittently fail with "Database busy" under high concurrency. Re-run to confirm; it is not a test bug.
+- **Form conversion required** — Always use `to_form(changeset)` before passing to `.input` components. Don't pass changesets directly; `Access.get/3` will fail on the changeset struct.
+- **Logger.configure timing** — Must call `Logger.configure(level: :info)` BEFORE `Mix.Task.run("app.start")`, not after. Ecto configures at startup, so log level needs to be set first.
+- **Supplier scraper headers** — Must match modern Chrome headers (sec-ch-ua, sec-fetch-*, upgrade-insecure-requests) to avoid Cloudflare WAF blocks. Disable Req retries with `retry: false` and add delays (2-5s) between requests to respect rate limits.
+- **Zone matching gotcha** — Zone editor accepts free-form text for allowed_types/cycles/sun_exposures, but matching logic requires exact string matches. Document examples or use dropdowns for UX clarity.
 
 ## Code Quality
 

@@ -28,6 +28,7 @@ defmodule Mix.Tasks.Supplier.Link do
 
   @impl Mix.Task
   def run([seed_id, product_ref]) do
+    configure_logging()
     Mix.Task.run("app.start")
     seed = Seeds.get_seed!(seed_id)
     product = resolve_product!(product_ref)
@@ -41,6 +42,11 @@ defmodule Mix.Tasks.Supplier.Link do
 
   def run(_) do
     Mix.raise("Usage: mix supplier.link <seed_id> <product_id|handle|url>")
+  end
+
+  defp configure_logging do
+    Logger.configure(level: :info)
+    Logger.put_module_level(Ecto.SQL, :info)
   end
 
   # Accept a UUID, a full product URL, or a bare handle.

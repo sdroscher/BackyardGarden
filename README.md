@@ -22,9 +22,16 @@ Built with **Elixir + Phoenix LiveView**, deployed to **fly.io**.
 - Monthly planting calendar with ideal window overlays
 - Weather-aware planting tips via OpenWeatherMap
 
-**Phase 3+ — Planned**
-- iOS push notifications via [Prowl](https://www.prowlapp.com/)
+**Phase 4 — Complete**
+- iOS push notifications via [Prowl](https://www.prowlapp.com/) — daily checks for plant-now and harvest-soon conditions
+- Notification settings page — configure Prowl API key and notification preferences
+- User context with timezone and notification settings
+- Oban job infrastructure (plant checking, notification sending) — ready for deployment
+
+**Phase 5+ — Planned**
 - Auth0 login (Google, Apple, email)
+- Multi-user support with authenticated routes
+- Frost warning notifications (weather-triggered)
 
 ## Getting Started
 
@@ -44,12 +51,21 @@ mix archive.install hex phx_new
 Create a `.env` file in the project root (auto-loaded in dev via dotenvy):
 
 ```
+# Weather (optional)
 OPENWEATHERMAP_API_KEY=your_key_here
 DEFAULT_LOCATION=Victoria,CA        # format: City,CountryCode
 TIMEZONE=America/Vancouver          # IANA timezone name
+
+# Prowl notifications (optional, Phase 4+)
+# Get your API key from https://www.prowlapp.com/
+# Leave blank to disable Prowl notifications
+PROWL_API_KEY=your_prowl_key_here
 ```
 
-`DEFAULT_LOCATION` and `TIMEZONE` have sensible defaults if omitted. The weather card is silently hidden if `OPENWEATHERMAP_API_KEY` is missing.
+**Env var defaults:**
+- `DEFAULT_LOCATION` and `TIMEZONE` have sensible defaults if omitted
+- `OPENWEATHERMAP_API_KEY`: Weather card is silently hidden if missing
+- `PROWL_API_KEY`: Set via the `/settings/notifications` page (no env var required)
 
 ### Setup
 
@@ -108,6 +124,44 @@ Targeted at [fly.io](https://fly.io). SQLite with a persistent volume for local/
 ```bash
 fly launch
 fly deploy
+```
+
+## Prowl Notifications (Phase 4)
+
+Receive daily iOS push notifications when plants are ready to plant or about to harvest.
+
+### Setup
+
+1. Install [Prowl](https://www.prowlapp.com/) on your iOS device (free app)
+2. Get your Prowl API key from [https://www.prowlapp.com/](https://www.prowlapp.com/)
+3. Add it via the settings page at `/settings/notifications`
+
+### Daily Job
+
+The app includes an Oban job (`DailyCheckWorker`) that runs at 7am local time and checks:
+- **Plant Now** — seeds whose ideal planting window is open and haven't been planted yet
+- **Harvest Soon** — planted items within 7 days of harvest maturity
+
+**Known Issue:** Oban supervisor startup is currently commented out in `lib/backyard_garden/application.ex` due to SQLite+testing mode configuration. The job infrastructure is complete; uncomment the supervisor line once notifier configuration is finalized (auto-works with Postgres in Phase 6+).
+
+### Testing
+
+To manually test notifications in dev:
+
+```elixir
+# In iex -S mix:
+user = BackyardGarden.Users.get_user_by_email("simon@droscher.com")
+
+# Create a test notification
+{:ok, notif} = BackyardGarden.Notifications.log_notification(%{
+  "user_id" => user.id,
+  "type" => "plant_now",
+  "message" => "Test notification"
+})
+
+# Manually enqueue the Prowl job
+BackyardGarden.Workers.ProwlNotifierJob.new(%{"notification_id" => notif.id})
+|> Oban.insert()
 ```
 
 ## Supplier Catalog

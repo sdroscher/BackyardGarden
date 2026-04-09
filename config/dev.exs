@@ -7,6 +7,11 @@ config :backyard_garden, BackyardGarden.Repo,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
 
+config :backyard_garden, Oban,
+  testing: :manual,
+  queues: [default: 10, notifications: 5],
+  plugins: []
+
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #
@@ -69,6 +74,9 @@ config :backyard_garden, dev_routes: true
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :default_formatter, format: "[$level] $message\n"
+
+# Suppress Ecto debug query logging
+config :logger, level: :info
 
 # Set a higher stacktrace during development. Avoid configuring such
 # in production as building large stacktraces may be expensive.

@@ -46,7 +46,7 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
        |> assign(:quick_log_zones, [])}
     else
       seed = Enum.find(socket.assigns.plant_now, &(&1.id == seed_id))
-      zones = if seed, do: all_zones_sorted(seed), else: []
+      zones = if seed, do: GardenZones.recommend_zones(seed), else: []
 
       form =
         %Plantings.Planting{}
@@ -132,13 +132,5 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
         |> assign(:weather_tips, [])
         |> assign(:weather_message, nil)
     end
-  end
-
-  # Show all zones sorted by recommendation: compatible first, then others
-  defp all_zones_sorted(seed) do
-    recommended = GardenZones.recommend_zones(seed)
-    all_zones = GardenZones.list_zones()
-
-    recommended ++ Enum.reject(all_zones, &Enum.member?(recommended, &1))
   end
 end

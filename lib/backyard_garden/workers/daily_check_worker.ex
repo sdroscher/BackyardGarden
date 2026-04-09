@@ -107,7 +107,8 @@ defmodule BackyardGarden.Workers.DailyCheckWorker do
     case type do
       "plant_now" ->
         Notification
-        |> where([n],
+        |> where(
+          [n],
           n.user_id == ^user_id and n.seed_id == ^seed_or_planting_id and
             n.type == ^type
         )
@@ -116,7 +117,8 @@ defmodule BackyardGarden.Workers.DailyCheckWorker do
 
       "harvest_soon" ->
         Notification
-        |> where([n],
+        |> where(
+          [n],
           n.user_id == ^user_id and n.planting_id == ^seed_or_planting_id and
             n.type == ^type
         )

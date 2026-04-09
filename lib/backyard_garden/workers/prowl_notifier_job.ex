@@ -12,22 +12,28 @@ defmodule BackyardGarden.Workers.ProwlNotifierJob do
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"notification_id" => notification_id}}) do
-    notification = Repo.get!(Notifications.Notification, notification_id)
-    user = Repo.get!(Users.User, notification.user_id)
-
-    case send_prowl(user, notification) do
-      {:ok, _response} ->
-        Notifications.mark_sent(notification, %{
-          "sent_at" => DateTime.utc_now(),
-          "prowl_response" => "success"
-        })
-
-        Logger.info("Prowl notification sent for user #{user.id}")
+    case Repo.get(Notifications.Notification, notification_id) do
+      nil ->
+        Logger.warning("Notification #{notification_id} not found")
         :ok
 
-      {:error, reason} ->
-        Logger.error("Failed to send Prowl notification: #{inspect(reason)}")
-        {:error, reason}
+      notification ->
+        user = Repo.get!(Users.User, notification.user_id)
+
+        case send_prowl(user, notification) do
+          {:ok, _response} ->
+            Notifications.mark_sent(notification, %{
+              "sent_at" => DateTime.utc_now(),
+              "prowl_response" => "success"
+            })
+
+            Logger.info("Prowl notification sent for user #{user.id}")
+            :ok
+
+          {:error, reason} ->
+            Logger.error("Failed to send Prowl notification: #{inspect(reason)}")
+            :ok
+        end
     end
   end
 

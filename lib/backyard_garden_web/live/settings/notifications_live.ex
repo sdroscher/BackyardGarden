@@ -40,43 +40,64 @@ defmodule BackyardGardenWeb.Settings.NotificationsLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-2xl mx-auto py-8 px-4">
-      <h1 class="text-3xl font-semibold text-[#14532d] mb-8">Notification Settings</h1>
+    <div class="space-y-4">
+      <%!-- Settings navigation --%>
+      <div class="border-b border-[#e5e7eb] flex gap-6">
+        <a
+          href={~p"/settings/zones"}
+          class="pb-3 text-sm font-medium text-[#6b7280] hover:text-[#374151] border-b-2 border-transparent transition-colors"
+        >
+          Garden Zones
+        </a>
+        <a
+          href={~p"/settings/notifications"}
+          class="pb-3 text-sm font-semibold text-[#2d6a4f] border-b-2 border-[#2d6a4f]"
+        >
+          Notifications
+        </a>
+      </div>
 
-      <div class="bg-white border border-[#bbf7d0] rounded-xl p-6">
-        <form phx-submit="save" class="space-y-6">
-          <.input
-            field={@changeset[:prowl_api_key]}
-            label="Prowl API Key"
-            type="password"
-            placeholder="Paste your Prowl API key here"
-          />
-          <p class="text-sm text-[#6b7280]">
-            Your Prowl API key is used to send notifications to your iOS device.
-            <a
-              href="https://www.prowlapp.com/"
-              target="_blank"
-              class="text-[#2d6a4f] underline"
-            >
-              Get your key from Prowl
-            </a>
-          </p>
+      <h1 class="text-2xl font-bold text-[#14532d]">Notification Settings</h1>
 
-          <.input
-            field={@changeset[:notifications_enabled]}
-            label="Enable Notifications"
-            type="checkbox"
-          />
+      <div class="rounded-[22px] overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
+        <div class="px-6 py-4" style="background: linear-gradient(135deg, #2d6a4f, #52b788);">
+          <h2 class="text-white text-base font-bold">Prowl Configuration</h2>
+        </div>
+        <div class="bg-white px-6 pb-6 pt-4">
+          <form phx-submit="save" class="space-y-4">
+            <.input
+              field={@changeset[:prowl_api_key]}
+              label="Prowl API Key"
+              type="password"
+              placeholder="Paste your Prowl API key here"
+            />
+            <p class="text-sm text-[#6b7280]">
+              Your Prowl API key is used to send notifications to your iOS device.
+              <a
+                href="https://www.prowlapp.com/"
+                target="_blank"
+                class="text-[#2d6a4f] underline"
+              >
+                Get your key from Prowl
+              </a>
+            </p>
 
-          <div class="pt-4">
-            <button
-              type="submit"
-              class="bg-[#2d6a4f] text-white px-4 py-2 rounded-lg hover:bg-[#1a3a2a]"
-            >
-              Save Settings
-            </button>
-          </div>
-        </form>
+            <.input
+              field={@changeset[:notifications_enabled]}
+              label="Enable Notifications"
+              type="checkbox"
+            />
+
+            <div class="pt-2">
+              <button
+                type="submit"
+                class="bg-[#2d6a4f] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#1a3a2a] transition-colors"
+              >
+                Save Settings
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
     """

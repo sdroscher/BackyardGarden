@@ -86,6 +86,10 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 - **Forms need both `phx-submit` and `phx-change`** — the change handler rebuilds the changeset with `|> Map.put(:action, :validate)` to show inline errors while typing.
 - **Test fixture helpers: omit default args** — write `defp fixture(attrs)` not `defp fixture(attrs \\ %{})` unless a call site actually omits the argument. Unused defaults produce compiler warnings.
 - **SQLite async test flakiness** — `async: true` tests can intermittently fail with "Database busy" under high concurrency. Re-run to confirm; it is not a test bug.
+- **Form conversion required** — Always use `to_form(changeset)` before passing to `.input` components. Don't pass changesets directly; `Access.get/3` will fail on the changeset struct.
+- **Logger.configure timing** — Must call `Logger.configure(level: :info)` BEFORE `Mix.Task.run("app.start")`, not after. Ecto configures at startup, so log level needs to be set first.
+- **Supplier scraper headers** — Must match modern Chrome headers (sec-ch-ua, sec-fetch-*, upgrade-insecure-requests) to avoid Cloudflare WAF blocks. Disable Req retries with `retry: false` and add delays (2-5s) between requests to respect rate limits.
+- **Zone matching gotcha** — Zone editor accepts free-form text for allowed_types/cycles/sun_exposures, but matching logic requires exact string matches. Document examples or use dropdowns for UX clarity.
 
 ## Code Quality
 

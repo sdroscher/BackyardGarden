@@ -20,6 +20,10 @@ defmodule BackyardGarden.Notifications.Notification do
 
     belongs_to :user, BackyardGarden.Users.User
 
+    belongs_to :seed, BackyardGarden.Seeds.Seed,
+      type: :binary_id,
+      foreign_key: :seed_id
+
     belongs_to :planting, BackyardGarden.Plantings.Planting,
       type: :binary_id,
       foreign_key: :planting_id
@@ -31,6 +35,7 @@ defmodule BackyardGarden.Notifications.Notification do
     notification
     |> cast(attrs, [
       :user_id,
+      :seed_id,
       :planting_id,
       :type,
       :message,
@@ -41,6 +46,7 @@ defmodule BackyardGarden.Notifications.Notification do
     |> validate_required([:user_id, :type, :message])
     |> validate_inclusion(:type, @valid_types)
     |> foreign_key_constraint(:user_id)
+    |> foreign_key_constraint(:seed_id)
     |> foreign_key_constraint(:planting_id)
   end
 end

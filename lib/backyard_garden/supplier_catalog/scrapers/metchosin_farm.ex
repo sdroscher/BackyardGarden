@@ -14,12 +14,14 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
 
   @doc "Fetches a single product by handle and returns its attribute map."
   def fetch_product(handle) do
-    Process.sleep(1000)  # Delay before request to avoid hammering server
+    # Delay before request to avoid hammering server
+    Process.sleep(1000)
+
     case Req.get("#{@base_url}/products/#{handle}.json",
-      receive_timeout: 15_000,
-      headers: user_agent_header(),
-      retry: false
-    ) do
+           receive_timeout: 15_000,
+           headers: user_agent_header(),
+           retry: false
+         ) do
       {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
         to_attrs(body["product"])
 
@@ -39,15 +41,18 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
 
   defp fetch_page(page, acc) do
     case Req.get("#{@base_url}/products.json?limit=250&page=#{page}",
-      receive_timeout: 15_000,
-      headers: user_agent_header(),
-      retry: false
-    ) do
+           receive_timeout: 15_000,
+           headers: user_agent_header(),
+           retry: false
+         ) do
       {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
         case body["products"] do
-          [] -> acc
+          [] ->
+            acc
+
           products ->
-            Process.sleep(5000)  # Rate limiting: 5s delay between pages
+            # Rate limiting: 5s delay between pages
+            Process.sleep(5000)
             fetch_page(page + 1, acc ++ Enum.map(products, &to_attrs/1))
         end
 
@@ -86,13 +91,16 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
   # Browser-like headers to avoid bot detection and rate limiting
   defp user_agent_header do
     [
-      {"user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"},
-      {"accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"},
+      {"user-agent",
+       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"},
+      {"accept",
+       "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"},
       {"accept-encoding", "gzip, deflate"},
       {"accept-language", "en-US,en;q=0.9"},
       {"cache-control", "max-age=0"},
       {"priority", "u=0, i"},
-      {"sec-ch-ua", "\"Chromium\";v=\"146\", \"Not-A.Brand\";v=\"24\", \"Google Chrome\";v=\"146\""},
+      {"sec-ch-ua",
+       "\"Chromium\";v=\"146\", \"Not-A.Brand\";v=\"24\", \"Google Chrome\";v=\"146\""},
       {"sec-ch-ua-mobile", "?0"},
       {"sec-ch-ua-platform", "\"macOS\""},
       {"sec-fetch-dest", "document"},

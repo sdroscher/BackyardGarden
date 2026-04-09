@@ -53,6 +53,7 @@ defmodule BackyardGarden.Workers.DailyCheckWorker do
         {:ok, notification} =
           Notifications.log_notification(%{
             "user_id" => user.id,
+            "seed_id" => seed.id,
             "type" => "plant_now",
             "message" => message,
             "scheduled_at" => DateTime.utc_now()
@@ -100,13 +101,28 @@ defmodule BackyardGarden.Workers.DailyCheckWorker do
     days_until_mature >= 0 and days_until_mature <= 7
   end
 
-  defp recently_notified?(user_id, _seed_or_planting_id, type) do
+  defp recently_notified?(user_id, seed_or_planting_id, type) do
     days_ago = DateTime.add(DateTime.utc_now(), -1, :day)
 
-    Notification
-    |> where([n], n.user_id == ^user_id and n.type == ^type)
-    |> where([n], n.inserted_at > ^days_ago)
-    |> Repo.exists?()
+    case type do
+      "plant_now" ->
+        Notification
+        |> where([n],
+          n.user_id == ^user_id and n.seed_id == ^seed_or_planting_id and
+            n.type == ^type
+        )
+        |> where([n], n.inserted_at > ^days_ago)
+        |> Repo.exists?()
+
+      "harvest_soon" ->
+        Notification
+        |> where([n],
+          n.user_id == ^user_id and n.planting_id == ^seed_or_planting_id and
+            n.type == ^type
+        )
+        |> where([n], n.inserted_at > ^days_ago)
+        |> Repo.exists?()
+    end
   end
 
   defp enqueue_prowl_job(notification_id) do

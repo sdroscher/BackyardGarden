@@ -12,12 +12,12 @@ defmodule BackyardGardenWeb.Settings.NotificationsLive do
     # For now, use default user simon@droscher.com
     # In Phase 5, this will use authenticated user from session
     user = Users.get_user_by_email("simon@droscher.com") || create_default_user()
-    changeset = Users.User.changeset(user, %{})
+    form = to_form(Users.User.changeset(user, %{}))
 
     {:ok,
      socket
      |> assign(:user, user)
-     |> assign(:changeset, changeset)}
+     |> assign(:form, form)}
   end
 
   @impl true
@@ -30,10 +30,10 @@ defmodule BackyardGardenWeb.Settings.NotificationsLive do
          socket
          |> assign(:user, updated_user)
          |> put_flash(:info, "Notification settings updated!")
-         |> assign(:changeset, Users.User.changeset(updated_user, %{}))}
+         |> assign(:form, to_form(Users.User.changeset(updated_user, %{})))}
 
       {:error, changeset} ->
-        {:noreply, assign(socket, :changeset, changeset)}
+        {:noreply, assign(socket, :form, to_form(changeset))}
     end
   end
 
@@ -64,9 +64,9 @@ defmodule BackyardGardenWeb.Settings.NotificationsLive do
           <h2 class="text-white text-base font-bold">Prowl Configuration</h2>
         </div>
         <div class="bg-white px-6 pb-6 pt-4">
-          <form phx-submit="save" class="space-y-4">
+          <.form for={@form} phx-submit="save" class="space-y-4">
             <.input
-              field={@changeset[:prowl_api_key]}
+              field={@form[:prowl_api_key]}
               label="Prowl API Key"
               type="password"
               placeholder="Paste your Prowl API key here"
@@ -83,7 +83,7 @@ defmodule BackyardGardenWeb.Settings.NotificationsLive do
             </p>
 
             <.input
-              field={@changeset[:notifications_enabled]}
+              field={@form[:notifications_enabled]}
               label="Enable Notifications"
               type="checkbox"
             />
@@ -96,7 +96,7 @@ defmodule BackyardGardenWeb.Settings.NotificationsLive do
                 Save Settings
               </button>
             </div>
-          </form>
+          </.form>
         </div>
       </div>
     </div>

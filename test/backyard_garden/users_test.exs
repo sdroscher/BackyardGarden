@@ -85,6 +85,21 @@ defmodule BackyardGarden.UsersTest do
       assert user.name == "New Name"
       assert BackyardGarden.Repo.aggregate(BackyardGarden.Users.User, :count, :id) == 1
     end
+
+    test "links auth0_id to an existing account matched by email" do
+      # Simulates a user created before Auth0 was added (no auth0_id).
+      {:ok, existing} = Users.create_user(%{"email" => "preexisting@example.com", "name" => "Old"})
+      assert existing.auth0_id == nil
+
+      auth = %{uid: "auth0|newid", info: %{email: "preexisting@example.com", name: "Updated"}}
+      {:ok, linked} = Users.upsert_from_auth0(auth)
+
+      # Same DB row — no duplicate created.
+      assert linked.id == existing.id
+      assert linked.auth0_id == "auth0|newid"
+      assert linked.name == "Updated"
+      assert BackyardGarden.Repo.aggregate(BackyardGarden.Users.User, :count, :id) == 1
+    end
   end
 
   # Fixture helper

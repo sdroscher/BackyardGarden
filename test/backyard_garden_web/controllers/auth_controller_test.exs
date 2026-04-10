@@ -49,22 +49,24 @@ defmodule BackyardGardenWeb.AuthControllerTest do
   end
 
   describe "callback/2 with upsert failure" do
+    # plug Ueberauth rewrites conn.assigns during HTTP dispatch, so we call the
+    # action directly to test the {:error, changeset} branch in isolation.
     test "returns 500 and does not redirect to a protected page", %{conn: conn} do
-      # Create a user with this email so the upsert fails on duplicate email.
-      {:ok, _} = Users.create_user(%{"email" => "dup@example.com"})
-
+      # A nil email fails the User changeset validation, so upsert returns {:error, ...}.
       ueberauth_auth = %Ueberauth.Auth{
         uid: "auth0|newuser",
-        info: %Ueberauth.Auth.Info{email: "dup@example.com", name: "Dup User"},
+        info: %Ueberauth.Auth.Info{email: nil, name: "No Email"},
         provider: :auth0
       }
 
-      # Bypass the ueberauth plug by assigning directly, then call the action.
-      conn = conn |> assign(:ueberauth_auth, ueberauth_auth)
-      conn = BackyardGardenWeb.AuthController.callback(conn, %{})
+      conn =
+        conn
+        |> Plug.Test.init_test_session(%{})
+        |> assign(:ueberauth_auth, ueberauth_auth)
+        |> BackyardGardenWeb.AuthController.callback(%{})
 
       assert conn.status == 500
-      refute conn.halted == false and get_resp_header(conn, "location") == ["/"]
+      assert get_resp_header(conn, "location") == []
     end
   end
 

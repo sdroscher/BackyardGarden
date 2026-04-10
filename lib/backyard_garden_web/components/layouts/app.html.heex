@@ -16,6 +16,12 @@
       <.nav_link href={~p"/garden"} current_path={@current_path}>My Garden</.nav_link>
       <.nav_link href={~p"/calendar"} current_path={@current_path}>Calendar</.nav_link>
       <.nav_link href={~p"/settings/zones"} current_path={@current_path}>Settings</.nav_link>
+      <a
+        href={~p"/auth/logout"}
+        class="px-3 py-1.5 rounded-lg text-sm font-medium text-[#95d5b2] hover:text-white hover:bg-white/5 transition-colors"
+      >
+        Log out
+      </a>
     </div>
   </nav>
 </header>

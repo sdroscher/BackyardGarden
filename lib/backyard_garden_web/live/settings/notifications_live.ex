@@ -9,9 +9,7 @@ defmodule BackyardGardenWeb.Settings.NotificationsLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    # For now, use default user simon@droscher.com
-    # In Phase 5, this will use authenticated user from session
-    user = Users.get_user_by_email("simon@droscher.com") || create_default_user()
+    user = socket.assigns.current_user
     form = to_form(Users.User.changeset(user, %{}))
 
     {:ok,
@@ -137,13 +135,4 @@ defmodule BackyardGardenWeb.Settings.NotificationsLive do
     """
   end
 
-  defp create_default_user do
-    {:ok, user} =
-      Users.create_user(%{
-        "email" => "simon@droscher.com",
-        "name" => "Simon"
-      })
-
-    user
-  end
 end

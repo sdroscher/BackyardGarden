@@ -3,6 +3,13 @@ defmodule BackyardGardenWeb.NavHooksTest do
 
   import Phoenix.LiveViewTest
 
+  alias BackyardGarden.Test.Fixtures
+
+  setup %{conn: conn} do
+    user = Fixtures.user_fixture()
+    %{conn: log_in_user(conn, user)}
+  end
+
   test "assigns current_path on mount for the dashboard", %{conn: conn} do
     {:ok, _view, html} = live(conn, ~p"/")
     # The dashboard nav link should have aria-current="page"

@@ -5,8 +5,12 @@ defmodule BackyardGardenWeb.Seeds.ShowLiveTest do
 
   alias BackyardGarden.Seeds
   alias BackyardGarden.SupplierCatalog
+  alias BackyardGarden.Test.Fixtures
 
-  setup do
+  setup %{conn: conn} do
+    user = Fixtures.user_fixture()
+    conn = log_in_user(conn, user)
+
     {:ok, seed} =
       Seeds.create_seed(%{
         name: "Purple Basil",
@@ -19,7 +23,7 @@ defmodule BackyardGardenWeb.Seeds.ShowLiveTest do
         notes: "Great companion plant"
       })
 
-    %{seed: seed}
+    %{conn: conn, seed: seed}
   end
 
   test "renders seed name and all present fields", %{conn: conn, seed: seed} do

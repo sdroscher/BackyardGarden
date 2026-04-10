@@ -5,10 +5,12 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
 
   alias BackyardGarden.{Seeds, Plantings}
   alias BackyardGarden.Weather.Cache
+  alias BackyardGarden.Test.Fixtures
 
-  setup do
+  setup %{conn: conn} do
     Cache.clear()
-    :ok
+    user = Fixtures.user_fixture()
+    %{conn: log_in_user(conn, user), user: user}
   end
 
   defp seed_fixture(attrs) do

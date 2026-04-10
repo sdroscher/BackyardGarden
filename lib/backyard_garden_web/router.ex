@@ -18,14 +18,24 @@ defmodule BackyardGardenWeb.Router do
     plug :accepts, ["json"]
   end
 
+  # Unauthenticated routes (OAuth flow)
   scope "/", BackyardGardenWeb do
     pipe_through :browser
 
-    # Auth0 OAuth — Ueberauth handles the request phase (redirect to Auth0);
-    # our controller handles the callback and logout.
+    # Ueberauth handles the request phase (redirect to Auth0);
+    # AuthController handles the callback and logout.
     get "/auth/auth0", AuthController, :request
     get "/auth/auth0/callback", AuthController, :callback
     delete "/auth/logout", AuthController, :delete
+  end
+
+  pipeline :require_auth do
+    plug BackyardGardenWeb.Plugs.RequireAuth
+  end
+
+  # Authenticated routes
+  scope "/", BackyardGardenWeb do
+    pipe_through [:browser, :require_auth]
 
     live "/", Dashboard.IndexLive, :index
 
@@ -37,6 +47,7 @@ defmodule BackyardGardenWeb.Router do
 
     live "/calendar", Calendar.IndexLive, :index
 
+    live "/settings", Settings.ProfileLive, :index
     live "/settings/zones", Settings.ZonesLive, :index
     live "/settings/notifications", Settings.NotificationsLive, :index
   end

@@ -6,6 +6,12 @@ defmodule BackyardGardenWeb.Garden.IndexLiveTest do
   alias BackyardGarden.GardenZones
   alias BackyardGarden.Plantings
   alias BackyardGarden.Seeds
+  alias BackyardGarden.Test.Fixtures
+
+  setup %{conn: conn} do
+    user = Fixtures.user_fixture()
+    %{conn: log_in_user(conn, user), user: user}
+  end
 
   defp seed_fixture(attrs) do
     defaults = %{name: "Test Seed", type: "Vegetable", cycle: "Annual", maturity_days: 50}

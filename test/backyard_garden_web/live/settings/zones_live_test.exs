@@ -4,6 +4,12 @@ defmodule BackyardGardenWeb.Settings.ZonesLiveTest do
   import Phoenix.LiveViewTest
 
   alias BackyardGarden.GardenZones
+  alias BackyardGarden.Test.Fixtures
+
+  setup %{conn: conn} do
+    user = Fixtures.user_fixture()
+    %{conn: log_in_user(conn, user), user: user}
+  end
 
   defp zone_fixture(attrs) do
     defaults = %{name: "Test Zone", sun_exposures: "full_sun"}

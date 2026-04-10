@@ -26,7 +26,7 @@ defmodule BackyardGardenWeb.Router do
     # AuthController handles the callback and logout.
     get "/auth/auth0", AuthController, :request
     get "/auth/auth0/callback", AuthController, :callback
-    delete "/auth/logout", AuthController, :delete
+    get "/auth/logout", AuthController, :delete
   end
 
   pipeline :require_auth do

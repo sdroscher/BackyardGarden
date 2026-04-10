@@ -75,7 +75,7 @@ defmodule BackyardGardenWeb.AuthControllerTest do
       conn =
         conn
         |> Plug.Test.init_test_session(%{user_id: "some-user-id"})
-        |> delete(~p"/auth/logout")
+        |> get(~p"/auth/logout")
 
       assert get_session(conn, :user_id) == nil
       assert redirected_to(conn) == "/auth/auth0"

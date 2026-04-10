@@ -28,6 +28,20 @@ end
 config :backyard_garden, BackyardGardenWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+cloak_key =
+  System.get_env("CLOAK_KEY") ||
+    if config_env() == :prod do
+      raise "environment variable CLOAK_KEY is missing. Generate with: mix run -e 'IO.puts Base.encode64(:crypto.strong_rand_bytes(32))'"
+    else
+      # Dev/test stable fallback — paste a real key from the command above into .env as CLOAK_KEY=<value>
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    end
+
+config :backyard_garden, BackyardGarden.Vault,
+  ciphers: [
+    default: {Cloak.Ciphers.AES.GCM, tag: "AES.GCM.V1", key: Base.decode64!(cloak_key)}
+  ]
+
 config :backyard_garden, :weather,
   base_url: "https://api.openweathermap.org",
   api_key: System.get_env("OPENWEATHERMAP_API_KEY", "")

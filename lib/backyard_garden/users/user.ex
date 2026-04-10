@@ -13,7 +13,7 @@ defmodule BackyardGarden.Users.User do
     field :email, :string
     field :name, :string
     field :timezone, :string, default: "America/Vancouver"
-    field :prowl_api_key, :string
+    field :prowl_api_key, BackyardGarden.Encrypted.Binary, source: :prowl_api_key_enc
     field :notifications_enabled, :boolean, default: true
     field :morning_reminder_hour, :integer, default: 8
     field :evening_reminder_hour, :integer, default: 18

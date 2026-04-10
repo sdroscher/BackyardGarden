@@ -1,6 +1,8 @@
 defmodule BackyardGarden.UsersTest do
   use BackyardGarden.DataCase
 
+  import Ecto.Query
+
   alias BackyardGarden.Users
 
   describe "create_user/1" do
@@ -35,6 +37,27 @@ defmodule BackyardGarden.UsersTest do
       user = user_fixture()
       assert {:ok, updated} = Users.update_user(user, %{"prowl_api_key" => "testkey123"})
       assert updated.prowl_api_key == "testkey123"
+    end
+  end
+
+  describe "prowl_api_key encryption" do
+    test "prowl_api_key is stored encrypted and decrypts on read" do
+      {:ok, user} =
+        Users.create_user(%{
+          "email" => "enc_test@example.com",
+          "prowl_api_key" => "secret-key-123"
+        })
+
+      raw =
+        BackyardGarden.Repo.one!(
+          from u in "users",
+            where: u.id == ^user.id,
+            select: u.prowl_api_key_enc
+        )
+
+      assert is_binary(raw)
+      refute raw == "secret-key-123"
+      assert user.prowl_api_key == "secret-key-123"
     end
   end
 

@@ -54,6 +54,7 @@ defmodule BackyardGardenWeb do
         layout: {BackyardGardenWeb.Layouts, :app}
 
       on_mount BackyardGardenWeb.NavHooks
+      on_mount BackyardGardenWeb.AuthHooks
 
       unquote(html_helpers())
     end

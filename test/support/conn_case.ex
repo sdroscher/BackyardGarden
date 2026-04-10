@@ -35,4 +35,9 @@ defmodule BackyardGardenWeb.ConnCase do
     BackyardGarden.DataCase.setup_sandbox(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
+
+  @doc "Puts an authenticated user in the session for controller/LiveView tests."
+  def log_in_user(conn, user) do
+    Plug.Test.init_test_session(conn, %{user_id: user.id})
+  end
 end

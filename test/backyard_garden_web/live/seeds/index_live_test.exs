@@ -4,8 +4,12 @@ defmodule BackyardGardenWeb.Seeds.IndexLiveTest do
   import Phoenix.LiveViewTest
 
   alias BackyardGarden.Seeds
+  alias BackyardGarden.Test.Fixtures
 
-  setup do
+  setup %{conn: conn} do
+    user = Fixtures.user_fixture()
+    conn = log_in_user(conn, user)
+
     {:ok, basil} =
       Seeds.create_seed(%{
         name: "Basil",
@@ -33,7 +37,7 @@ defmodule BackyardGardenWeb.Seeds.IndexLiveTest do
         ideal_planting_time: "Early Spring"
       })
 
-    %{basil: basil, carrots: carrots, echinacea: echinacea}
+    %{conn: conn, basil: basil, carrots: carrots, echinacea: echinacea}
   end
 
   test "renders all seeds", %{conn: conn} do

@@ -32,4 +32,23 @@ defmodule BackyardGarden.Users do
   def list_users do
     Repo.all(User)
   end
+
+  @doc """
+  Creates or updates a user based on their Auth0 credentials.
+
+  Lookup order:
+  1. Match on auth0_id (returning user, fast path)
+  2. Match on email (existing account without auth0_id — links the auth0_id so
+     all existing garden data is preserved)
+  3. Create a new user
+  """
+  def upsert_from_auth0(%{uid: auth0_id, info: %{email: email, name: name}}) do
+    case Repo.get_by(User, auth0_id: auth0_id) || (email && Repo.get_by(User, email: email)) do
+      nil ->
+        create_user(%{"auth0_id" => auth0_id, "email" => email, "name" => name})
+
+      user ->
+        update_user(user, %{"auth0_id" => auth0_id, "name" => name})
+    end
+  end
 end

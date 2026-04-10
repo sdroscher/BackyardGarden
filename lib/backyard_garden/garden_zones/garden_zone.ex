@@ -15,13 +15,21 @@ defmodule BackyardGarden.GardenZones.GardenZone do
     field :sun_exposures, :string
     field :allowed_types, :string
     field :allowed_cycles, :string
+    belongs_to :user, BackyardGarden.Users.User
 
     timestamps()
   end
 
   def changeset(zone, attrs) do
     zone
-    |> cast(attrs, [:name, :description, :sun_exposures, :allowed_types, :allowed_cycles])
+    |> cast(attrs, [
+      :name,
+      :description,
+      :sun_exposures,
+      :allowed_types,
+      :allowed_cycles,
+      :user_id
+    ])
     |> validate_required([:name])
   end
 end

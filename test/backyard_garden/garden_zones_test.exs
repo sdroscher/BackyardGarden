@@ -3,6 +3,7 @@ defmodule BackyardGarden.GardenZonesTest do
 
   alias BackyardGarden.GardenZones
   alias BackyardGarden.GardenZones.GardenZone
+  alias BackyardGarden.Test.Fixtures
 
   defp zone_fixture(attrs \\ %{}) do
     defaults = %{
@@ -16,12 +17,20 @@ defmodule BackyardGarden.GardenZonesTest do
     zone
   end
 
-  describe "list_zones/0" do
-    test "returns all zones ordered by name" do
-      zone_fixture(%{name: "Back Garden"})
-      zone_fixture(%{name: "Herb Boxes"})
-      zones = GardenZones.list_zones()
+  describe "list_zones/1" do
+    test "returns zones for a user ordered by name" do
+      user = Fixtures.user_fixture()
+      zone_fixture(%{name: "Back Garden", user_id: user.id})
+      zone_fixture(%{name: "Herb Boxes", user_id: user.id})
+      zones = GardenZones.list_zones(user.id)
       assert Enum.map(zones, & &1.name) == ["Back Garden", "Herb Boxes"]
+    end
+
+    test "does not return another user's zones" do
+      user_a = Fixtures.user_fixture()
+      user_b = Fixtures.user_fixture()
+      zone_fixture(%{name: "User A Zone", user_id: user_a.id})
+      assert GardenZones.list_zones(user_b.id) == []
     end
   end
 

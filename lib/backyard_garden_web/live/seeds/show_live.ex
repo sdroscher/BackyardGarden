@@ -12,7 +12,7 @@ defmodule BackyardGardenWeb.Seeds.ShowLive do
   def mount(%{"id" => id}, _session, socket) do
     seed = Seeds.get_seed_with_supplier!(id)
     status = season_status(seed)
-    zones = GardenZones.recommend_zones(seed)
+    zones = GardenZones.recommend_zones(socket.assigns.current_user.id, seed)
 
     {:ok,
      socket
@@ -62,7 +62,9 @@ defmodule BackyardGardenWeb.Seeds.ShowLive do
 
   @impl true
   def handle_event("save_planting", %{"planting" => params}, socket) do
-    case Plantings.create_planting(normalise_params(params)) do
+    params = params |> normalise_params() |> Map.put("user_id", socket.assigns.current_user.id)
+
+    case Plantings.create_planting(params) do
       {:ok, _} ->
         {:noreply,
          socket

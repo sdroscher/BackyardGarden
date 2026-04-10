@@ -7,25 +7,26 @@ defmodule BackyardGarden.Plantings do
   alias BackyardGarden.Repo
   alias BackyardGarden.Plantings.Planting
 
-  @doc "Returns all plantings preloaded with seed and zone, ordered by inserted_at desc."
-  def list_plantings do
+  @doc "Returns all plantings for a user, preloaded with seed and zone, ordered by inserted_at desc."
+  def list_plantings(user_id) do
     Planting
+    |> where([p], p.user_id == ^user_id)
     |> order_by([p], desc: p.inserted_at)
     |> preload([:seed, :zone])
     |> Repo.all()
   end
 
-  @doc "Returns all plantings with the given status, preloaded with seed and zone."
-  def list_plantings_by_status(status) do
+  @doc "Returns all plantings for a user with the given status, preloaded with seed and zone."
+  def list_plantings_by_status(user_id, status) do
     Planting
-    |> where([p], p.status == ^status)
+    |> where([p], p.user_id == ^user_id and p.status == ^status)
     |> order_by([p], desc: p.inserted_at)
     |> preload([:seed, :zone])
     |> Repo.all()
   end
 
   @doc """
-  Returns plantings relevant to the given month — either planted in that month,
+  Returns plantings for a user relevant to the given month — either planted in that month,
   or with a harvest due date (planted_at + seed.maturity_days) in that month.
 
   The harvest-due filter is applied in Elixir (not SQL) because it requires
@@ -33,11 +34,11 @@ defmodule BackyardGarden.Plantings do
   SQL expression would require a join-based computed column, which is impractical
   with the current schema.
   """
-  def list_plantings_for_month(%Date{} = first_day) do
+  def list_plantings_for_month(user_id, %Date{} = first_day) do
     last_day = Date.end_of_month(first_day)
 
     Planting
-    |> where([p], not is_nil(p.planted_at))
+    |> where([p], p.user_id == ^user_id and not is_nil(p.planted_at))
     |> preload(:seed)
     |> Repo.all()
     |> Enum.filter(fn planting ->

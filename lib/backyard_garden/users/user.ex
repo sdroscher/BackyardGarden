@@ -12,8 +12,10 @@ defmodule BackyardGarden.Users.User do
   schema "users" do
     field :email, :string
     field :name, :string
+    field :auth0_id, :string
+    field :location, :string
     field :timezone, :string, default: "America/Vancouver"
-    field :prowl_api_key, :string
+    field :prowl_api_key, BackyardGarden.Encrypted.Binary, source: :prowl_api_key_enc
     field :notifications_enabled, :boolean, default: true
     field :morning_reminder_hour, :integer, default: 8
     field :evening_reminder_hour, :integer, default: 18
@@ -26,6 +28,8 @@ defmodule BackyardGarden.Users.User do
     |> cast(attrs, [
       :email,
       :name,
+      :auth0_id,
+      :location,
       :timezone,
       :prowl_api_key,
       :notifications_enabled,
@@ -34,5 +38,6 @@ defmodule BackyardGarden.Users.User do
     ])
     |> validate_required([:email])
     |> unique_constraint(:email)
+    |> unique_constraint(:auth0_id)
   end
 end

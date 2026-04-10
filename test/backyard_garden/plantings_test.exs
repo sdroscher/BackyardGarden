@@ -4,6 +4,7 @@ defmodule BackyardGarden.PlantingsTest do
   alias BackyardGarden.Plantings
   alias BackyardGarden.Plantings.Planting
   alias BackyardGarden.Seeds
+  alias BackyardGarden.Test.Fixtures
 
   defp seed_fixture(attrs \\ %{}) do
     defaults = %{name: "Test Seed", brand: "Metchosin Farm", type: "Herb", cycle: "Annual"}
@@ -17,20 +18,22 @@ defmodule BackyardGarden.PlantingsTest do
     planting
   end
 
-  describe "list_plantings/0" do
-    test "returns all plantings" do
+  describe "list_plantings/1" do
+    test "returns all plantings for a user" do
+      user = Fixtures.user_fixture()
       seed = seed_fixture()
-      planting_fixture(seed)
-      assert length(Plantings.list_plantings()) == 1
+      planting_fixture(seed, %{user_id: user.id})
+      assert length(Plantings.list_plantings(user.id)) == 1
     end
   end
 
-  describe "list_plantings_by_status/1" do
-    test "returns only plantings with the given status" do
+  describe "list_plantings_by_status/2" do
+    test "returns only plantings with the given status for a user" do
+      user = Fixtures.user_fixture()
       seed = seed_fixture()
-      planting_fixture(seed, %{status: "planned"})
-      planting_fixture(seed, %{status: "planted"})
-      planned = Plantings.list_plantings_by_status("planned")
+      planting_fixture(seed, %{user_id: user.id, status: "planned"})
+      planting_fixture(seed, %{user_id: user.id, status: "planted"})
+      planned = Plantings.list_plantings_by_status(user.id, "planned")
       assert length(planned) == 1
       assert hd(planned).status == "planned"
     end
@@ -103,24 +106,60 @@ defmodule BackyardGarden.PlantingsTest do
     end
   end
 
-  describe "list_plantings_for_month/1" do
+  describe "list_plantings_for_month/2" do
     test "returns plantings planted in the given month" do
+      user = Fixtures.user_fixture()
       seed = seed_fixture()
-      planting_fixture(seed, %{status: "planted", planted_at: ~D[2026-04-15]})
-      planting_fixture(seed, %{status: "planted", planted_at: ~D[2026-03-10]})
+      planting_fixture(seed, %{user_id: user.id, status: "planted", planted_at: ~D[2026-04-15]})
+      planting_fixture(seed, %{user_id: user.id, status: "planted", planted_at: ~D[2026-03-10]})
       april = ~D[2026-04-01]
-      results = Plantings.list_plantings_for_month(april)
+      results = Plantings.list_plantings_for_month(user.id, april)
       assert length(results) == 1
       assert hd(results).planted_at == ~D[2026-04-15]
     end
 
     test "returns plantings with harvest due in the given month" do
+      user = Fixtures.user_fixture()
       seed = seed_fixture(%{maturity_days: 50})
       # planted March 15 + 50 days = May 4 → harvest due in May
-      planting_fixture(seed, %{status: "planted", planted_at: ~D[2026-03-15]})
+      planting_fixture(seed, %{user_id: user.id, status: "planted", planted_at: ~D[2026-03-15]})
       may = ~D[2026-05-01]
-      results = Plantings.list_plantings_for_month(may)
+      results = Plantings.list_plantings_for_month(user.id, may)
       assert length(results) == 1
+    end
+  end
+
+  describe "user scoping" do
+    test "list_plantings/1 returns only user's plantings" do
+      user_a = Fixtures.user_fixture()
+      user_b = Fixtures.user_fixture()
+      seed = seed_fixture()
+
+      {:ok, planting_a} =
+        Plantings.create_planting(%{seed_id: seed.id, user_id: user_a.id, status: "planted"})
+
+      {:ok, _planting_b} =
+        Plantings.create_planting(%{seed_id: seed.id, user_id: user_b.id, status: "planted"})
+
+      result = Plantings.list_plantings(user_a.id)
+      assert length(result) == 1
+      assert hd(result).id == planting_a.id
+    end
+
+    test "list_plantings_by_status/2 scopes to user" do
+      user_a = Fixtures.user_fixture()
+      user_b = Fixtures.user_fixture()
+      seed = seed_fixture()
+
+      {:ok, planting_a} =
+        Plantings.create_planting(%{seed_id: seed.id, user_id: user_a.id, status: "planted"})
+
+      {:ok, _} =
+        Plantings.create_planting(%{seed_id: seed.id, user_id: user_b.id, status: "planted"})
+
+      result = Plantings.list_plantings_by_status(user_a.id, "planted")
+      assert length(result) == 1
+      assert hd(result).id == planting_a.id
     end
   end
 end

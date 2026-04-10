@@ -72,7 +72,10 @@ defmodule BackyardGarden.MixProject do
       {:tzdata, "~> 1.1"},
       {:dotenvy, "~> 0.8", only: [:dev, :test]},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false}
+      {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
+      {:ueberauth, "~> 0.10"},
+      {:ueberauth_auth0, "~> 2.1"},
+      {:cloak_ecto, "~> 1.3"}
     ]
   end
 

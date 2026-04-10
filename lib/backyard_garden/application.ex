@@ -10,6 +10,7 @@ defmodule BackyardGarden.Application do
     children = [
       BackyardGardenWeb.Telemetry,
       BackyardGarden.Repo,
+      BackyardGarden.Vault,
       {DNSCluster, query: Application.get_env(:backyard_garden, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: BackyardGarden.PubSub},
       BackyardGarden.Weather.Cache,

@@ -47,7 +47,9 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
        |> assign(:quick_log_zones, [])}
     else
       seed = Enum.find(socket.assigns.plant_now, &(&1.id == seed_id))
-      zones = if seed, do: GardenZones.recommend_zones(seed), else: []
+
+      zones =
+        if seed, do: GardenZones.recommend_zones(socket.assigns.current_user.id, seed), else: []
 
       form =
         %Plantings.Planting{}
@@ -79,7 +81,12 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
 
   @impl true
   def handle_event("save_quick_log", %{"planting" => params}, socket) do
-    case Plantings.create_planting(normalise_planting_params(params)) do
+    params =
+      params
+      |> normalise_planting_params()
+      |> Map.put("user_id", socket.assigns.current_user.id)
+
+    case Plantings.create_planting(params) do
       {:ok, _planting} ->
         {:noreply,
          socket
@@ -106,10 +113,12 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
   end
 
   defp load_dashboard(socket) do
+    user_id = socket.assigns.current_user.id
+
     socket
-    |> assign(:plant_now, Dashboard.plant_now_seeds())
-    |> assign(:recently_planted, Dashboard.recently_planted())
-    |> assign(:upcoming, Dashboard.upcoming_schedule())
+    |> assign(:plant_now, Dashboard.plant_now_seeds(user_id))
+    |> assign(:recently_planted, Dashboard.recently_planted(user_id))
+    |> assign(:upcoming, Dashboard.upcoming_schedule(user_id))
   end
 
   defp local_today do

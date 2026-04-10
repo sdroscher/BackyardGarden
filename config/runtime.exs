@@ -28,6 +28,20 @@ end
 config :backyard_garden, BackyardGardenWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+cloak_key =
+  System.get_env("CLOAK_KEY") ||
+    if config_env() == :prod do
+      raise "environment variable CLOAK_KEY is missing. Generate with: mix run -e 'IO.puts Base.encode64(:crypto.strong_rand_bytes(32))'"
+    else
+      # Dev/test stable fallback — paste a real key from the command above into .env as CLOAK_KEY=<value>
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    end
+
+config :backyard_garden, BackyardGarden.Vault,
+  ciphers: [
+    default: {Cloak.Ciphers.AES.GCM, tag: "AES.GCM.V1", key: Base.decode64!(cloak_key)}
+  ]
+
 config :backyard_garden, :weather,
   base_url: "https://api.openweathermap.org",
   api_key: System.get_env("OPENWEATHERMAP_API_KEY", "")
@@ -35,6 +49,11 @@ config :backyard_garden, :weather,
 config :backyard_garden, :default_location, System.get_env("DEFAULT_LOCATION", "Victoria, BC")
 
 config :backyard_garden, :timezone, System.get_env("TIMEZONE", "America/Vancouver")
+
+config :ueberauth, Ueberauth.Strategy.Auth0.OAuth,
+  domain: System.get_env("AUTH0_DOMAIN", "placeholder.auth0.com"),
+  client_id: System.get_env("AUTH0_CLIENT_ID", "placeholder"),
+  client_secret: System.get_env("AUTH0_CLIENT_SECRET", "placeholder")
 
 if config_env() == :prod do
   database_path =

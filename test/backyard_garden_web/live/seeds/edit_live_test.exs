@@ -4,8 +4,12 @@ defmodule BackyardGardenWeb.Seeds.EditLiveTest do
   import Phoenix.LiveViewTest
 
   alias BackyardGarden.Seeds
+  alias BackyardGarden.Test.Fixtures
 
-  setup do
+  setup %{conn: conn} do
+    user = Fixtures.user_fixture()
+    conn = log_in_user(conn, user)
+
     {:ok, seed} =
       Seeds.create_seed(%{
         name: "Basil",
@@ -15,7 +19,7 @@ defmodule BackyardGardenWeb.Seeds.EditLiveTest do
         maturity_days: 60
       })
 
-    %{seed: seed}
+    %{conn: conn, seed: seed}
   end
 
   test "renders edit form with seed fields pre-filled", %{conn: conn, seed: seed} do

@@ -47,7 +47,9 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
        |> assign(:quick_log_zones, [])}
     else
       seed = Enum.find(socket.assigns.plant_now, &(&1.id == seed_id))
-      zones = if seed, do: GardenZones.recommend_zones(socket.assigns.current_user.id, seed), else: []
+
+      zones =
+        if seed, do: GardenZones.recommend_zones(socket.assigns.current_user.id, seed), else: []
 
       form =
         %Plantings.Planting{}

@@ -75,7 +75,10 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
     assert html =~ "May Beans"
   end
 
-  test "shows frost warning banner when forecast has sub-zero temperatures", %{conn: conn, user: user} do
+  test "shows frost warning banner when forecast has sub-zero temperatures", %{
+    conn: conn,
+    user: user
+  } do
     # WeatherClientStub returns sub-zero forecast for "FrostCity"
     original = Application.get_env(:backyard_garden, :default_location)
     Application.put_env(:backyard_garden, :default_location, "FrostCity")

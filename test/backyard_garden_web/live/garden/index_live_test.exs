@@ -77,7 +77,9 @@ defmodule BackyardGardenWeb.Garden.IndexLiveTest do
 
   test "mark harvested action updates status", %{conn: conn, user: user} do
     seed = seed_fixture(%{name: "Basil"})
-    planting = planting_fixture(seed, %{user_id: user.id, status: "planted", planted_at: ~D[2026-03-27]})
+
+    planting =
+      planting_fixture(seed, %{user_id: user.id, status: "planted", planted_at: ~D[2026-03-27]})
 
     {:ok, view, _html} = live(conn, ~p"/garden")
     html = render_click(view, "mark_harvested", %{"id" => planting.id})

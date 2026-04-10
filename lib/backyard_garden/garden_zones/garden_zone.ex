@@ -22,7 +22,14 @@ defmodule BackyardGarden.GardenZones.GardenZone do
 
   def changeset(zone, attrs) do
     zone
-    |> cast(attrs, [:name, :description, :sun_exposures, :allowed_types, :allowed_cycles, :user_id])
+    |> cast(attrs, [
+      :name,
+      :description,
+      :sun_exposures,
+      :allowed_types,
+      :allowed_cycles,
+      :user_id
+    ])
     |> validate_required([:name])
   end
 end

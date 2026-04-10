@@ -107,7 +107,11 @@ defmodule BackyardGarden.DashboardTest do
       seed = seed_fixture(%{name: "Repeated"})
 
       for i <- 1..10 do
-        planting_fixture(seed, %{user_id: user.id, status: "planted", planted_at: Date.new!(2026, 3, i)})
+        planting_fixture(seed, %{
+          user_id: user.id,
+          status: "planted",
+          planted_at: Date.new!(2026, 3, i)
+        })
       end
 
       assert length(Dashboard.recently_planted(user.id, 3)) == 3

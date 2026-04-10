@@ -134,5 +134,4 @@ defmodule BackyardGardenWeb.Settings.NotificationsLive do
     </div>
     """
   end
-
 end

@@ -134,8 +134,12 @@ defmodule BackyardGarden.PlantingsTest do
       user_a = Fixtures.user_fixture()
       user_b = Fixtures.user_fixture()
       seed = seed_fixture()
-      {:ok, planting_a} = Plantings.create_planting(%{seed_id: seed.id, user_id: user_a.id, status: "planted"})
-      {:ok, _planting_b} = Plantings.create_planting(%{seed_id: seed.id, user_id: user_b.id, status: "planted"})
+
+      {:ok, planting_a} =
+        Plantings.create_planting(%{seed_id: seed.id, user_id: user_a.id, status: "planted"})
+
+      {:ok, _planting_b} =
+        Plantings.create_planting(%{seed_id: seed.id, user_id: user_b.id, status: "planted"})
 
       result = Plantings.list_plantings(user_a.id)
       assert length(result) == 1
@@ -146,8 +150,12 @@ defmodule BackyardGarden.PlantingsTest do
       user_a = Fixtures.user_fixture()
       user_b = Fixtures.user_fixture()
       seed = seed_fixture()
-      {:ok, planting_a} = Plantings.create_planting(%{seed_id: seed.id, user_id: user_a.id, status: "planted"})
-      {:ok, _} = Plantings.create_planting(%{seed_id: seed.id, user_id: user_b.id, status: "planted"})
+
+      {:ok, planting_a} =
+        Plantings.create_planting(%{seed_id: seed.id, user_id: user_a.id, status: "planted"})
+
+      {:ok, _} =
+        Plantings.create_planting(%{seed_id: seed.id, user_id: user_b.id, status: "planted"})
 
       result = Plantings.list_plantings_by_status(user_a.id, "planted")
       assert length(result) == 1

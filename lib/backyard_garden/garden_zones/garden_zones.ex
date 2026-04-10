@@ -7,9 +7,10 @@ defmodule BackyardGarden.GardenZones do
   alias BackyardGarden.Repo
   alias BackyardGarden.GardenZones.GardenZone
 
-  @doc "Returns all zones ordered by name."
-  def list_zones do
+  @doc "Returns all zones for a user, ordered by name."
+  def list_zones(user_id) do
     GardenZone
+    |> where([z], z.user_id == ^user_id)
     |> order_by([z], z.name)
     |> Repo.all()
   end
@@ -44,8 +45,8 @@ defmodule BackyardGarden.GardenZones do
 
   Zones with more matching criteria appear first (best match).
   """
-  def recommend_zones(seed) do
-    list_zones()
+  def recommend_zones(user_id, seed) do
+    list_zones(user_id)
     |> Enum.filter(&zone_compatible?(&1, seed))
     |> Enum.sort_by(&zone_match_score(&1, seed), :desc)
   end

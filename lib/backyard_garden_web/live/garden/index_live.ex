@@ -78,7 +78,7 @@ defmodule BackyardGardenWeb.Garden.IndexLive do
   def handle_event("edit_planting", %{"id" => id}, socket) do
     planting = Plantings.get_planting!(id)
     changeset = Plantings.change_planting(planting)
-    recommended_zones = GardenZones.recommend_zones(planting.seed)
+    recommended_zones = GardenZones.recommend_zones(socket.assigns.current_user.id, planting.seed)
 
     {:noreply,
      socket
@@ -106,7 +106,7 @@ defmodule BackyardGardenWeb.Garden.IndexLive do
     recommended_zones =
       case Seeds.get_seed(params["seed_id"]) do
         nil -> []
-        seed -> GardenZones.recommend_zones(seed)
+        seed -> GardenZones.recommend_zones(socket.assigns.current_user.id, seed)
       end
 
     {:noreply,
@@ -144,7 +144,7 @@ defmodule BackyardGardenWeb.Garden.IndexLive do
     recommended_zones =
       case Seeds.get_seed(seed_id) do
         nil -> []
-        seed -> GardenZones.recommend_zones(seed)
+        seed -> GardenZones.recommend_zones(socket.assigns.current_user.id, seed)
       end
 
     {:noreply,

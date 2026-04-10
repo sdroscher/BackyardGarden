@@ -84,13 +84,14 @@ defmodule BackyardGardenWeb.Garden.IndexLiveTest do
     assert html =~ "harvested"
   end
 
-  test "shows zone recommendations when seed is selected in form", %{conn: conn} do
+  test "shows zone recommendations when seed is selected in form", %{conn: conn, user: user} do
     {:ok, _zone} =
       GardenZones.create_zone(%{
         name: "Sunny Raised Planters",
         sun_exposures: "full_sun",
         allowed_types: "Vegetable",
-        allowed_cycles: "Annual"
+        allowed_cycles: "Annual",
+        user_id: user.id
       })
 
     seed =

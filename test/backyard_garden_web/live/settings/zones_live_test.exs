@@ -11,8 +11,8 @@ defmodule BackyardGardenWeb.Settings.ZonesLiveTest do
     %{conn: log_in_user(conn, user), user: user}
   end
 
-  defp zone_fixture(attrs) do
-    defaults = %{name: "Test Zone", sun_exposures: "full_sun"}
+  defp zone_fixture(user, attrs) do
+    defaults = %{name: "Test Zone", sun_exposures: "full_sun", user_id: user.id}
     {:ok, zone} = GardenZones.create_zone(Map.merge(defaults, attrs))
     zone
   end
@@ -22,8 +22,8 @@ defmodule BackyardGardenWeb.Settings.ZonesLiveTest do
     assert html =~ "Garden Zones"
   end
 
-  test "lists all zones", %{conn: conn} do
-    zone_fixture(%{name: "My Zone"})
+  test "lists all zones", %{conn: conn, user: user} do
+    zone_fixture(user, %{name: "My Zone"})
     {:ok, _view, html} = live(conn, ~p"/settings/zones")
     assert html =~ "My Zone"
   end
@@ -45,15 +45,15 @@ defmodule BackyardGardenWeb.Settings.ZonesLiveTest do
     assert html =~ "Fruit Patch"
   end
 
-  test "deletes a zone", %{conn: conn} do
-    zone = zone_fixture(%{name: "Delete Me"})
+  test "deletes a zone", %{conn: conn, user: user} do
+    zone = zone_fixture(user, %{name: "Delete Me"})
     {:ok, view, _html} = live(conn, ~p"/settings/zones")
     html = render_click(view, "delete_zone", %{"id" => zone.id})
     refute html =~ "Delete Me"
   end
 
-  test "edits a zone", %{conn: conn} do
-    zone = zone_fixture(%{name: "Old Name"})
+  test "edits a zone", %{conn: conn, user: user} do
+    zone = zone_fixture(user, %{name: "Old Name"})
     {:ok, view, _html} = live(conn, ~p"/settings/zones")
     render_click(view, "edit_zone", %{"id" => zone.id})
 

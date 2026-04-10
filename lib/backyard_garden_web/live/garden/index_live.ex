@@ -10,25 +10,32 @@ defmodule BackyardGardenWeb.Garden.IndexLive do
   alias BackyardGarden.Plantings
   alias BackyardGarden.Plantings.Planting
   alias BackyardGarden.Seeds
+  alias BackyardGarden.Users
 
   @impl true
   def mount(_params, _session, socket) do
+    user = Users.get_user_by_email("simon@droscher.com")
+    timezone = (user && user.timezone) || "UTC"
+
     {:ok,
      socket
      |> assign(:page_title, "My Garden")
+     |> assign(:timezone, timezone)
      |> assign(:seeds, Seeds.list_seeds())
      |> assign(:show_form, false)
      |> assign(:form, nil)
      |> assign(:editing_planting, nil)
      |> assign(:edit_form, nil)
      |> assign(:recommended_zones, [])
+     |> assign(:in_trays, [])
+     |> assign(:hardening, [])
      |> load_plantings()}
   end
 
   @impl true
   def handle_event("mark_planted", %{"id" => id}, socket) do
     planting = Plantings.get_planting!(id)
-    today = Date.utc_today()
+    today = local_today(socket.assigns.timezone)
 
     {:ok, _} =
       Plantings.update_planting(planting, %{
@@ -44,7 +51,10 @@ defmodule BackyardGardenWeb.Garden.IndexLive do
     planting = Plantings.get_planting!(id)
 
     {:ok, _} =
-      Plantings.update_planting(planting, %{status: "harvested", harvested_at: Date.utc_today()})
+      Plantings.update_planting(planting, %{
+        status: "harvested",
+        harvested_at: local_today(socket.assigns.timezone)
+      })
 
     {:noreply, load_plantings(socket)}
   end
@@ -162,11 +172,52 @@ defmodule BackyardGardenWeb.Garden.IndexLive do
     end
   end
 
+  @impl true
+  def handle_event("mark_sown", %{"id" => id}, socket) do
+    planting = Plantings.get_planting!(id)
+
+    {:ok, _} =
+      Plantings.update_planting(planting, %{
+        status: "sown",
+        sown_at: local_today(socket.assigns.timezone)
+      })
+
+    {:noreply, load_plantings(socket)}
+  end
+
+  @impl true
+  def handle_event("mark_hardening", %{"id" => id}, socket) do
+    planting = Plantings.get_planting!(id)
+    {:ok, _} = Plantings.update_planting(planting, %{status: "hardening"})
+    {:noreply, load_plantings(socket)}
+  end
+
+  @impl true
+  def handle_event("mark_transplanted", %{"id" => id}, socket) do
+    planting = Plantings.get_planting!(id)
+
+    {:ok, _} =
+      Plantings.update_planting(planting, %{
+        status: "planted",
+        planted_at: local_today(socket.assigns.timezone)
+      })
+
+    {:noreply, load_plantings(socket)}
+  end
+
   defp load_plantings(socket) do
     socket
-    |> assign(:planted, Plantings.list_plantings_by_status("planted"))
     |> assign(:planned, Plantings.list_plantings_by_status("planned"))
+    |> assign(:in_trays, Plantings.list_plantings_by_status("sown"))
+    |> assign(:hardening, Plantings.list_plantings_by_status("hardening"))
+    |> assign(:planted, Plantings.list_plantings_by_status("planted"))
     |> assign(:harvested, Plantings.list_plantings_by_status("harvested"))
+  end
+
+  defp local_today(timezone) do
+    DateTime.utc_now()
+    |> DateTime.shift_zone!(timezone)
+    |> DateTime.to_date()
   end
 
   defp estimated_harvest(%{planted_at: nil}), do: nil

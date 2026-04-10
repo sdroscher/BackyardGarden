@@ -88,6 +88,40 @@ defmodule BackyardGardenWeb.Settings.NotificationsLive do
               type="checkbox"
             />
 
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <.input
+                field={@form[:morning_reminder_hour]}
+                label="Morning reminder time"
+                type="select"
+                options={[
+                  {"6:00 AM", 6},
+                  {"7:00 AM", 7},
+                  {"8:00 AM", 8},
+                  {"9:00 AM", 9},
+                  {"10:00 AM", 10},
+                  {"11:00 AM", 11}
+                ]}
+              />
+              <.input
+                field={@form[:evening_reminder_hour]}
+                label="Evening reminder time"
+                type="select"
+                options={[
+                  {"4:00 PM", 16},
+                  {"5:00 PM", 17},
+                  {"6:00 PM", 18},
+                  {"7:00 PM", 19},
+                  {"8:00 PM", 20},
+                  {"9:00 PM", 21},
+                  {"10:00 PM", 22}
+                ]}
+              />
+            </div>
+            <p class="text-sm text-[#6b7280]">
+              Morning reminders include seedling sow-date alerts and hardening prompts.
+              Evening reminders include the bring-seedlings-inside prompt.
+            </p>
+
             <div class="pt-2">
               <button
                 type="submit"

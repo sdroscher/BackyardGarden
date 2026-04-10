@@ -71,7 +71,9 @@ defmodule BackyardGarden.Weather.Client do
       feels_like: get_in(body, ["main", "feels_like"]),
       condition: get_in(body, ["weather", Access.at(0), "main"]),
       description: get_in(body, ["weather", Access.at(0), "description"]),
-      icon: get_in(body, ["weather", Access.at(0), "icon"])
+      icon: get_in(body, ["weather", Access.at(0), "icon"]),
+      # Wind speed in m/s from API; convert to km/h for readability
+      wind_speed_kmh: (get_in(body, ["wind", "speed"]) || 0) * 3.6
     }
   end
 

@@ -15,6 +15,8 @@ defmodule BackyardGarden.Seeds.Seed do
     field :sun_requirement, :string
     field :source_url, :string
     field :notes, :string
+    field :weeks_to_start_indoors, :integer
+    field :hardening_days, :integer
 
     belongs_to :supplier_product, BackyardGarden.SupplierCatalog.SupplierProduct, type: :binary_id
 
@@ -34,6 +36,8 @@ defmodule BackyardGarden.Seeds.Seed do
       :sun_requirement,
       :source_url,
       :notes,
+      :weeks_to_start_indoors,
+      :hardening_days,
       :supplier_product_id
     ])
     |> validate_required([:name])

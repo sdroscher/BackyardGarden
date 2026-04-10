@@ -23,9 +23,9 @@ config :backyard_garden, Oban,
   plugins: [
     {Oban.Plugins.Cron,
      crons: [
-       daily_check: [
-         schedule: "0 7 * * *",
-         worker: "BackyardGarden.Workers.DailyCheckWorker"
+       hourly_check: [
+         schedule: "0 * * * *",
+         worker: "BackyardGarden.Workers.HourlyCheckWorker"
        ]
      ]}
   ]

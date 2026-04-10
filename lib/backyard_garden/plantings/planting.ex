@@ -9,10 +9,11 @@ defmodule BackyardGarden.Plantings.Planting do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
-  @valid_statuses ~w(planned planted harvested)
+  @valid_statuses ~w(planned sown hardening planted harvested)
 
   schema "plantings" do
     field :status, :string, default: "planned"
+    field :sown_at, :date
     field :planted_at, :date
     field :harvested_at, :date
     field :location, :string
@@ -32,6 +33,7 @@ defmodule BackyardGarden.Plantings.Planting do
       :seed_id,
       :zone_id,
       :status,
+      :sown_at,
       :planted_at,
       :harvested_at,
       :location,

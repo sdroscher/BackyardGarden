@@ -21,7 +21,8 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
   end
 
   defp greeting do
-    day = Date.utc_today() |> Calendar.strftime("%A")
+    tz = Application.get_env(:backyard_garden, :timezone, "America/Vancouver")
+    day = DateTime.now!(tz) |> DateTime.to_date() |> Calendar.strftime("%A")
     "Good #{time_of_day()}, happy #{day}"
   end
 
@@ -52,7 +53,7 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
         %Plantings.Planting{}
         |> Plantings.change_planting(%{
           seed_id: seed_id,
-          planted_at: Date.utc_today(),
+          planted_at: local_today(),
           status: "planted"
         })
         |> to_form(as: "planting")
@@ -109,6 +110,11 @@ defmodule BackyardGardenWeb.Dashboard.IndexLive do
     |> assign(:plant_now, Dashboard.plant_now_seeds())
     |> assign(:recently_planted, Dashboard.recently_planted())
     |> assign(:upcoming, Dashboard.upcoming_schedule())
+  end
+
+  defp local_today do
+    tz = Application.get_env(:backyard_garden, :timezone, "America/Vancouver")
+    DateTime.now!(tz) |> DateTime.to_date()
   end
 
   defp load_weather(socket) do

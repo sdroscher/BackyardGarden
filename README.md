@@ -23,10 +23,19 @@ Built with **Elixir + Phoenix LiveView**, deployed to **fly.io**.
 - Weather-aware planting tips via OpenWeatherMap
 
 **Phase 4 — Complete**
-- iOS push notifications via [Prowl](https://www.prowlapp.com/) — daily checks for plant-now and harvest-soon conditions
-- Notification settings page — configure Prowl API key and notification preferences
+- iOS push notifications via [Prowl](https://www.prowlapp.com/) — hourly checks dispatched at each user's preferred morning/evening times
+- Notification types: plant-now, harvest-soon, sow-now, start-hardening, hardening-morning, hardening-evening, hardening-weather-warning
+- Weather-aware hardening alerts: warns when rain, high wind (>40 km/h), or heat (>30°C) is forecast
+- Notification settings page — configure Prowl API key, enable/disable notifications, and set morning/evening reminder times
 - User context with timezone and notification settings
 - Oban job infrastructure (plant checking, notification sending) — ready for deployment
+
+**Session Improvements (April 2026)**
+- Seedling tracking — full indoor lifecycle: sow in trays → harden outdoors → transplant; new planting statuses `sown` and `hardening`
+- Seed edit page — edit any seed's details including new seedling fields (`weeks_to_start_indoors`, `hardening_days`)
+- Edit logged plantings — inline edit form on My Garden page for any planting
+- Timezone-correct date handling — all dates use the configured app timezone, not UTC
+- Flash messages now appear below the navigation bar
 
 **Phase 5+ — Planned**
 - Auth0 login (Google, Apple, email)
@@ -95,9 +104,15 @@ Set `OPENWEATHERMAP_API_KEY` in `.env` (auto-loaded in dev). Location format mus
 ```
 lib/
   backyard_garden/          # business logic (contexts)
-    seeds/                  # Seeds context + schema
+    seeds/                  # Seeds context + schema (includes seedling fields)
     supplier_catalog/       # SupplierCatalog context, SupplierProduct schema, scrapers
-    garden/                 # Plantings, Zones contexts (Phase 2)
+    plantings/              # Plantings context + schema (planned/sown/hardening/planted/harvested)
+    garden_zones/           # GardenZones context + zone recommendation engine
+    users/                  # Users context (timezone, notification prefs)
+    notifications/          # Notifications context + delivery tracking
+    workers/                # Oban workers: HourlyCheckWorker, ProwlNotifierJob
+    weather/                # Weather facade, HTTP client, ETS cache, tip generation
+    dashboard/              # Dashboard query functions
   backyard_garden_web/      # web layer (LiveViews, router, layouts)
   mix/tasks/                # mix supplier.scrape / match / link
 priv/
@@ -128,19 +143,29 @@ fly deploy
 
 ## Prowl Notifications (Phase 4)
 
-Receive daily iOS push notifications when plants are ready to plant or about to harvest.
+Receive iOS push notifications for planting events and seedling reminders.
 
 ### Setup
 
 1. Install [Prowl](https://www.prowlapp.com/) on your iOS device (free app)
 2. Get your Prowl API key from [https://www.prowlapp.com/](https://www.prowlapp.com/)
 3. Add it via the settings page at `/settings/notifications`
+4. Set your preferred morning and evening reminder times on the same page
 
-### Daily Job
+### Hourly Job
 
-The app includes an Oban job (`DailyCheckWorker`) that runs at 7am local time and checks:
+The app includes an Oban job (`HourlyCheckWorker`) that runs at the top of every hour. For each user it checks whether the current local hour matches their configured morning or evening reminder time, then sends the appropriate notifications.
+
+**Morning checks:**
 - **Plant Now** — seeds whose ideal planting window is open and haven't been planted yet
 - **Harvest Soon** — planted items within 7 days of harvest maturity
+- **Sow Now** — seedling plantings where today is the calculated indoor sow date
+- **Start Hardening** — seedlings that are ready to begin outdoor hardening
+- **Hardening Morning** — reminder to take seedlings outside (skipped if a weather warning is sent instead)
+- **Hardening Weather Warning** — rain, high wind (>40 km/h), or heat (>30°C) forecast; warns to keep seedlings inside
+
+**Evening checks:**
+- **Hardening Evening** — reminder to bring seedlings inside for the night
 
 **Known Issue:** Oban supervisor startup is currently commented out in `lib/backyard_garden/application.ex` due to SQLite+testing mode configuration. The job infrastructure is complete; uncomment the supervisor line once notifier configuration is finalized (auto-works with Postgres in Phase 6+).
 

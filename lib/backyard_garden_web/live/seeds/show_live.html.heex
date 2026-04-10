@@ -10,7 +10,15 @@
     <div class="bg-white rounded-xl border border-[#bbf7d0] p-5 space-y-4">
       <div class="flex items-start justify-between gap-3">
         <h1 class="text-xl font-bold text-[#14532d] leading-tight">{@seed.name}</h1>
-        <Layouts.type_badge type={@seed.type} />
+        <div class="flex items-center gap-2">
+          <Layouts.type_badge type={@seed.type} />
+          <.link
+            navigate={~p"/seeds/#{@seed.id}/edit"}
+            class="text-xs text-[#6b7280] hover:text-[#2d6a4f] transition-colors"
+          >
+            Edit
+          </.link>
+        </div>
       </div>
 
       <dl class="space-y-2 text-sm">
@@ -85,7 +93,7 @@
                     {"— no zone —", ""}
                     | Enum.map(
                         @log_zones,
-                        &{"#{if(&1.score && &1.score > 0, do: "★ ", else: "")}#{&1.name}", &1.id}
+                        &{&1.name, &1.id}
                       )
                   ]}
                 />

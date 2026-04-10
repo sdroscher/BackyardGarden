@@ -50,6 +50,11 @@ config :backyard_garden, :default_location, System.get_env("DEFAULT_LOCATION", "
 
 config :backyard_garden, :timezone, System.get_env("TIMEZONE", "America/Vancouver")
 
+config :ueberauth, Ueberauth.Strategy.Auth0.OAuth,
+  domain: System.get_env("AUTH0_DOMAIN", "placeholder.auth0.com"),
+  client_id: System.get_env("AUTH0_CLIENT_ID", "placeholder"),
+  client_secret: System.get_env("AUTH0_CLIENT_SECRET", "placeholder")
+
 if config_env() == :prod do
   database_path =
     System.get_env("DATABASE_PATH") ||

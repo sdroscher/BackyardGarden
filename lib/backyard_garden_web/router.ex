@@ -21,6 +21,12 @@ defmodule BackyardGardenWeb.Router do
   scope "/", BackyardGardenWeb do
     pipe_through :browser
 
+    # Auth0 OAuth — Ueberauth handles the request phase (redirect to Auth0);
+    # our controller handles the callback and logout.
+    get "/auth/auth0", AuthController, :request
+    get "/auth/auth0/callback", AuthController, :callback
+    delete "/auth/logout", AuthController, :delete
+
     live "/", Dashboard.IndexLive, :index
 
     live "/seeds", Seeds.IndexLive, :index

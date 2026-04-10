@@ -80,6 +80,17 @@ config :backyard_garden, :timezone, "America/Vancouver"
 
 config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 
+config :ueberauth, Ueberauth,
+  providers: [
+    auth0: {Ueberauth.Strategy.Auth0, []}
+  ]
+
+# Auth0 credentials are loaded from env in runtime.exs
+config :ueberauth, Ueberauth.Strategy.Auth0.OAuth,
+  domain: "placeholder.auth0.com",
+  client_id: "placeholder",
+  client_secret: "placeholder"
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

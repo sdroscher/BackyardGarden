@@ -147,7 +147,7 @@ The Prowl API key is encrypted at rest using AES-GCM. Generate a random 32-byte 
 
 ```bash
 # In iex or any shell with Elixir available:
-32 |> :crypto.strong_rand_bytes() |> Base.encode64() |> IO.puts()
+:crypto.strong_rand_bytes(32) |> Base.encode64() |> IO.puts()
 ```
 
 Add the output to `.env` as `CLOAK_KEY=<output>`.

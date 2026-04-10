@@ -119,6 +119,116 @@
     </div>
   <% end %>
 
+  <%!-- Edit Planting form --%>
+  <%= if @editing_planting do %>
+    <div class="rounded-[22px] overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
+      <div
+        class="px-6 py-4 flex items-center justify-between"
+        style="background: linear-gradient(135deg, #2d6a4f, #52b788);"
+      >
+        <span class="text-white text-base font-bold">
+          Edit Planting — {@editing_planting.seed.name}
+        </span>
+        <button
+          phx-click="cancel_edit"
+          class="text-white opacity-80 hover:opacity-100 transition-opacity text-xl leading-none"
+          aria-label="Dismiss"
+        >
+          &times;
+        </button>
+      </div>
+      <div class="bg-white px-6 pb-6 pt-4">
+        <.form
+          id="edit-planting-form"
+          for={@edit_form}
+          phx-submit="update_planting"
+          phx-change="validate_edit"
+          class="space-y-4"
+        >
+          <%!-- Seed selector --%>
+          <.input
+            field={@edit_form[:seed_id]}
+            type="select"
+            label="Seed"
+            options={Enum.map(@seeds, &{&1.name, &1.id})}
+            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+          />
+
+          <%!-- Status selector --%>
+          <.input
+            field={@edit_form[:status]}
+            type="select"
+            label="Status"
+            options={[{"Planned", "planned"}, {"Planted", "planted"}, {"Harvested", "harvested"}]}
+            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+          />
+
+          <%!-- Date planted --%>
+          <.input
+            field={@edit_form[:planted_at]}
+            type="date"
+            label="Date planted"
+            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+          />
+
+          <%!-- Date harvested --%>
+          <.input
+            field={@edit_form[:harvested_at]}
+            type="date"
+            label="Date harvested"
+            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+          />
+
+          <%!-- Location --%>
+          <.input
+            field={@edit_form[:location]}
+            type="text"
+            label="Location (optional)"
+            placeholder="e.g. east end of bed"
+            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+          />
+
+          <%!-- Notes --%>
+          <.input
+            field={@edit_form[:notes]}
+            type="textarea"
+            label="Notes (optional)"
+            rows="2"
+            class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+          />
+
+          <%!-- Zone selector --%>
+          <%= if @recommended_zones != [] do %>
+            <.input
+              field={@edit_form[:zone_id]}
+              type="select"
+              label="Zone"
+              options={[{"— no zone —", ""} | Enum.map(@recommended_zones, &{&1.name, &1.id})]}
+              class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+            />
+          <% end %>
+
+          <%!-- Buttons --%>
+          <div class="flex gap-3 pt-2">
+            <button
+              type="submit"
+              class="bg-[#2d6a4f] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#1a3a2a] transition-colors"
+            >
+              Save Changes
+            </button>
+            <button
+              type="button"
+              phx-click="cancel_edit"
+              class="rounded-lg px-4 py-2 text-sm font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </.form>
+      </div>
+    </div>
+  <% end %>
+
   <%!-- PLANTED section --%>
   <div class="rounded-[22px] overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
     <div
@@ -150,13 +260,22 @@
                 <% end %>
               </p>
             </div>
-            <button
-              phx-click="mark_harvested"
-              phx-value-id={planting.id}
-              class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
-            >
-              Mark Harvested
-            </button>
+            <div class="flex shrink-0 gap-2">
+              <button
+                phx-click="edit_planting"
+                phx-value-id={planting.id}
+                class="rounded-lg px-3 py-1.5 text-xs font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+              >
+                Edit
+              </button>
+              <button
+                phx-click="mark_harvested"
+                phx-value-id={planting.id}
+                class="rounded-lg px-3 py-1.5 text-xs font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+              >
+                Mark Harvested
+              </button>
+            </div>
           </li>
         </ul>
       <% end %>
@@ -191,13 +310,22 @@
                 <% end %>
               </p>
             </div>
-            <button
-              phx-click="mark_planted"
-              phx-value-id={planting.id}
-              class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
-            >
-              Mark Planted
-            </button>
+            <div class="flex shrink-0 gap-2">
+              <button
+                phx-click="edit_planting"
+                phx-value-id={planting.id}
+                class="rounded-lg px-3 py-1.5 text-xs font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+              >
+                Edit
+              </button>
+              <button
+                phx-click="mark_planted"
+                phx-value-id={planting.id}
+                class="rounded-lg px-3 py-1.5 text-xs font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+              >
+                Mark Planted
+              </button>
+            </div>
           </li>
         </ul>
       <% end %>
@@ -219,7 +347,7 @@
         <ul class="space-y-3">
           <li
             :for={planting <- @harvested}
-            class="flex items-start gap-4"
+            class="flex items-start justify-between gap-4"
             data-status={planting.status}
           >
             <div class="min-w-0">
@@ -231,6 +359,13 @@
                 Harvested: {planting.harvested_at}
               </p>
             </div>
+            <button
+              phx-click="edit_planting"
+              phx-value-id={planting.id}
+              class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+            >
+              Edit
+            </button>
           </li>
         </ul>
       <% end %>

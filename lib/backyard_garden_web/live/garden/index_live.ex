@@ -19,6 +19,8 @@ defmodule BackyardGardenWeb.Garden.IndexLive do
      |> assign(:seeds, Seeds.list_seeds())
      |> assign(:show_form, false)
      |> assign(:form, nil)
+     |> assign(:editing_planting, nil)
+     |> assign(:edit_form, nil)
      |> assign(:recommended_zones, [])
      |> load_plantings()}
   end
@@ -62,6 +64,66 @@ defmodule BackyardGardenWeb.Garden.IndexLive do
   @impl true
   def handle_event("hide_form", _params, socket) do
     {:noreply, assign(socket, show_form: false, form: nil, recommended_zones: [])}
+  end
+
+  @impl true
+  def handle_event("edit_planting", %{"id" => id}, socket) do
+    planting = Plantings.get_planting!(id)
+    changeset = Plantings.change_planting(planting)
+    recommended_zones = GardenZones.recommend_zones(planting.seed)
+
+    {:noreply,
+     socket
+     |> assign(:show_form, false)
+     |> assign(:form, nil)
+     |> assign(:editing_planting, planting)
+     |> assign(:edit_form, to_form(changeset))
+     |> assign(:recommended_zones, recommended_zones)}
+  end
+
+  @impl true
+  def handle_event("cancel_edit", _params, socket) do
+    {:noreply, assign(socket, editing_planting: nil, edit_form: nil, recommended_zones: [])}
+  end
+
+  @impl true
+  def handle_event("validate_edit", %{"planting" => params}, socket) do
+    planting = socket.assigns.editing_planting
+
+    changeset =
+      planting
+      |> Plantings.change_planting(params)
+      |> Map.put(:action, :validate)
+
+    recommended_zones =
+      case Seeds.get_seed(params["seed_id"]) do
+        nil -> []
+        seed -> GardenZones.recommend_zones(seed)
+      end
+
+    {:noreply,
+     socket
+     |> assign(:edit_form, to_form(changeset))
+     |> assign(:recommended_zones, recommended_zones)}
+  end
+
+  @impl true
+  def handle_event("update_planting", %{"planting" => params}, socket) do
+    planting = socket.assigns.editing_planting
+
+    case Plantings.update_planting(planting, params) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Planting updated successfully.")
+         |> assign(:editing_planting, nil)
+         |> assign(:edit_form, nil)
+         |> assign(:recommended_zones, [])
+         |> load_plantings()}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, :edit_form, to_form(changeset))}
+    end
   end
 
   @impl true

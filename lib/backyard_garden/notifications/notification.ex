@@ -9,7 +9,7 @@ defmodule BackyardGarden.Notifications.Notification do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
-  @valid_types ~w(plant_now harvest_soon frost_warning)
+  @valid_types ~w(plant_now harvest_soon frost_warning sow_now start_hardening hardening_morning hardening_evening hardening_weather_warning)
 
   schema "notifications" do
     field :type, :string

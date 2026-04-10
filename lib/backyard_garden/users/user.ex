@@ -15,13 +15,23 @@ defmodule BackyardGarden.Users.User do
     field :timezone, :string, default: "America/Vancouver"
     field :prowl_api_key, :string
     field :notifications_enabled, :boolean, default: true
+    field :morning_reminder_hour, :integer, default: 8
+    field :evening_reminder_hour, :integer, default: 18
 
     timestamps()
   end
 
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:email, :name, :timezone, :prowl_api_key, :notifications_enabled])
+    |> cast(attrs, [
+      :email,
+      :name,
+      :timezone,
+      :prowl_api_key,
+      :notifications_enabled,
+      :morning_reminder_hour,
+      :evening_reminder_hour
+    ])
     |> validate_required([:email])
     |> unique_constraint(:email)
   end

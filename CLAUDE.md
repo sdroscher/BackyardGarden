@@ -73,6 +73,10 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 - **`mix run -e` targets the dev DB** — never use for throwaway queries; use `iex -S mix` instead.
 - **Env vars loaded via dotenvy** — `.env` is auto-loaded in dev via `config/runtime.exs`; never put secrets in committed config files. Weather: `OPENWEATHERMAP_API_KEY=...`, location: `DEFAULT_LOCATION=Victoria,CA` (format: `City,CountryCode`). Prowl notifications: set `PROWL_API_KEY` in `.env` OR configure via `/settings/notifications` page (stored in database).
 - **`GardenZones.recommend_zones/1` returns plain structs** — no `.score` field; all returned zones are already filtered to compatible matches, sorted by quality.
+- **Local date from timezone** — `DateTime.utc_now() |> DateTime.shift_zone!(timezone) |> DateTime.to_date()` is the correct pattern throughout the app (tzdata is already a dep). Never use `Date.utc_today()` where a local date is needed.
+- **Migration timestamp collisions** — generating two migrations in the same second produces identical filenames; rename the second file to increment the timestamp by 1 (e.g. `...012321` → `...012322`).
+- **OpenWeatherMap wind speed** — returned in m/s under `["wind", "speed"]`; multiply by 3.6 for km/h. Guard with `|| 0` for nil safety.
+- **No early return in Elixir** — use `with false <- condition` (or pattern-match on `:ok`/`:error`) to bail out of a function with a specific value. `return/1` does not exist.
 - **Planting date field is `planted_at`** — the `Planting` schema field is `:planted_at`, not `:date_planted`.
 - **Credo strict mode is on.** `TODO` comments fail the build (exit_status 2). Max line length: 120.
 - **Oban + SQLite in testing mode** — Oban supervisor startup is complex with SQLite. Workaround: comment out supervisor in `application.ex` for dev/test, uncomment for Postgres (Phase 6+). Core Oban infrastructure (workers, jobs, config) works fine; issue is runtime notifier/engine configuration.

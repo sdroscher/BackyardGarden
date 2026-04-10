@@ -75,6 +75,47 @@ defmodule BackyardGarden.Plantings do
     Planting.changeset(planting, attrs)
   end
 
+  @doc """
+  Returns the calculated sow date for a planned seedling planting, or nil if any
+  required value (planted_at, weeks_to_start_indoors, hardening_days) is missing.
+  """
+  def sow_date(%{planted_at: nil}), do: nil
+  def sow_date(%{planted_at: _, seed: %{weeks_to_start_indoors: nil}}), do: nil
+  def sow_date(%{planted_at: _, seed: %{hardening_days: nil}}), do: nil
+
+  def sow_date(%{
+        planted_at: transplant,
+        seed: %{weeks_to_start_indoors: weeks, hardening_days: harden}
+      }) do
+    Date.add(transplant, -(weeks * 7 + harden))
+  end
+
+  @doc """
+  Returns the calculated hardening start date for a sown seedling planting, or nil
+  if any required value (sown_at, weeks_to_start_indoors) is missing.
+  """
+  def hardening_start_date(%{sown_at: nil}), do: nil
+  def hardening_start_date(%{sown_at: _, seed: %{weeks_to_start_indoors: nil}}), do: nil
+
+  def hardening_start_date(%{sown_at: sown, seed: %{weeks_to_start_indoors: weeks}}) do
+    Date.add(sown, weeks * 7)
+  end
+
+  @doc """
+  Returns the projected transplant date for a sown seedling planting, or nil if any
+  required value (sown_at, weeks_to_start_indoors, hardening_days) is missing.
+  """
+  def projected_transplant_date(%{sown_at: nil}), do: nil
+  def projected_transplant_date(%{sown_at: _, seed: %{weeks_to_start_indoors: nil}}), do: nil
+  def projected_transplant_date(%{sown_at: _, seed: %{hardening_days: nil}}), do: nil
+
+  def projected_transplant_date(%{
+        sown_at: sown,
+        seed: %{weeks_to_start_indoors: weeks, hardening_days: harden}
+      }) do
+    Date.add(sown, weeks * 7 + harden)
+  end
+
   # Private helpers
 
   defp planted_in_month?(%Planting{planted_at: date}, first_day, last_day) do

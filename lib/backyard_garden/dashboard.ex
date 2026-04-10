@@ -8,20 +8,20 @@ defmodule BackyardGarden.Dashboard do
 
   @doc """
   Seeds whose ideal planting window includes the month of `date`,
-  excluding seeds that already have a "planted" or "planned" planting.
+  excluding seeds that already have a "planted" or "planned" planting for this user.
   """
-  def plant_now_seeds(date \\ Date.utc_today()) do
-    active_ids = active_seed_ids()
+  def plant_now_seeds(user_id, date \\ Date.utc_today()) do
+    active_ids = active_seed_ids(user_id)
 
     Seeds.list_seeds()
     |> Enum.reject(&(&1.id in active_ids))
     |> Enum.filter(&in_planting_window?(&1, date))
   end
 
-  @doc "Returns the `limit` most recently planted plantings with seed preloaded."
-  def recently_planted(limit \\ 5) do
+  @doc "Returns the `limit` most recently planted plantings for a user with seed preloaded."
+  def recently_planted(user_id, limit \\ 5) do
     Planting
-    |> where([p], p.status == "planted")
+    |> where([p], p.user_id == ^user_id and p.status == "planted")
     |> order_by([p], desc: fragment("coalesce(?, ?)", p.planted_at, p.inserted_at))
     |> limit(^limit)
     |> preload(:seed)
@@ -30,11 +30,11 @@ defmodule BackyardGarden.Dashboard do
 
   @doc """
   Seeds whose ideal planting window opens between 1 and `days_ahead` days after `date`,
-  excluding seeds that already have a "planted" or "planned" planting.
+  excluding seeds that already have a "planted" or "planned" planting for this user.
   Returns `[{seed, window_open_date}]` sorted by `window_open_date`.
   """
-  def upcoming_schedule(date \\ Date.utc_today(), days_ahead \\ 60) do
-    active_ids = active_seed_ids()
+  def upcoming_schedule(user_id, date \\ Date.utc_today(), days_ahead \\ 60) do
+    active_ids = active_seed_ids(user_id)
 
     Seeds.list_seeds()
     |> Enum.reject(&(&1.id in active_ids))
@@ -49,9 +49,9 @@ defmodule BackyardGarden.Dashboard do
 
   # --- private ---
 
-  defp active_seed_ids do
+  defp active_seed_ids(user_id) do
     Planting
-    |> where([p], p.status in ["planted", "planned"])
+    |> where([p], p.user_id == ^user_id and p.status in ["planted", "planned"])
     |> select([p], p.seed_id)
     |> Repo.all()
   end

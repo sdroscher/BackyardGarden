@@ -30,27 +30,28 @@ defmodule BackyardGardenWeb.Garden.IndexLiveTest do
     assert html =~ "My Garden"
   end
 
-  test "shows PLANTED section with planting", %{conn: conn} do
+  test "shows PLANTED section with planting", %{conn: conn, user: user} do
     seed = seed_fixture(%{name: "Spinach"})
-    planting_fixture(seed, %{status: "planted", planted_at: ~D[2026-03-27]})
+    planting_fixture(seed, %{user_id: user.id, status: "planted", planted_at: ~D[2026-03-27]})
 
     {:ok, _view, html} = live(conn, ~p"/garden")
     assert html =~ "Spinach"
     assert html =~ "planted"
   end
 
-  test "shows PLANNED section with planting", %{conn: conn} do
+  test "shows PLANNED section with planting", %{conn: conn, user: user} do
     seed = seed_fixture(%{name: "Carrots"})
-    planting_fixture(seed, %{status: "planned"})
+    planting_fixture(seed, %{user_id: user.id, status: "planned"})
 
     {:ok, _view, html} = live(conn, ~p"/garden")
     assert html =~ "Carrots"
   end
 
-  test "shows HARVESTED section", %{conn: conn} do
+  test "shows HARVESTED section", %{conn: conn, user: user} do
     seed = seed_fixture(%{name: "Lettuce"})
 
     planting_fixture(seed, %{
+      user_id: user.id,
       status: "harvested",
       planted_at: ~D[2026-03-01],
       harvested_at: ~D[2026-04-01]
@@ -65,18 +66,18 @@ defmodule BackyardGardenWeb.Garden.IndexLiveTest do
     assert html =~ "Log Planting"
   end
 
-  test "mark planted action updates status", %{conn: conn} do
+  test "mark planted action updates status", %{conn: conn, user: user} do
     seed = seed_fixture(%{name: "Basil"})
-    planting = planting_fixture(seed, %{status: "planned"})
+    planting = planting_fixture(seed, %{user_id: user.id, status: "planned"})
 
     {:ok, view, _html} = live(conn, ~p"/garden")
     html = render_click(view, "mark_planted", %{"id" => planting.id})
     assert html =~ "planted"
   end
 
-  test "mark harvested action updates status", %{conn: conn} do
+  test "mark harvested action updates status", %{conn: conn, user: user} do
     seed = seed_fixture(%{name: "Basil"})
-    planting = planting_fixture(seed, %{status: "planted", planted_at: ~D[2026-03-27]})
+    planting = planting_fixture(seed, %{user_id: user.id, status: "planted", planted_at: ~D[2026-03-27]})
 
     {:ok, view, _html} = live(conn, ~p"/garden")
     html = render_click(view, "mark_harvested", %{"id" => planting.id})

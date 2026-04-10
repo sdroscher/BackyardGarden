@@ -46,7 +46,7 @@ defmodule BackyardGardenWeb.Calendar.IndexLive do
     month = socket.assigns.current_month
     {first_day, _last_day} = PlantingCalendar.month_range(month)
     weeks = PlantingCalendar.weeks_for_month(first_day)
-    plantings = Plantings.list_plantings_for_month(first_day)
+    plantings = Plantings.list_plantings_for_month(socket.assigns.current_user.id, first_day)
 
     events_by_date =
       Enum.reduce(plantings, %{}, fn planting, acc ->

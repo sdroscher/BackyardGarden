@@ -62,7 +62,9 @@ defmodule BackyardGardenWeb.Seeds.ShowLive do
 
   @impl true
   def handle_event("save_planting", %{"planting" => params}, socket) do
-    case Plantings.create_planting(normalise_params(params)) do
+    params = params |> normalise_params() |> Map.put("user_id", socket.assigns.current_user.id)
+
+    case Plantings.create_planting(params) do
       {:ok, _} ->
         {:noreply,
          socket

@@ -54,10 +54,13 @@ defmodule BackyardGardenWeb.Calendar.IndexLiveTest do
   test "shows planted seed name chip on its planted_at date", %{conn: conn} do
     seed = seed_fixture(%{name: "Spinach"})
     today = Date.utc_today()
+    user = BackyardGarden.Test.Fixtures.user_fixture()
+    conn = log_in_user(conn, user)
 
     {:ok, _} =
       Plantings.create_planting(%{
         seed_id: seed.id,
+        user_id: user.id,
         status: "planted",
         planted_at: today
       })

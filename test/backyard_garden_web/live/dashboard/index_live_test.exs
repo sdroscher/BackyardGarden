@@ -47,9 +47,9 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
     assert html =~ "April Spinach"
   end
 
-  test "does not show a planted seed in Plant Now", %{conn: conn} do
+  test "does not show a planted seed in Plant Now", %{conn: conn, user: user} do
     seed = seed_fixture(%{name: "Already Planted", ideal_planting_time: "spring"})
-    planting_fixture(seed, %{status: "planted", planted_at: ~D[2026-03-27]})
+    planting_fixture(seed, %{user_id: user.id, status: "planted", planted_at: ~D[2026-03-27]})
 
     {:ok, _view, html} = live(conn, ~p"/")
 
@@ -59,9 +59,9 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
     assert count <= 1
   end
 
-  test "shows a recently planted item in Recently Planted", %{conn: conn} do
+  test "shows a recently planted item in Recently Planted", %{conn: conn, user: user} do
     seed = seed_fixture(%{name: "Recent Basil"})
-    planting_fixture(seed, %{status: "planted", planted_at: ~D[2026-03-27]})
+    planting_fixture(seed, %{user_id: user.id, status: "planted", planted_at: ~D[2026-03-27]})
 
     {:ok, _view, html} = live(conn, ~p"/")
     assert html =~ "Recent Basil"
@@ -75,7 +75,7 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
     assert html =~ "May Beans"
   end
 
-  test "shows frost warning banner when forecast has sub-zero temperatures", %{conn: conn} do
+  test "shows frost warning banner when forecast has sub-zero temperatures", %{conn: conn, user: user} do
     # WeatherClientStub returns sub-zero forecast for "FrostCity"
     original = Application.get_env(:backyard_garden, :default_location)
     Application.put_env(:backyard_garden, :default_location, "FrostCity")
@@ -83,7 +83,7 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
 
     # has_planted must be true for frost warning to appear
     seed = seed_fixture(%{name: "Frost Test Seed"})
-    planting_fixture(seed, %{status: "planted", planted_at: ~D[2026-03-27]})
+    planting_fixture(seed, %{user_id: user.id, status: "planted", planted_at: ~D[2026-03-27]})
 
     {:ok, _view, html} = live(conn, ~p"/")
     assert html =~ "Frost"

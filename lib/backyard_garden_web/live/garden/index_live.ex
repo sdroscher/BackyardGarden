@@ -10,12 +10,10 @@ defmodule BackyardGardenWeb.Garden.IndexLive do
   alias BackyardGarden.Plantings
   alias BackyardGarden.Plantings.Planting
   alias BackyardGarden.Seeds
-  alias BackyardGarden.Users
 
   @impl true
   def mount(_params, _session, socket) do
-    user = Users.get_user_by_email("simon@droscher.com")
-    timezone = (user && user.timezone) || "UTC"
+    timezone = socket.assigns.current_user.timezone || "UTC"
 
     {:ok,
      socket
@@ -157,6 +155,8 @@ defmodule BackyardGardenWeb.Garden.IndexLive do
 
   @impl true
   def handle_event("save_planting", %{"planting" => params}, socket) do
+    params = Map.put(params, "user_id", socket.assigns.current_user.id)
+
     case Plantings.create_planting(params) do
       {:ok, _planting} ->
         {:noreply,
@@ -206,12 +206,14 @@ defmodule BackyardGardenWeb.Garden.IndexLive do
   end
 
   defp load_plantings(socket) do
+    user_id = socket.assigns.current_user.id
+
     socket
-    |> assign(:planned, Plantings.list_plantings_by_status("planned"))
-    |> assign(:in_trays, Plantings.list_plantings_by_status("sown"))
-    |> assign(:hardening, Plantings.list_plantings_by_status("hardening"))
-    |> assign(:planted, Plantings.list_plantings_by_status("planted"))
-    |> assign(:harvested, Plantings.list_plantings_by_status("harvested"))
+    |> assign(:planned, Plantings.list_plantings_by_status(user_id, "planned"))
+    |> assign(:in_trays, Plantings.list_plantings_by_status(user_id, "sown"))
+    |> assign(:hardening, Plantings.list_plantings_by_status(user_id, "hardening"))
+    |> assign(:planted, Plantings.list_plantings_by_status(user_id, "planted"))
+    |> assign(:harvested, Plantings.list_plantings_by_status(user_id, "harvested"))
   end
 
   defp local_today(timezone) do

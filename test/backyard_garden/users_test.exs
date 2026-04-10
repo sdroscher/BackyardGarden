@@ -88,7 +88,9 @@ defmodule BackyardGarden.UsersTest do
 
     test "links auth0_id to an existing account matched by email" do
       # Simulates a user created before Auth0 was added (no auth0_id).
-      {:ok, existing} = Users.create_user(%{"email" => "preexisting@example.com", "name" => "Old"})
+      {:ok, existing} =
+        Users.create_user(%{"email" => "preexisting@example.com", "name" => "Old"})
+
       assert existing.auth0_id == nil
 
       auth = %{uid: "auth0|newid", info: %{email: "preexisting@example.com", name: "Updated"}}

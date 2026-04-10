@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 BackyardGarden is a Phoenix LiveView web app for managing planting schedules. Phase 1 (seed library with browsing, filtering, and detail pages) is complete. Future phases add planting schedules, garden zones, weather integration, iOS notifications (Prowl), and Auth0 login.
 
-**Progress:** Phase 1 ✅, Phase 1.5 (Supplier Catalog) ✅, Phase 2 (Garden & Plantings) ✅, Phase 3 (Dashboard & Weather) ✅, Phase 4 (Notifications) ✅. Phase 5 (Auth0) coming next.
+**Progress:** Phase 1 ✅, Phase 1.5 (Supplier Catalog) ✅, Phase 2 (Garden & Plantings) ✅, Phase 3 (Dashboard & Weather) ✅, Phase 4 (Notifications) ✅, Phase 5 (Auth0 + multi-user) ✅. Phase 6 (Deployment) coming next.
 
 **Stack:** Elixir + Phoenix 1.8 + Phoenix LiveView + Ecto + SQLite3 + Tailwind CSS
 
@@ -48,7 +48,7 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 - `BackyardGarden.Users` — User schema (email, timezone, prowl_api_key, notifications_enabled) and CRUD (Phase 4)
 - `BackyardGarden.Notifications` — Notification schema (type, message, scheduled_at, sent_at) and delivery tracking (Phase 4)
 - `BackyardGarden.Plantings` — context for plantings (CRUD + `list_plantings_for_month/1`)
-- `BackyardGarden.GardenZones` — context for zones (CRUD + `recommend_zones/1` scoring engine)
+- `BackyardGarden.GardenZones` — context for zones (CRUD + `recommend_zones/2` scoring engine); scoped to user_id
 - `BackyardGarden.PlantingCalendar` — parses `ideal_planting_time` text → `{start_month, end_month}` tuples; builds week grids
 - `BackyardGarden.Dashboard` — query functions for the dashboard (plant_now_seeds, recently_planted, upcoming_schedule)
 - `BackyardGarden.Weather` / `Weather.Client` / `Weather.Cache` / `Weather.Tips` — weather facade, HTTP client, ETS cache, and contextual tip generation
@@ -62,7 +62,11 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 - `Garden.IndexLive` — My Garden page at `/garden`; log plantings, update status, zone recommendations
 - `Calendar.IndexLive` — Planting calendar at `/calendar`; month grid with planted/harvest/ideal markers
 - `Settings.ZonesLive` — Zone settings at `/settings/zones`; add/edit/delete zones
-- Router: `GET /` → PageController, plus LiveViews above
+- `Settings.ProfileLive` — Profile settings at `/settings`; name, email, location, timezone
+- `Settings.NotificationsLive` — Notification settings at `/settings/notifications`
+- `BackyardGardenWeb.AuthHooks` — `on_mount` hook that loads `current_user` from session into all LiveView sockets; redirects to `/auth/auth0` if unauthenticated
+- `BackyardGardenWeb.Plugs.RequireAuth` — plug that redirects unauthenticated controller requests to `/auth/auth0`
+- Router: all app routes protected; unauthenticated scope covers `/auth/auth0`, `/auth/auth0/callback`, `/auth/logout` only
 
 **Seed data:** 62 seeds imported from CSV via `priv/repo/seeds.exs` using NimbleCSV.
 
@@ -94,6 +98,10 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 - **Logger.configure timing** — Must call `Logger.configure(level: :info)` BEFORE `Mix.Task.run("app.start")`, not after. Ecto configures at startup, so log level needs to be set first.
 - **Supplier scraper headers** — Must match modern Chrome headers (sec-ch-ua, sec-fetch-*, upgrade-insecure-requests) to avoid Cloudflare WAF blocks. Disable Req retries with `retry: false` and add delays (2-5s) between requests to respect rate limits.
 - **Zone matching gotcha** — Zone editor accepts free-form text for allowed_types/cycles/sun_exposures, but matching logic requires exact string matches. Document examples or use dropdowns for UX clarity.
+- **Ueberauth v0.10 — use `plug Ueberauth`, not `use Ueberauth`** — `use Ueberauth` was removed; add `plug Ueberauth` to the controller and define a no-op `request/2` action (ueberauth halts the conn before it's reached).
+- **Auth callback must not redirect to protected routes on failure** — redirecting to `"/"` on auth failure creates an Auth0 ↔ app redirect loop (Auth0 caches the session and immediately bounces back). On failure, redirect to `/auth/auth0` or render a response directly.
+- **Logout route must be GET** — browser `<a>` tags issue GET requests; using `delete` for a logout route silently 404s when clicked from the nav.
+- **Backfill `user_id` after adding auth scoping** — when a `user_id` FK is added to an existing table, existing rows have `NULL` and won't appear in any user's scoped queries. Backfill via `Repo.update_all(Schema, set: [user_id: id])` in iex after migrating.
 
 ## Code Quality
 

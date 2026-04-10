@@ -61,6 +61,32 @@ defmodule BackyardGarden.UsersTest do
     end
   end
 
+  describe "upsert_from_auth0/1" do
+    test "creates a new user from Auth0 credentials" do
+      auth = %{
+        uid: "auth0|abc123",
+        info: %{email: "new@example.com", name: "New User"}
+      }
+
+      {:ok, user} = Users.upsert_from_auth0(auth)
+
+      assert user.auth0_id == "auth0|abc123"
+      assert user.email == "new@example.com"
+      assert user.name == "New User"
+    end
+
+    test "updates name if user with same auth0_id already exists" do
+      auth = %{uid: "auth0|existing", info: %{email: "existing@example.com", name: "Old Name"}}
+      {:ok, _} = Users.upsert_from_auth0(auth)
+
+      auth2 = %{uid: "auth0|existing", info: %{email: "existing@example.com", name: "New Name"}}
+      {:ok, user} = Users.upsert_from_auth0(auth2)
+
+      assert user.name == "New Name"
+      assert BackyardGarden.Repo.aggregate(BackyardGarden.Users.User, :count, :id) == 1
+    end
+  end
+
   # Fixture helper
   defp user_fixture(attrs \\ %{}) do
     {:ok, user} =

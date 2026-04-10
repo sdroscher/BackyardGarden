@@ -3,6 +3,15 @@ defmodule BackyardGardenWeb.AuthControllerTest do
 
   alias BackyardGarden.Users
 
+  describe "request/2" do
+    test "redirects to Auth0 authorize URL", %{conn: conn} do
+      conn = get(conn, ~p"/auth/auth0")
+      assert conn.status == 302
+      location = get_resp_header(conn, "location") |> List.first()
+      assert location =~ "authorize"
+    end
+  end
+
   describe "callback/2 with successful Auth0 response" do
     test "creates user, stores user_id in session, redirects to /", %{conn: conn} do
       ueberauth_auth = %Ueberauth.Auth{

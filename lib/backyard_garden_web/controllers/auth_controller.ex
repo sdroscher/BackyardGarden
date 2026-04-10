@@ -3,7 +3,13 @@ defmodule BackyardGardenWeb.AuthController do
 
   use BackyardGardenWeb, :controller
 
+  plug Ueberauth
+
   alias BackyardGarden.Users
+
+  # Ueberauth intercepts /auth/auth0 and redirects to Auth0 before this action
+  # is reached — it exists to satisfy Phoenix's route dispatch requirement.
+  def request(conn, _params), do: conn
 
   # Triggered by Ueberauth after successful Auth0 authentication.
   def callback(%{assigns: %{ueberauth_auth: auth}} = conn, _params) do

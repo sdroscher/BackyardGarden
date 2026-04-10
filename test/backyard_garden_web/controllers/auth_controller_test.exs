@@ -32,30 +32,51 @@ defmodule BackyardGardenWeb.AuthControllerTest do
     end
   end
 
+  # When the callback is hit without a valid OAuth state (e.g. no code+state params),
+  # ueberauth itself sets ueberauth_failure with a CSRF error. These tests hit the
+  # real ueberauth plug path to verify our callback handler doesn't cause a redirect loop.
   describe "callback/2 with Auth0 failure" do
-    test "redirects to / with error flash", %{conn: conn} do
-      conn =
-        conn
-        |> assign(:ueberauth_failure, %Ueberauth.Failure{
-          provider: :auth0,
-          errors: [%Ueberauth.Failure.Error{message: "access_denied"}]
-        })
-        |> get(~p"/auth/auth0/callback")
+    test "redirects to /auth/auth0, not to a protected page", %{conn: conn} do
+      # Hit callback without a valid code/state — ueberauth will set ueberauth_failure.
+      conn = get(conn, ~p"/auth/auth0/callback")
+      assert redirected_to(conn) == "/auth/auth0"
+    end
 
-      assert redirected_to(conn) == "/"
-      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "Authentication failed"
+    test "sets an error flash with the failure reason", %{conn: conn} do
+      conn = get(conn, ~p"/auth/auth0/callback")
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "Sign in failed"
+    end
+  end
+
+  describe "callback/2 with upsert failure" do
+    test "returns 500 and does not redirect to a protected page", %{conn: conn} do
+      # Create a user with this email so the upsert fails on duplicate email.
+      {:ok, _} = Users.create_user(%{"email" => "dup@example.com"})
+
+      ueberauth_auth = %Ueberauth.Auth{
+        uid: "auth0|newuser",
+        info: %Ueberauth.Auth.Info{email: "dup@example.com", name: "Dup User"},
+        provider: :auth0
+      }
+
+      # Bypass the ueberauth plug by assigning directly, then call the action.
+      conn = conn |> assign(:ueberauth_auth, ueberauth_auth)
+      conn = BackyardGardenWeb.AuthController.callback(conn, %{})
+
+      assert conn.status == 500
+      refute conn.halted == false and get_resp_header(conn, "location") == ["/"]
     end
   end
 
   describe "delete/2" do
-    test "clears session and redirects to /", %{conn: conn} do
+    test "clears session and redirects to /auth/auth0", %{conn: conn} do
       conn =
         conn
         |> Plug.Test.init_test_session(%{user_id: "some-user-id"})
         |> delete(~p"/auth/logout")
 
       assert get_session(conn, :user_id) == nil
-      assert redirected_to(conn) == "/"
+      assert redirected_to(conn) == "/auth/auth0"
     end
   end
 end

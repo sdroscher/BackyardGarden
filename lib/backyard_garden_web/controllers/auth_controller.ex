@@ -3,6 +3,8 @@ defmodule BackyardGardenWeb.AuthController do
 
   use BackyardGardenWeb, :controller
 
+  require Logger
+
   plug Ueberauth
 
   alias BackyardGarden.Users
@@ -20,23 +22,30 @@ defmodule BackyardGardenWeb.AuthController do
         |> put_flash(:info, "Welcome, #{user.name || user.email}!")
         |> redirect(to: ~p"/")
 
-      {:error, _changeset} ->
+      {:error, changeset} ->
+        Logger.error("Auth0 callback: failed to upsert user — #{inspect(changeset.errors)}")
+
         conn
-        |> put_flash(:error, "Authentication failed. Please try again.")
-        |> redirect(to: ~p"/")
+        |> put_status(:internal_server_error)
+        |> text("Could not create your account. Check the server logs for details.")
     end
   end
 
-  def callback(%{assigns: %{ueberauth_failure: _failure}} = conn, _params) do
+  # Ueberauth signals an auth failure (e.g. state mismatch, token exchange error).
+  # Redirecting to "/" here would loop: "/" requires auth → /auth/auth0 → Auth0 → callback → repeat.
+  # Instead, log the reason and redirect to the login entry point for a fresh attempt.
+  def callback(%{assigns: %{ueberauth_failure: failure}} = conn, _params) do
+    reasons = Enum.map_join(failure.errors, ", ", & &1.message)
+    Logger.error("Auth0 callback failure: #{reasons}")
+
     conn
-    |> put_flash(:error, "Authentication failed. Please try again.")
-    |> redirect(to: ~p"/")
+    |> put_flash(:error, "Sign in failed (#{reasons}). Please try again.")
+    |> redirect(to: ~p"/auth/auth0")
   end
 
   def delete(conn, _params) do
     conn
     |> clear_session()
-    |> put_flash(:info, "You have been logged out.")
-    |> redirect(to: ~p"/")
+    |> redirect(to: ~p"/auth/auth0")
   end
 end

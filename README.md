@@ -27,20 +27,20 @@ Built with **Elixir + Phoenix LiveView**, deployed to **fly.io**.
 - Notification types: plant-now, harvest-soon, sow-now, start-hardening, hardening-morning, hardening-evening, hardening-weather-warning
 - Weather-aware hardening alerts: warns when rain, high wind (>40 km/h), or heat (>30°C) is forecast
 - Notification settings page — configure Prowl API key, enable/disable notifications, and set morning/evening reminder times
-- User context with timezone and notification settings
-- Oban job infrastructure (plant checking, notification sending) — ready for deployment
+
+**Phase 5 — Complete**
+- Auth0 login (Google OAuth and email+password) via ueberauth_auth0
+- All routes protected — unauthenticated users are redirected to Auth0
+- All garden data (plantings, zones) scoped to the authenticated user
+- Prowl API key encrypted at rest using Cloak AES-GCM
+- Profile settings page — update name, email, location, timezone
+- Logout link in nav
 
 **Session Improvements (April 2026)**
 - Seedling tracking — full indoor lifecycle: sow in trays → harden outdoors → transplant; new planting statuses `sown` and `hardening`
 - Seed edit page — edit any seed's details including new seedling fields (`weeks_to_start_indoors`, `hardening_days`)
 - Edit logged plantings — inline edit form on My Garden page for any planting
 - Timezone-correct date handling — all dates use the configured app timezone, not UTC
-- Flash messages now appear below the navigation bar
-
-**Phase 5+ — Planned**
-- Auth0 login (Google, Apple, email)
-- Multi-user support with authenticated routes
-- Frost warning notifications (weather-triggered)
 
 ## Getting Started
 
@@ -60,21 +60,29 @@ mix archive.install hex phx_new
 Create a `.env` file in the project root (auto-loaded in dev via dotenvy):
 
 ```
+# Auth0 (required — see Auth0 Setup below)
+AUTH0_DOMAIN=your-tenant.auth0.com
+AUTH0_CLIENT_ID=your_client_id
+AUTH0_CLIENT_SECRET=your_client_secret
+
+# Cloak encryption key (required — see Generating a Cloak Key below)
+CLOAK_KEY=base64_encoded_32_byte_key
+
 # Weather (optional)
 OPENWEATHERMAP_API_KEY=your_key_here
 DEFAULT_LOCATION=Victoria,CA        # format: City,CountryCode
 TIMEZONE=America/Vancouver          # IANA timezone name
 
-# Prowl notifications (optional, Phase 4+)
-# Get your API key from https://www.prowlapp.com/
-# Leave blank to disable Prowl notifications
-PROWL_API_KEY=your_prowl_key_here
+# Prowl notifications (optional — configurable via /settings/notifications)
+# PROWL_API_KEY=your_prowl_key_here
 ```
 
-**Env var defaults:**
-- `DEFAULT_LOCATION` and `TIMEZONE` have sensible defaults if omitted
-- `OPENWEATHERMAP_API_KEY`: Weather card is silently hidden if missing
-- `PROWL_API_KEY`: Set via the `/settings/notifications` page (no env var required)
+**Env var notes:**
+- `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET` — required for login to work; the app will start without them but the OAuth callback will fail
+- `CLOAK_KEY` — required in production; a hard-coded dev fallback is used if omitted in dev/test
+- `DEFAULT_LOCATION` and `TIMEZONE` — have sensible defaults if omitted
+- `OPENWEATHERMAP_API_KEY` — weather card is silently hidden if missing
+- `PROWL_API_KEY` — set via the `/settings/notifications` page (no env var required)
 
 ### Setup
 
@@ -85,7 +93,7 @@ mix setup
 mix phx.server
 ```
 
-Visit [http://localhost:4000](http://localhost:4000).
+Visit [http://localhost:4000](http://localhost:4000). You will be redirected to Auth0 to log in.
 
 ### Tests
 
@@ -93,11 +101,68 @@ Visit [http://localhost:4000](http://localhost:4000).
 mix test
 ```
 
+---
+
+## Auth0 Setup
+
+### 1. Create an Auth0 Application
+
+1. Sign in to [manage.auth0.com](https://manage.auth0.com/)
+2. Go to **Applications → Applications → Create Application**
+3. Choose **Regular Web Application**, name it "BackyardGarden"
+4. Click **Create**
+
+### 2. Configure Allowed URLs
+
+In the application settings, set:
+
+| Field | Value |
+|---|---|
+| Allowed Callback URLs | `http://localhost:4000/auth/auth0/callback` |
+| Allowed Logout URLs | `http://localhost:4000` |
+
+For production, add your production domain alongside localhost (comma-separated).
+
+### 3. Enable Social Connections (optional)
+
+To enable Google login:
+
+1. Go to **Authentication → Social**
+2. Enable **Google / Gmail**
+3. Auth0 provides shared dev credentials for testing; supply your own Google OAuth app credentials for production
+
+### 4. Copy Credentials
+
+From the **Settings** tab of your application, copy:
+
+- **Domain** → `AUTH0_DOMAIN` (e.g. `your-tenant.auth0.com`)
+- **Client ID** → `AUTH0_CLIENT_ID`
+- **Client Secret** → `AUTH0_CLIENT_SECRET`
+
+Add these to your `.env` file.
+
+### 5. Generating a Cloak Key
+
+The Prowl API key is encrypted at rest using AES-GCM. Generate a random 32-byte key and base64-encode it:
+
+```bash
+# In iex or any shell with Elixir available:
+32 |> :crypto.strong_rand_bytes() |> Base.encode64() |> IO.puts()
+```
+
+Add the output to `.env` as `CLOAK_KEY=<output>`.
+
+In dev, if `CLOAK_KEY` is not set, a fixed placeholder key is used automatically so the app starts without configuration.
+
+---
+
 ## Weather Integration
 
 The dashboard shows current conditions and a contextual planting tip powered by [OpenWeatherMap](https://openweathermap.org/api).
 
-Set `OPENWEATHERMAP_API_KEY` in `.env` (auto-loaded in dev). Location format must be `City,CountryCode` (e.g. `Victoria,CA`) — province/state names are not supported by the API. The weather card is silently hidden if the key is missing.
+Set `OPENWEATHERMAP_API_KEY` in `.env`. Location format must be `City,CountryCode` (e.g. `Victoria,CA`) — province/state names are not supported by the API. The weather card is silently hidden if the key is missing.
+
+---
 
 ## Project Structure
 
@@ -113,7 +178,19 @@ lib/
     workers/                # Oban workers: HourlyCheckWorker, ProwlNotifierJob
     weather/                # Weather facade, HTTP client, ETS cache, tip generation
     dashboard/              # Dashboard query functions
+    vault.ex                # Cloak vault for field-level encryption
+    encrypted/binary.ex     # Custom Cloak.Ecto.Binary type
   backyard_garden_web/      # web layer (LiveViews, router, layouts)
+    controllers/
+      auth_controller.ex    # Auth0 OAuth callback + logout
+    live/
+      settings/
+        profile_live.ex     # /settings — name, email, location, timezone
+        zones_live.ex       # /settings/zones
+        notifications_live.ex  # /settings/notifications
+    plugs/
+      require_auth.ex       # redirects unauthenticated requests to Auth0
+    live/auth_hooks.ex      # on_mount hook — loads current_user into LiveView socket
   mix/tasks/                # mix supplier.scrape / match / link
 priv/
   repo/
@@ -126,20 +203,41 @@ docs/
     plans/                  # implementation plans (phase by phase)
 ```
 
+---
+
 ## Implementation Plan
 
 See [Plan.md](./Plan.md) for architecture decisions, data model, UI mockups, and phased implementation tasks.
 
 Detailed task-by-task plans are in `docs/superpowers/plans/`.
 
+---
+
 ## Deployment
 
 Targeted at [fly.io](https://fly.io). SQLite with a persistent volume for local/dev; Postgres migration path is documented in Plan.md.
+
+Set the following secrets before deploying:
+
+```bash
+fly secrets set AUTH0_DOMAIN=your-tenant.auth0.com
+fly secrets set AUTH0_CLIENT_ID=your_client_id
+fly secrets set AUTH0_CLIENT_SECRET=your_client_secret
+fly secrets set CLOAK_KEY=your_base64_key
+fly secrets set OPENWEATHERMAP_API_KEY=your_key   # optional
+```
+
+Then:
 
 ```bash
 fly launch
 fly deploy
 ```
+
+Remember to add your production callback URL to Auth0:
+`https://your-app.fly.dev/auth/auth0/callback`
+
+---
 
 ## Prowl Notifications (Phase 4)
 
@@ -169,25 +267,7 @@ The app includes an Oban job (`HourlyCheckWorker`) that runs at the top of every
 
 **Known Issue:** Oban supervisor startup is currently commented out in `lib/backyard_garden/application.ex` due to SQLite+testing mode configuration. The job infrastructure is complete; uncomment the supervisor line once notifier configuration is finalized (auto-works with Postgres in Phase 6+).
 
-### Testing
-
-To manually test notifications in dev:
-
-```elixir
-# In iex -S mix:
-user = BackyardGarden.Users.get_user_by_email("simon@droscher.com")
-
-# Create a test notification
-{:ok, notif} = BackyardGarden.Notifications.log_notification(%{
-  "user_id" => user.id,
-  "type" => "plant_now",
-  "message" => "Test notification"
-})
-
-# Manually enqueue the Prowl job
-BackyardGarden.Workers.ProwlNotifierJob.new(%{"notification_id" => notif.id})
-|> Oban.insert()
-```
+---
 
 ## Supplier Catalog
 
@@ -212,6 +292,8 @@ mix supplier.link <seed_id> noche-zucchini
 ```
 
 Run `mix supplier.scrape` first to populate the catalog, then `mix supplier.match` to link seeds. Re-running either task is safe — scrape uses upsert and match skips already-linked seeds.
+
+---
 
 ## Seed Data
 

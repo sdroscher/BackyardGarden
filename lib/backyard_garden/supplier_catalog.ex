@@ -7,10 +7,13 @@ defmodule BackyardGarden.SupplierCatalog do
   alias BackyardGarden.Repo
   alias BackyardGarden.SupplierCatalog.SupplierProduct
 
+  @doc "Returns a supplier product by id. Raises Ecto.NoResultsError if not found."
+  def get_supplier_product!(id), do: Repo.get!(SupplierProduct, id)
+
   @doc "Returns all supplier products matching the given filters, ordered by title."
   def list_supplier_products(filters \\ %{}) do
     SupplierProduct
-    |> filter_by_supplier(filters[:supplier])
+    |> filter_by_supplier(filters[:suppliers] || filters[:supplier])
     |> filter_by_search(filters[:search])
     |> order_by([p], p.title)
     |> Repo.all()
@@ -79,15 +82,93 @@ defmodule BackyardGarden.SupplierCatalog do
     end
   end
 
+  @doc """
+  Fetches and upserts a supplier product by URL.
+
+  Parses the URL to identify the supplier and product handle, checks for an
+  existing record in the database (returning it immediately if found), otherwise
+  calls the appropriate scraper to fetch and upsert.
+
+  Returns `{:ok, supplier_product}` or `{:error, reason}`.
+  """
+  def fetch_and_upsert_by_url(url) do
+    case parse_supplier_url(url) do
+      {:ok, supplier, handle} ->
+        case Repo.get_by(SupplierProduct, supplier: supplier, handle: handle) do
+          %SupplierProduct{} = existing ->
+            {:ok, existing}
+
+          nil ->
+            fetch_and_store(supplier, handle)
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp parse_supplier_url(url) do
+    uri = URI.parse(url)
+    host = uri.host || ""
+    path = uri.path || ""
+
+    cond do
+      String.contains?(host, "westcoastseeds.com") ->
+        extract_handle(path, "west_coast_seeds")
+
+      String.contains?(host, "metchosinfarm.ca") ->
+        extract_handle(path, "metchosin_farm")
+
+      true ->
+        {:error, "URL must be from westcoastseeds.com or metchosinfarm.ca"}
+    end
+  end
+
+  defp extract_handle(path, supplier) do
+    case Regex.run(~r|/products/([^/?#]+)|, path) do
+      [_, handle] -> {:ok, supplier, handle}
+      _ -> {:error, "Could not extract product handle from URL"}
+    end
+  end
+
+  defp fetch_and_store("west_coast_seeds", handle) do
+    attrs = BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds.fetch_product(handle)
+
+    case upsert_supplier_product(attrs) do
+      {:ok, product} -> {:ok, product}
+      {:error, _} -> {:error, "Failed to save supplier product"}
+    end
+  rescue
+    e -> {:error, Exception.message(e)}
+  end
+
+  defp fetch_and_store("metchosin_farm", handle) do
+    attrs = BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm.fetch_product(handle)
+
+    case upsert_supplier_product(attrs) do
+      {:ok, product} -> {:ok, product}
+      {:error, _} -> {:error, "Failed to save supplier product"}
+    end
+  rescue
+    e -> {:error, Exception.message(e)}
+  end
+
   defp filter_by_supplier(query, nil), do: query
   defp filter_by_supplier(query, ""), do: query
+
+  defp filter_by_supplier(query, suppliers) when is_list(suppliers),
+    do: where(query, [p], p.supplier in ^suppliers)
+
   defp filter_by_supplier(query, supplier), do: where(query, [p], p.supplier == ^supplier)
 
   defp filter_by_search(query, nil), do: query
   defp filter_by_search(query, ""), do: query
 
   defp filter_by_search(query, search) do
-    term = "%#{String.downcase(search)}%"
+    escaped =
+      search |> String.downcase() |> String.replace("%", "\\%") |> String.replace("_", "\\_")
+
+    term = "%#{escaped}%"
     where(query, [p], like(fragment("lower(?)", p.title), ^term))
   end
 end

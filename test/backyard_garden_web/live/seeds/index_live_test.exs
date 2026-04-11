@@ -11,33 +11,33 @@ defmodule BackyardGardenWeb.Seeds.IndexLiveTest do
     conn = log_in_user(conn, user)
 
     {:ok, basil} =
-      Seeds.create_seed(%{
-        name: "Basil",
-        brand: "Metchosin Farm",
-        type: "Herb",
-        cycle: "Annual",
-        ideal_planting_time: "Spring"
+      Seeds.create_seed_for_user(user.id, %{
+        "name" => "Basil",
+        "brand" => "Metchosin Farm",
+        "type" => "Herb",
+        "cycle" => "Annual",
+        "ideal_planting_time" => "Spring"
       })
 
     {:ok, carrots} =
-      Seeds.create_seed(%{
-        name: "Carrots",
-        brand: "West Coast Seeds",
-        type: "Vegetable",
-        cycle: "Annual",
-        ideal_planting_time: "Early Spring"
+      Seeds.create_seed_for_user(user.id, %{
+        "name" => "Carrots",
+        "brand" => "West Coast Seeds",
+        "type" => "Vegetable",
+        "cycle" => "Annual",
+        "ideal_planting_time" => "Early Spring"
       })
 
     {:ok, echinacea} =
-      Seeds.create_seed(%{
-        name: "Echinacea",
-        brand: "Metchosin Farm",
-        type: "Herb",
-        cycle: "Perennial",
-        ideal_planting_time: "Early Spring"
+      Seeds.create_seed_for_user(user.id, %{
+        "name" => "Echinacea",
+        "brand" => "Metchosin Farm",
+        "type" => "Herb",
+        "cycle" => "Perennial",
+        "ideal_planting_time" => "Early Spring"
       })
 
-    %{conn: conn, basil: basil, carrots: carrots, echinacea: echinacea}
+    %{conn: conn, user: user, basil: basil, carrots: carrots, echinacea: echinacea}
   end
 
   test "renders all seeds", %{conn: conn} do
@@ -204,47 +204,54 @@ defmodule BackyardGardenWeb.Seeds.IndexLiveTest do
     assert html =~ "sun_requirement"
   end
 
-  test "shows in-season badge for seed whose window includes today", %{conn: conn} do
+  test "shows in-season badge for seed whose window includes today", %{conn: conn, user: user} do
     today = Date.utc_today()
     month_name = Calendar.strftime(today, "%B") |> String.downcase()
 
-    Seeds.create_seed(%{
-      name: "In Season Now",
-      type: "Vegetable",
-      ideal_planting_time: month_name
+    Seeds.create_seed_for_user(user.id, %{
+      "name" => "In Season Now",
+      "type" => "Vegetable",
+      "ideal_planting_time" => month_name
     })
 
     {:ok, _view, html} = live(conn, ~p"/seeds")
     assert html =~ "In season"
   end
 
-  test "shows coming-soon badge for seed whose window opens within 30 days", %{conn: conn} do
+  test "shows coming-soon badge for seed whose window opens within 30 days", %{
+    conn: conn,
+    user: user
+  } do
     # Use the last day of the current month + 1 to get the first day of next month,
     # guaranteeing the seed's window starts in the next month (within 30 days from now).
     today = Date.utc_today()
     next_month_start = today |> Date.end_of_month() |> Date.add(1)
     month_name = Calendar.strftime(next_month_start, "%B") |> String.downcase()
 
-    Seeds.create_seed(%{
-      name: "Coming Soon Seed",
-      type: "Vegetable",
-      ideal_planting_time: month_name
+    Seeds.create_seed_for_user(user.id, %{
+      "name" => "Coming Soon Seed",
+      "type" => "Vegetable",
+      "ideal_planting_time" => month_name
     })
 
     {:ok, _view, html} = live(conn, ~p"/seeds")
     assert html =~ "week"
   end
 
-  test "filters by planting_method", %{conn: conn} do
+  test "filters by planting_method", %{conn: conn, user: user} do
     {:ok, direct_sow} =
-      Seeds.create_seed(%{
-        name: "Direct Sow Seed",
-        planting_method: "Direct Sow",
-        type: "Vegetable"
+      Seeds.create_seed_for_user(user.id, %{
+        "name" => "Direct Sow Seed",
+        "planting_method" => "Direct Sow",
+        "type" => "Vegetable"
       })
 
     {:ok, seedlings} =
-      Seeds.create_seed(%{name: "Seedlings Seed", planting_method: "Seedlings", type: "Herb"})
+      Seeds.create_seed_for_user(user.id, %{
+        "name" => "Seedlings Seed",
+        "planting_method" => "Seedlings",
+        "type" => "Herb"
+      })
 
     {:ok, view, _html} = live(conn, ~p"/seeds")
 

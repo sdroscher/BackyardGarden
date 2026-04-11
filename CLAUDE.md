@@ -44,12 +44,12 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 
 **Data layer:**
 - `BackyardGarden.Seeds.Seed` — Ecto schema (UUID primary keys, fields: name, brand, type, cycle, planting_method, ideal_planting_time, maturity_days, sun_requirement, source_url, notes)
-- `BackyardGarden.Seeds` — context module with `list_seeds/1` (accepts filter map), `get_seed!/1`, `create_seed/1`, and distinct list helpers
+- `BackyardGarden.Seeds` — context module with `list_seeds(user_id, filters \\ %{})`, `get_seed!/1`, `create_seed_for_user(user_id, attrs)`, and distinct list helpers (all scoped by user_id)
 - `BackyardGarden.Users` — User schema (email, timezone, prowl_api_key, notifications_enabled) and CRUD (Phase 4)
 - `BackyardGarden.Notifications` — Notification schema (type, message, scheduled_at, sent_at) and delivery tracking (Phase 4)
 - `BackyardGarden.Plantings` — context for plantings (CRUD + `list_plantings_for_month/1`)
 - `BackyardGarden.GardenZones` — context for zones (CRUD + `recommend_zones/2` scoring engine); scoped to user_id
-- `BackyardGarden.PlantingCalendar` — parses `ideal_planting_time` text → `{start_month, end_month}` tuples; builds week grids
+- `BackyardGarden.PlantingCalendar` — parses `ideal_planting_time` text → list of `{start_month, end_month}` tuples (supports comma-separated multi-window e.g. `"Autumn,Early Spring"`); returns `[]` for unrecognised input; builds week grids
 - `BackyardGarden.Dashboard` — query functions for the dashboard (plant_now_seeds, recently_planted, upcoming_schedule)
 - `BackyardGarden.Weather` / `Weather.Client` / `Weather.Cache` / `Weather.Tips` — weather facade, HTTP client, ETS cache, and contextual tip generation
 
@@ -68,7 +68,7 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 - `BackyardGardenWeb.Plugs.RequireAuth` — plug that redirects unauthenticated controller requests to `/auth/auth0`
 - Router: all app routes protected; unauthenticated scope covers `/auth/auth0`, `/auth/auth0/callback`, `/auth/logout` only
 
-**Seed data:** 62 seeds imported from CSV via `priv/repo/seeds.exs` using NimbleCSV.
+**Seed data:** Seeds are user-owned; new users start with 0 seeds. `priv/repo/seeds.exs` is kept for historical reference only — it no longer works because `user_id` is required. Use the iex backfill documented in README.md.
 
 ## Key Conventions
 
@@ -102,13 +102,19 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 - **Auth callback must not redirect to protected routes on failure** — redirecting to `"/"` on auth failure creates an Auth0 ↔ app redirect loop (Auth0 caches the session and immediately bounces back). On failure, redirect to `/auth/auth0` or render a response directly.
 - **Logout route must be GET** — browser `<a>` tags issue GET requests; using `delete` for a logout route silently 404s when clicked from the nav.
 - **Backfill `user_id` after adding auth scoping** — when a `user_id` FK is added to an existing table, existing rows have `NULL` and won't appear in any user's scoped queries. Backfill via `Repo.update_all(Schema, set: [user_id: id])` in iex after migrating.
+- **`phx-value-*` is a stale-value trap** — `phx-value-foo={@assign}` sends the server-side assign at render time, NOT the current input value. For `phx-keyup` on plain inputs, omit `phx-value-*` and read `%{"value" => val}` in the handler instead.
+- **Testing mount-time redirects** — when `push_navigate` fires in `mount/3` (e.g. ownership check), `live(conn, path)` returns `{:error, {:live_redirect, %{to: "/path", flash: flash}}}`. Pattern match on that; don't expect `{:ok, view, html}`.
+- **Hidden inputs for pre-filled non-visible fields** — if a field is set in a changeset via pre-fill but has no visible `<.input>`, it is dropped on submit. Add `<input type="hidden" name="schema[field]" value={@form[:field].value} />` to preserve it.
+- **Cancel in-flight async Tasks before re-spawning** — call `Task.shutdown(socket.assigns.fetch_task, :brutal_kill)` before spawning a replacement task, otherwise both results arrive and the first one wins.
 
 ## Code Quality
 
+- **Always run `mix format` after making changes** — keeps diffs clean and prevents credo line-length violations from unformatted code
 - Fix the code, not the tests (unless tests are incorrect)
 - Use descriptive variable and function names
 - Ensure compliance with linting rules (credo, sobelow)
 - Add tests for new features and bug fixes
+- **Write a failing test before fixing any bug** — confirm it fails, apply the fix, confirm it passes
 
 ## UI Style Guide
 
@@ -162,6 +168,7 @@ New nav links go in the existing `<div class="flex items-center gap-6 ...">` blo
 - Comments should explain "why", not "what" — the code should be self-explanatory about "what" it does
 - Prefer comments to be at the function level rather than inline, unless explaining a non-obvious line of code
 - If a block of code needs a comment, consider if it can be refactored into a well-named function instead, which may eliminate the need for the comment altogether
+- **Update README.md at the end of every feature or phase** — document new capabilities, update env var tables, fix any setup instructions affected by the change
 - Keep README.md up to date with any architectural changes or new features
   - this includes quick start instructions, env variable table, and any new dependencies or setup steps
 - Mark any completed tasks/phases in Plan.md and update the project roadmap as needed

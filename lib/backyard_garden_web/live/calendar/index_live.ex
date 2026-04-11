@@ -58,12 +58,11 @@ defmodule BackyardGardenWeb.Calendar.IndexLive do
       end)
 
     ideal_seeds =
-      Seeds.list_seeds()
+      Seeds.list_seeds(socket.assigns.current_user.id)
       |> Enum.filter(fn seed ->
-        case PlantingCalendar.parse_ideal_months(seed.ideal_planting_time) do
-          {start_m, _end_m} -> start_m == month.month
-          _ -> false
-        end
+        seed.ideal_planting_time
+        |> PlantingCalendar.parse_ideal_months()
+        |> Enum.any?(fn {start_m, _end_m} -> start_m == month.month end)
       end)
       |> Enum.map(& &1.name)
 

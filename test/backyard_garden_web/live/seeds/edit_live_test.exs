@@ -11,12 +11,12 @@ defmodule BackyardGardenWeb.Seeds.EditLiveTest do
     conn = log_in_user(conn, user)
 
     {:ok, seed} =
-      Seeds.create_seed(%{
-        name: "Basil",
-        brand: "Metchosin Farm",
-        type: "Herb",
-        cycle: "Annual",
-        maturity_days: 60
+      Seeds.create_seed_for_user(user.id, %{
+        "name" => "Basil",
+        "brand" => "Metchosin Farm",
+        "type" => "Herb",
+        "cycle" => "Annual",
+        "maturity_days" => 60
       })
 
     %{conn: conn, seed: seed}
@@ -57,5 +57,21 @@ defmodule BackyardGardenWeb.Seeds.EditLiveTest do
   test "back link navigates to show page", %{conn: conn, seed: seed} do
     {:ok, _view, html} = live(conn, ~p"/seeds/#{seed.id}/edit")
     assert html =~ ~p"/seeds/#{seed.id}"
+  end
+
+  test "redirects with error flash when editing another user's seed", %{conn: conn} do
+    other_user = Fixtures.user_fixture()
+
+    {:ok, other_seed} =
+      Seeds.create_seed_for_user(other_user.id, %{
+        "name" => "Other User Seed",
+        "type" => "Vegetable",
+        "cycle" => "Annual"
+      })
+
+    assert {:error, {:live_redirect, %{to: "/seeds", flash: flash}}} =
+             live(conn, ~p"/seeds/#{other_seed.id}/edit")
+
+    assert flash["error"] =~ "not found"
   end
 end

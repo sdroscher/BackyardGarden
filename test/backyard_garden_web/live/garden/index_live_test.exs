@@ -13,9 +13,16 @@ defmodule BackyardGardenWeb.Garden.IndexLiveTest do
     %{conn: log_in_user(conn, user), user: user}
   end
 
-  defp seed_fixture(attrs) do
-    defaults = %{name: "Test Seed", type: "Vegetable", cycle: "Annual", maturity_days: 50}
-    {:ok, seed} = Seeds.create_seed(Map.merge(defaults, attrs))
+  defp seed_fixture(user, attrs) do
+    defaults = %{
+      "name" => "Test Seed",
+      "type" => "Vegetable",
+      "cycle" => "Annual",
+      "maturity_days" => 50
+    }
+
+    merged = Map.merge(defaults, Map.new(attrs, fn {k, v} -> {to_string(k), v} end))
+    {:ok, seed} = Seeds.create_seed_for_user(user.id, merged)
     seed
   end
 
@@ -31,7 +38,7 @@ defmodule BackyardGardenWeb.Garden.IndexLiveTest do
   end
 
   test "shows PLANTED section with planting", %{conn: conn, user: user} do
-    seed = seed_fixture(%{name: "Spinach"})
+    seed = seed_fixture(user, %{name: "Spinach"})
     planting_fixture(seed, %{user_id: user.id, status: "planted", planted_at: ~D[2026-03-27]})
 
     {:ok, _view, html} = live(conn, ~p"/garden")
@@ -40,7 +47,7 @@ defmodule BackyardGardenWeb.Garden.IndexLiveTest do
   end
 
   test "shows PLANNED section with planting", %{conn: conn, user: user} do
-    seed = seed_fixture(%{name: "Carrots"})
+    seed = seed_fixture(user, %{name: "Carrots"})
     planting_fixture(seed, %{user_id: user.id, status: "planned"})
 
     {:ok, _view, html} = live(conn, ~p"/garden")
@@ -48,7 +55,7 @@ defmodule BackyardGardenWeb.Garden.IndexLiveTest do
   end
 
   test "shows HARVESTED section", %{conn: conn, user: user} do
-    seed = seed_fixture(%{name: "Lettuce"})
+    seed = seed_fixture(user, %{name: "Lettuce"})
 
     planting_fixture(seed, %{
       user_id: user.id,
@@ -67,7 +74,7 @@ defmodule BackyardGardenWeb.Garden.IndexLiveTest do
   end
 
   test "mark planted action updates status", %{conn: conn, user: user} do
-    seed = seed_fixture(%{name: "Basil"})
+    seed = seed_fixture(user, %{name: "Basil"})
     planting = planting_fixture(seed, %{user_id: user.id, status: "planned"})
 
     {:ok, view, _html} = live(conn, ~p"/garden")
@@ -76,7 +83,7 @@ defmodule BackyardGardenWeb.Garden.IndexLiveTest do
   end
 
   test "mark harvested action updates status", %{conn: conn, user: user} do
-    seed = seed_fixture(%{name: "Basil"})
+    seed = seed_fixture(user, %{name: "Basil"})
 
     planting =
       planting_fixture(seed, %{user_id: user.id, status: "planted", planted_at: ~D[2026-03-27]})
@@ -97,7 +104,7 @@ defmodule BackyardGardenWeb.Garden.IndexLiveTest do
       })
 
     seed =
-      seed_fixture(%{
+      seed_fixture(user, %{
         name: "Beans",
         type: "Vegetable",
         cycle: "Annual",

@@ -19,7 +19,7 @@ defmodule BackyardGardenWeb.Garden.IndexLive do
      socket
      |> assign(:page_title, "My Garden")
      |> assign(:timezone, timezone)
-     |> assign(:seeds, Seeds.list_seeds())
+     |> assign(:seeds, Seeds.list_seeds(socket.assigns.current_user.id))
      |> assign(:show_form, false)
      |> assign(:form, nil)
      |> assign(:editing_planting, nil)

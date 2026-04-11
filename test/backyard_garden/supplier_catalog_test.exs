@@ -94,14 +94,16 @@ defmodule BackyardGarden.SupplierCatalogTest do
     test "returns the best-matching supplier product and its score" do
       product_fixture(%{title: "Bush Bean Mix", shopify_product_id: 1})
       product_fixture(%{title: "Basil", shopify_product_id: 2})
-      {:ok, seed} = Seeds.create_seed(%{name: "Bush Beans - Mix"})
+      user = BackyardGarden.Test.Fixtures.user_fixture()
+      {:ok, seed} = Seeds.create_seed_for_user(user.id, %{"name" => "Bush Beans - Mix"})
       {product, score} = SupplierCatalog.find_match_for_seed(seed)
       assert product.title == "Bush Bean Mix"
       assert score > 0.75
     end
 
     test "returns {nil, 0.0} when the supplier_products table is empty" do
-      {:ok, seed} = Seeds.create_seed(%{name: "Tomato"})
+      user = BackyardGarden.Test.Fixtures.user_fixture()
+      {:ok, seed} = Seeds.create_seed_for_user(user.id, %{"name" => "Tomato"})
       assert {nil, +0.0} = SupplierCatalog.find_match_for_seed(seed)
     end
   end

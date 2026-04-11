@@ -1,0 +1,335 @@
+<div class="space-y-4">
+  <div>
+    <.link navigate={~p"/seeds"} class="text-[#52b788] hover:text-[#2d6a4f] text-sm">
+      ← Back to Seed Library
+    </.link>
+  </div>
+
+  <%!-- Mode selector --%>
+  <div class="rounded-[22px] overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
+    <div class="px-6 py-4" style="background: linear-gradient(135deg, #1a3a2a, #2d6a4f);">
+      <h1 class="text-white text-base font-bold">Add Seed to Your Library</h1>
+    </div>
+    <div class="bg-white px-6 pt-4 pb-2">
+      <div class="flex gap-2">
+        <button
+          phx-click="set_mode"
+          phx-value-mode="catalog"
+          class={"px-4 py-2 rounded-lg text-sm font-medium transition-colors " <>
+            if @mode == :catalog,
+              do: "bg-[#2d6a4f] text-white",
+              else: "border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4]"}
+        >
+          Supplier Catalog
+        </button>
+        <button
+          phx-click="set_mode"
+          phx-value-mode="url"
+          class={"px-4 py-2 rounded-lg text-sm font-medium transition-colors " <>
+            if @mode == :url,
+              do: "bg-[#2d6a4f] text-white",
+              else: "border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4]"}
+        >
+          From URL
+        </button>
+        <button
+          phx-click="set_mode"
+          phx-value-mode="manual"
+          class={"px-4 py-2 rounded-lg text-sm font-medium transition-colors " <>
+            if @mode == :manual,
+              do: "bg-[#2d6a4f] text-white",
+              else: "border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4]"}
+        >
+          Enter Manually
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <%!-- Catalog mode --%>
+  <%= if @mode == :catalog do %>
+    <div class="bg-white border border-[#bbf7d0] rounded-xl p-4 space-y-3">
+      <p class="text-xs font-semibold text-[#52b788] uppercase tracking-wide">
+        Browse Supplier Catalog
+      </p>
+      <div class="flex gap-2">
+        <button
+          phx-click="toggle_supplier"
+          phx-value-supplier="west_coast_seeds"
+          class={"px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border " <>
+            if MapSet.member?(@supplier_filters, "west_coast_seeds"),
+              do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
+              else: "bg-white text-[#6b7280] border-[#bbf7d0] hover:bg-[#f0fdf4]"}
+        >
+          West Coast Seeds
+        </button>
+        <button
+          phx-click="toggle_supplier"
+          phx-value-supplier="metchosin_farm"
+          class={"px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border " <>
+            if MapSet.member?(@supplier_filters, "metchosin_farm"),
+              do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
+              else: "bg-white text-[#6b7280] border-[#bbf7d0] hover:bg-[#f0fdf4]"}
+        >
+          Metchosin Farm
+        </button>
+      </div>
+      <input
+        type="text"
+        value={@catalog_search}
+        placeholder="Search supplier products…"
+        phx-keyup="search_catalog"
+        name="search"
+        class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+      />
+      <div class="max-h-64 overflow-y-auto space-y-1">
+        <%= if @supplier_products == [] do %>
+          <p class="text-sm text-[#6b7280] py-4 text-center">
+            No supplier products found. Run the scraper to import catalog data.
+          </p>
+        <% else %>
+          <%= for product <- @supplier_products do %>
+            <div class={"flex items-center justify-between px-3 py-2 rounded-lg border " <>
+              if @selected_supplier_product && @selected_supplier_product.id == product.id,
+                do: "border-[#2d6a4f] bg-[#f0fdf4]",
+                else: "border-transparent hover:bg-[#f0fdf4]"}>
+              <div>
+                <p class="text-sm font-medium text-[#14532d]">{product.title}</p>
+                <p class="text-xs text-[#6b7280]">
+                  {if product.supplier == "west_coast_seeds",
+                    do: "West Coast Seeds",
+                    else: "Metchosin Farm"}
+                </p>
+              </div>
+              <button
+                phx-click="select_supplier_product"
+                phx-value-id={product.id}
+                class="text-xs px-3 py-1 bg-[#2d6a4f] text-white rounded-lg hover:bg-[#1a3a2a] transition-colors shrink-0 ml-2"
+              >
+                Select
+              </button>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+      <%= if @selected_supplier_product do %>
+        <p class="text-xs text-[#52b788]">
+          Selected: <span class="font-medium">{@selected_supplier_product.title}</span>
+          — form pre-filled below. Review and save.
+        </p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%!-- URL mode --%>
+  <%= if @mode == :url do %>
+    <div class="bg-white border border-[#bbf7d0] rounded-xl p-4 space-y-3">
+      <p class="text-xs font-semibold text-[#52b788] uppercase tracking-wide">Import from URL</p>
+      <p class="text-xs text-[#6b7280]">
+        Paste a product URL from westcoastseeds.com or metchosinfarm.ca
+      </p>
+      <div class="flex gap-2">
+        <input
+          type="url"
+          value={@url_input}
+          placeholder="https://www.westcoastseeds.com/products/…"
+          phx-keyup="set_url"
+          name="url"
+          class="flex-1 rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+        />
+        <button
+          phx-click="fetch_url"
+          disabled={@url_loading || @url_input == ""}
+          class="px-4 py-2 bg-[#2d6a4f] text-white rounded-lg text-sm font-medium hover:bg-[#1a3a2a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {if @url_loading, do: "Fetching…", else: "Fetch"}
+        </button>
+      </div>
+      <%= if @url_error do %>
+        <p class="text-xs text-red-600">{@url_error}</p>
+      <% end %>
+      <%= if @selected_supplier_product && @mode == :url do %>
+        <p class="text-xs text-[#52b788]">
+          Fetched: <span class="font-medium">{@selected_supplier_product.title}</span>
+          — form pre-filled below. Review and save.
+        </p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%!-- Seed form --%>
+  <div class="rounded-[22px] overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.07)]">
+    <div class="px-6 py-3 bg-[#f0fdf4] border-b border-[#bbf7d0]">
+      <p class="text-xs font-semibold text-[#52b788] uppercase tracking-wide">Seed Details</p>
+    </div>
+    <div class="bg-white p-6">
+      <.form
+        for={@form}
+        id="seed-new-form"
+        phx-change="validate"
+        phx-submit="save"
+        class="space-y-4"
+      >
+        <input
+          type="hidden"
+          name="seed[supplier_product_id]"
+          value={@form[:supplier_product_id].value}
+        />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <.input
+              field={@form[:name]}
+              type="text"
+              label="Name"
+              class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <.input
+              field={@form[:brand]}
+              type="text"
+              label="Brand / Supplier"
+              class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <.input
+              field={@form[:type]}
+              type="select"
+              label="Type"
+              options={[
+                {"— not set —", ""},
+                {"Vegetable", "Vegetable"},
+                {"Herb", "Herb"},
+                {"Flower", "Flower"},
+                {"Berry", "Berry"}
+              ]}
+              class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+            />
+          </div>
+
+          <div>
+            <.input
+              field={@form[:cycle]}
+              type="select"
+              label="Cycle"
+              options={[
+                {"— not set —", ""},
+                {"Annual", "Annual"},
+                {"Biennial", "Biennial"},
+                {"Perennial", "Perennial"}
+              ]}
+              class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+            />
+          </div>
+
+          <div>
+            <.input
+              field={@form[:sun_requirement]}
+              type="select"
+              label="Sun Requirement"
+              options={[
+                {"— not set —", ""},
+                {"Full Sun", "full_sun"},
+                {"Partial Sun", "partial_sun"},
+                {"Shade Tolerant", "shade_tolerant"}
+              ]}
+              class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+            />
+          </div>
+
+          <div>
+            <.input
+              field={@form[:planting_method]}
+              type="select"
+              label="Planting Method"
+              options={[
+                {"— not set —", ""},
+                {"Direct Sow", "Direct Sow"},
+                {"Seedlings", "Seedlings"},
+                {"Transplant", "Transplant"}
+              ]}
+              class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none bg-white"
+            />
+          </div>
+
+          <div>
+            <.input
+              field={@form[:ideal_planting_time]}
+              type="text"
+              label="Ideal Planting Time"
+              placeholder="e.g. Early Spring, April–June"
+              class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <.input
+              field={@form[:maturity_days]}
+              type="number"
+              label="Days to Maturity"
+              class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+            />
+          </div>
+
+          <%= if @form[:planting_method].value == "Seedlings" do %>
+            <div>
+              <.input
+                field={@form[:weeks_to_start_indoors]}
+                type="number"
+                label="Weeks to start indoors"
+                placeholder="e.g. 8"
+                class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+              />
+            </div>
+            <div>
+              <.input
+                field={@form[:hardening_days]}
+                type="number"
+                label="Hardening days"
+                placeholder="e.g. 7"
+                class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+              />
+            </div>
+          <% end %>
+
+          <div class="md:col-span-2">
+            <.input
+              field={@form[:source_url]}
+              type="text"
+              label="Source URL"
+              class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+            />
+          </div>
+
+          <div class="md:col-span-2">
+            <.input
+              field={@form[:notes]}
+              type="textarea"
+              label="Notes"
+              rows="3"
+              class="w-full rounded-lg border border-[#bbf7d0] px-3 py-2 text-sm focus:border-[#52b788] focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button
+            type="submit"
+            class="bg-[#2d6a4f] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#1a3a2a] transition-colors"
+          >
+            Add to Library
+          </button>
+          <.link
+            navigate={~p"/seeds"}
+            class="rounded-lg px-4 py-2 text-sm font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+          >
+            Cancel
+          </.link>
+        </div>
+      </.form>
+    </div>
+  </div>
+</div>

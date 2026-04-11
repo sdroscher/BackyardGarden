@@ -11,8 +11,16 @@ defmodule BackyardGardenWeb.Seeds.EditLive do
   @impl true
   def mount(%{"id" => id}, _session, socket) do
     seed = Seeds.get_seed!(id)
-    changeset = Seed.changeset(seed, %{})
-    {:ok, assign(socket, seed: seed, form: to_form(changeset))}
+
+    if seed.user_id != socket.assigns.current_user.id do
+      {:ok,
+       socket
+       |> put_flash(:error, "Seed not found.")
+       |> push_navigate(to: ~p"/seeds")}
+    else
+      changeset = Seed.changeset(seed, %{})
+      {:ok, assign(socket, seed: seed, form: to_form(changeset))}
+    end
   end
 
   @impl true

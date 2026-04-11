@@ -5,16 +5,17 @@ defmodule BackyardGarden.DashboardTest do
   alias BackyardGarden.{Seeds, Plantings}
   alias BackyardGarden.Test.Fixtures
 
-  defp seed_fixture(attrs) do
+  defp seed_fixture(user, attrs) do
     defaults = %{
-      name: "Test Seed",
-      type: "Vegetable",
-      cycle: "Annual",
-      ideal_planting_time: "spring",
-      maturity_days: 50
+      "name" => "Test Seed",
+      "type" => "Vegetable",
+      "cycle" => "Annual",
+      "ideal_planting_time" => "spring",
+      "maturity_days" => 50
     }
 
-    {:ok, seed} = Seeds.create_seed(Map.merge(defaults, attrs))
+    merged = Map.merge(defaults, Map.new(attrs, fn {k, v} -> {to_string(k), v} end))
+    {:ok, seed} = Seeds.create_seed_for_user(user.id, merged)
     seed
   end
 
@@ -27,7 +28,7 @@ defmodule BackyardGarden.DashboardTest do
   describe "plant_now_seeds/1" do
     test "returns seeds whose window includes the given month" do
       user = Fixtures.user_fixture()
-      seed_fixture(%{name: "Spinach", ideal_planting_time: "spring"})
+      seed_fixture(user, %{name: "Spinach", ideal_planting_time: "spring"})
 
       # spring = {3, 5}, April is month 4
       result = Dashboard.plant_now_seeds(user.id, ~D[2026-04-03])
@@ -38,7 +39,7 @@ defmodule BackyardGarden.DashboardTest do
 
     test "excludes seeds already planted" do
       user = Fixtures.user_fixture()
-      seed = seed_fixture(%{name: "Planted Seed", ideal_planting_time: "spring"})
+      seed = seed_fixture(user, %{name: "Planted Seed", ideal_planting_time: "spring"})
       planting_fixture(seed, %{user_id: user.id, status: "planted", planted_at: ~D[2026-03-27]})
 
       result = Dashboard.plant_now_seeds(user.id, ~D[2026-04-03])
@@ -49,7 +50,7 @@ defmodule BackyardGarden.DashboardTest do
 
     test "excludes seeds already planned" do
       user = Fixtures.user_fixture()
-      seed = seed_fixture(%{name: "Planned Seed", ideal_planting_time: "spring"})
+      seed = seed_fixture(user, %{name: "Planned Seed", ideal_planting_time: "spring"})
       planting_fixture(seed, %{user_id: user.id, status: "planned"})
 
       result = Dashboard.plant_now_seeds(user.id, ~D[2026-04-03])
@@ -60,7 +61,7 @@ defmodule BackyardGarden.DashboardTest do
 
     test "excludes seeds with no parseable planting time" do
       user = Fixtures.user_fixture()
-      seed_fixture(%{name: "Unknown", ideal_planting_time: nil})
+      seed_fixture(user, %{name: "Unknown", ideal_planting_time: nil})
 
       result = Dashboard.plant_now_seeds(user.id, ~D[2026-04-03])
       names = Enum.map(result, & &1.name)
@@ -70,7 +71,7 @@ defmodule BackyardGarden.DashboardTest do
 
     test "excludes seeds out of their planting window" do
       user = Fixtures.user_fixture()
-      seed_fixture(%{name: "Summer Seed", ideal_planting_time: "summer"})
+      seed_fixture(user, %{name: "Summer Seed", ideal_planting_time: "summer"})
 
       # summer = {6, 8}, April is outside
       result = Dashboard.plant_now_seeds(user.id, ~D[2026-04-03])
@@ -83,8 +84,8 @@ defmodule BackyardGarden.DashboardTest do
   describe "recently_planted/1" do
     test "returns planted plantings in descending planted_at order" do
       user = Fixtures.user_fixture()
-      seed1 = seed_fixture(%{name: "Spinach"})
-      seed2 = seed_fixture(%{name: "Chard"})
+      seed1 = seed_fixture(user, %{name: "Spinach"})
+      seed2 = seed_fixture(user, %{name: "Chard"})
       planting_fixture(seed1, %{user_id: user.id, status: "planted", planted_at: ~D[2026-03-20]})
       planting_fixture(seed2, %{user_id: user.id, status: "planted", planted_at: ~D[2026-03-27]})
 
@@ -94,7 +95,7 @@ defmodule BackyardGarden.DashboardTest do
 
     test "does not return planned or harvested plantings" do
       user = Fixtures.user_fixture()
-      seed = seed_fixture(%{name: "Planned"})
+      seed = seed_fixture(user, %{name: "Planned"})
       planting_fixture(seed, %{user_id: user.id, status: "planned"})
 
       result = Dashboard.recently_planted(user.id, 5)
@@ -104,7 +105,7 @@ defmodule BackyardGarden.DashboardTest do
 
     test "respects the limit" do
       user = Fixtures.user_fixture()
-      seed = seed_fixture(%{name: "Repeated"})
+      seed = seed_fixture(user, %{name: "Repeated"})
 
       for i <- 1..10 do
         planting_fixture(seed, %{
@@ -122,7 +123,7 @@ defmodule BackyardGarden.DashboardTest do
     test "returns seeds with windows opening in the future within days_ahead" do
       user = Fixtures.user_fixture()
       # May = month 5; today is April 3, so May 1 is 28 days away
-      seed_fixture(%{name: "May Seed", ideal_planting_time: "may"})
+      seed_fixture(user, %{name: "May Seed", ideal_planting_time: "may"})
 
       result = Dashboard.upcoming_schedule(user.id, ~D[2026-04-03], 60)
       names = Enum.map(result, fn {s, _} -> s.name end)
@@ -133,7 +134,7 @@ defmodule BackyardGarden.DashboardTest do
     test "does not include seeds whose window opens today or in the past" do
       user = Fixtures.user_fixture()
       # April window opened April 1; today is April 3 — already in Plant Now
-      seed_fixture(%{name: "April Seed", ideal_planting_time: "april"})
+      seed_fixture(user, %{name: "April Seed", ideal_planting_time: "april"})
 
       result = Dashboard.upcoming_schedule(user.id, ~D[2026-04-03], 60)
       names = Enum.map(result, fn {s, _} -> s.name end)
@@ -144,7 +145,7 @@ defmodule BackyardGarden.DashboardTest do
     test "does not include seeds beyond days_ahead" do
       user = Fixtures.user_fixture()
       # August 1 is 120 days from April 3 — beyond 60
-      seed_fixture(%{name: "Far Future Seed", ideal_planting_time: "august"})
+      seed_fixture(user, %{name: "Far Future Seed", ideal_planting_time: "august"})
 
       result = Dashboard.upcoming_schedule(user.id, ~D[2026-04-03], 60)
       names = Enum.map(result, fn {s, _} -> s.name end)
@@ -154,7 +155,7 @@ defmodule BackyardGarden.DashboardTest do
 
     test "excludes seeds already planted or planned" do
       user = Fixtures.user_fixture()
-      seed = seed_fixture(%{name: "Already Planned May", ideal_planting_time: "may"})
+      seed = seed_fixture(user, %{name: "Already Planned May", ideal_planting_time: "may"})
       planting_fixture(seed, %{user_id: user.id, status: "planned"})
 
       result = Dashboard.upcoming_schedule(user.id, ~D[2026-04-03], 60)
@@ -165,8 +166,8 @@ defmodule BackyardGarden.DashboardTest do
 
     test "returns results sorted by window open date" do
       user = Fixtures.user_fixture()
-      seed_fixture(%{name: "May Seed", ideal_planting_time: "may"})
-      seed_fixture(%{name: "June Seed", ideal_planting_time: "june"})
+      seed_fixture(user, %{name: "May Seed", ideal_planting_time: "may"})
+      seed_fixture(user, %{name: "June Seed", ideal_planting_time: "june"})
 
       result = Dashboard.upcoming_schedule(user.id, ~D[2026-04-03], 90)
       names = Enum.map(result, fn {s, _} -> s.name end)
@@ -179,7 +180,7 @@ defmodule BackyardGarden.DashboardTest do
 
     test "includes the window open date in each result" do
       user = Fixtures.user_fixture()
-      seed_fixture(%{name: "May Seed", ideal_planting_time: "may"})
+      seed_fixture(user, %{name: "May Seed", ideal_planting_time: "may"})
 
       result = Dashboard.upcoming_schedule(user.id, ~D[2026-04-03], 60)
       {_seed, open_date} = Enum.find(result, fn {s, _} -> s.name == "May Seed" end)

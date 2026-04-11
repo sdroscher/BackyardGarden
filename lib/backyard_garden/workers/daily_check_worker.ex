@@ -43,7 +43,7 @@ defmodule BackyardGarden.Workers.DailyCheckWorker do
 
   defp check_plant_now(user, date) do
     # Get seeds in planting window that aren't already planted
-    plant_now_seeds = Dashboard.plant_now_seeds(date)
+    plant_now_seeds = Dashboard.plant_now_seeds(user.id, date)
 
     Enum.each(plant_now_seeds, fn seed ->
       # Check if user already received a plant_now notification for this seed recently

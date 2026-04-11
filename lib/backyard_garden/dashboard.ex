@@ -13,7 +13,7 @@ defmodule BackyardGarden.Dashboard do
   def plant_now_seeds(user_id, date \\ Date.utc_today()) do
     active_ids = active_seed_ids(user_id)
 
-    Seeds.list_seeds()
+    Seeds.list_seeds(user_id)
     |> Enum.reject(&(&1.id in active_ids))
     |> Enum.filter(&in_planting_window?(&1, date))
   end
@@ -36,7 +36,7 @@ defmodule BackyardGarden.Dashboard do
   def upcoming_schedule(user_id, date \\ Date.utc_today(), days_ahead \\ 60) do
     active_ids = active_seed_ids(user_id)
 
-    Seeds.list_seeds()
+    Seeds.list_seeds(user_id)
     |> Enum.reject(&(&1.id in active_ids))
     |> Enum.flat_map(fn seed ->
       case upcoming_open_date(seed, date, days_ahead) do
@@ -57,10 +57,9 @@ defmodule BackyardGarden.Dashboard do
   end
 
   defp in_planting_window?(seed, %Date{month: month}) do
-    case PlantingCalendar.parse_ideal_months(seed.ideal_planting_time) do
-      nil -> false
-      {start_m, end_m} -> month_in_range?(month, start_m, end_m)
-    end
+    seed.ideal_planting_time
+    |> PlantingCalendar.parse_ideal_months()
+    |> Enum.any?(fn {start_m, end_m} -> month_in_range?(month, start_m, end_m) end)
   end
 
   # Normal range: start_m <= end_m (e.g., March–May)
@@ -73,19 +72,17 @@ defmodule BackyardGarden.Dashboard do
     month >= start_m or month <= end_m
   end
 
-  # Returns the first day of the next occurrence of `start_m` that is strictly
-  # after `from` and within `days_ahead`. Returns nil otherwise.
+  # Returns the earliest first-of-month across all planting windows that is
+  # strictly after `from` and within `days_ahead`. Returns nil otherwise.
   defp upcoming_open_date(seed, from, days_ahead) do
-    case PlantingCalendar.parse_ideal_months(seed.ideal_planting_time) do
-      nil ->
-        nil
-
-      {start_m, _end_m} ->
-        open_date = next_month_first(from, start_m)
-        days_until = Date.diff(open_date, from)
-
-        if days_until >= 1 and days_until <= days_ahead, do: open_date, else: nil
-    end
+    seed.ideal_planting_time
+    |> PlantingCalendar.parse_ideal_months()
+    |> Enum.map(fn {start_m, _end_m} -> next_month_first(from, start_m) end)
+    |> Enum.filter(fn open_date ->
+      days_until = Date.diff(open_date, from)
+      days_until >= 1 and days_until <= days_ahead
+    end)
+    |> Enum.min(Date, fn -> nil end)
   end
 
   # Returns the 1st of `month` in the current year if that date is after `from`,

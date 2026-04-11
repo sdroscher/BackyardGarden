@@ -1,15 +1,17 @@
 defmodule BackyardGarden.Seeds do
   @moduledoc """
-  Context for managing seed reference data.
+  Context for managing a user's personal seed library.
+  All queries are scoped to a specific user_id.
   """
 
   import Ecto.Query
   alias BackyardGarden.Repo
   alias BackyardGarden.Seeds.Seed
 
-  @doc "Returns all seeds matching the given filters, sorted by name or specified field."
-  def list_seeds(filters \\ %{}) do
+  @doc "Returns all seeds for `user_id` matching the given filters, sorted by name or specified field."
+  def list_seeds(user_id, filters \\ %{}) do
     Seed
+    |> where([s], s.user_id == ^user_id)
     |> filter_by(:type, filters[:type])
     |> filter_by(:brand, filters[:brand])
     |> filter_by(:cycle, filters[:cycle])
@@ -28,10 +30,13 @@ defmodule BackyardGarden.Seeds do
     get_seed!(id) |> Repo.preload(:supplier_product)
   end
 
-  @doc "Creates a seed. Returns {:ok, seed} or {:error, changeset}."
-  def create_seed(attrs) do
+  @doc "Returns a single seed by id, or nil if not found."
+  def get_seed(id), do: Repo.get(Seed, id)
+
+  @doc "Creates a seed owned by `user_id`. Returns {:ok, seed} or {:error, changeset}."
+  def create_seed_for_user(user_id, attrs) do
     %Seed{}
-    |> Seed.changeset(attrs)
+    |> Seed.changeset(Map.put(attrs, "user_id", user_id))
     |> Repo.insert()
   end
 
@@ -42,53 +47,56 @@ defmodule BackyardGarden.Seeds do
     |> Repo.update()
   end
 
-  @doc "Returns a single seed by id, or nil if not found."
-  def get_seed(id), do: Repo.get(Seed, id)
-
-  @doc "Returns sorted distinct seed types present in the database."
-  def list_types do
+  @doc "Returns sorted distinct seed types present in `user_id`'s library."
+  def list_types(user_id) do
     Seed
-    |> where([s], not is_nil(s.type) and s.type != "")
+    |> where([s], s.user_id == ^user_id and not is_nil(s.type) and s.type != "")
     |> select([s], s.type)
     |> distinct(true)
     |> order_by([s], s.type)
     |> Repo.all()
   end
 
-  @doc "Returns sorted distinct seed brands present in the database."
-  def list_brands do
+  @doc "Returns sorted distinct seed brands present in `user_id`'s library."
+  def list_brands(user_id) do
     Seed
-    |> where([s], not is_nil(s.brand) and s.brand != "")
+    |> where([s], s.user_id == ^user_id and not is_nil(s.brand) and s.brand != "")
     |> select([s], s.brand)
     |> distinct(true)
     |> order_by([s], s.brand)
     |> Repo.all()
   end
 
-  @doc "Returns sorted distinct seed cycles present in the database."
-  def list_cycles do
+  @doc "Returns sorted distinct seed cycles present in `user_id`'s library."
+  def list_cycles(user_id) do
     Seed
-    |> where([s], not is_nil(s.cycle) and s.cycle != "")
+    |> where([s], s.user_id == ^user_id and not is_nil(s.cycle) and s.cycle != "")
     |> select([s], s.cycle)
     |> distinct(true)
     |> order_by([s], s.cycle)
     |> Repo.all()
   end
 
-  @doc "Returns sorted distinct planting methods present in the database."
-  def list_planting_methods do
+  @doc "Returns sorted distinct planting methods present in `user_id`'s library."
+  def list_planting_methods(user_id) do
     Seed
-    |> where([s], not is_nil(s.planting_method) and s.planting_method != "")
+    |> where(
+      [s],
+      s.user_id == ^user_id and not is_nil(s.planting_method) and s.planting_method != ""
+    )
     |> select([s], s.planting_method)
     |> distinct(true)
     |> order_by([s], s.planting_method)
     |> Repo.all()
   end
 
-  @doc "Returns sorted distinct sun requirements present in the database."
-  def list_sun_requirements do
+  @doc "Returns sorted distinct sun requirements present in `user_id`'s library."
+  def list_sun_requirements(user_id) do
     Seed
-    |> where([s], not is_nil(s.sun_requirement) and s.sun_requirement != "")
+    |> where(
+      [s],
+      s.user_id == ^user_id and not is_nil(s.sun_requirement) and s.sun_requirement != ""
+    )
     |> select([s], s.sun_requirement)
     |> distinct(true)
     |> order_by([s], s.sun_requirement)

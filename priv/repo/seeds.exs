@@ -1,7 +1,17 @@
 # priv/repo/seeds.exs
-# Run with: mix run priv/repo/seeds.exs
 #
-# Idempotent: skips seeds that already exist (matched by name + brand).
+# NOTE: Seeds are now user-owned. This script no longer works as-is because
+# the Seed schema requires a user_id. To import seeds for an existing user,
+# use the iex backfill instead:
+#
+#   user = BackyardGarden.Users.get_user_by_email("your@email.com")
+#   import Ecto.Query
+#   BackyardGarden.Repo.update_all(
+#     from(s in BackyardGarden.Seeds.Seed, where: is_nil(s.user_id)),
+#     set: [user_id: user.id]
+#   )
+#
+# This script is kept for historical reference only.
 
 alias BackyardGarden.Repo
 alias BackyardGarden.Seeds.Seed

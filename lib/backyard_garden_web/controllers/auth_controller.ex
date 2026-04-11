@@ -44,8 +44,17 @@ defmodule BackyardGardenWeb.AuthController do
   end
 
   def delete(conn, _params) do
+    %{domain: domain, client_id: client_id} =
+      Application.get_env(:ueberauth, Ueberauth.Strategy.Auth0.OAuth)
+      |> Map.new()
+
+    return_to = url(~p"/auth/auth0")
+
+    logout_url =
+      "https://#{domain}/v2/logout?client_id=#{client_id}&returnTo=#{URI.encode_www_form(return_to)}"
+
     conn
     |> clear_session()
-    |> redirect(to: ~p"/auth/auth0")
+    |> redirect(external: logout_url)
   end
 end

@@ -40,6 +40,7 @@ defmodule BackyardGardenWeb.Router do
     live "/", Dashboard.IndexLive, :index
 
     live "/seeds", Seeds.IndexLive, :index
+    live "/seeds/new", Seeds.NewLive, :new
     live "/seeds/:id", Seeds.ShowLive, :show
     live "/seeds/:id/edit", Seeds.EditLive, :edit
 

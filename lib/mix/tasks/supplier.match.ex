@@ -13,7 +13,7 @@ defmodule Mix.Tasks.Supplier.Match do
   use Mix.Task
 
   import Ecto.Query
-  alias BackyardGarden.{Repo, Seeds, SupplierCatalog}
+  alias BackyardGarden.{Repo, SupplierCatalog}
   alias BackyardGarden.Seeds.Seed
 
   @shortdoc "Match seeds to supplier products by name similarity"
@@ -25,7 +25,7 @@ defmodule Mix.Tasks.Supplier.Match do
   def run(_args) do
     Mix.Task.run("app.start")
 
-    seeds = Seeds.list_seeds() |> Enum.filter(&is_nil(&1.supplier_product_id))
+    seeds = Repo.all(from(s in Seed, where: is_nil(s.supplier_product_id)))
 
     {auto_count, review, unmatched} =
       Enum.reduce(seeds, {0, [], []}, fn seed, {auto_count, review_acc, unmatched_acc} ->

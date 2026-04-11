@@ -14,10 +14,15 @@ defmodule BackyardGarden.Test.Fixtures do
     user
   end
 
-  @doc "Creates a seed with default values. Accepts atom-keyed attrs to override defaults."
-  def seed_fixture(attrs \\ %{}) do
+  @doc "Creates a seed owned by `user` with default values. Accepts atom-keyed attrs to override defaults."
+  def seed_fixture(user, attrs \\ %{}) do
     defaults = %{name: "Test Seed #{System.unique_integer()}", type: "Vegetable", cycle: "Annual"}
-    {:ok, seed} = Seeds.create_seed(Map.merge(defaults, attrs))
+
+    merged =
+      Map.merge(defaults, attrs)
+      |> Map.new(fn {k, v} -> {to_string(k), v} end)
+
+    {:ok, seed} = Seeds.create_seed_for_user(user.id, merged)
     seed
   end
 end

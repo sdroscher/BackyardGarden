@@ -13,8 +13,10 @@ defmodule BackyardGardenWeb.Calendar.IndexLiveTest do
   end
 
   defp seed_fixture(attrs) do
-    defaults = %{name: "Basil", type: "Herb", cycle: "Annual", maturity_days: 60}
-    {:ok, seed} = Seeds.create_seed(Map.merge(defaults, attrs))
+    user = Fixtures.user_fixture()
+    defaults = %{"name" => "Basil", "type" => "Herb", "cycle" => "Annual", "maturity_days" => 60}
+    merged = Map.merge(defaults, Map.new(attrs, fn {k, v} -> {to_string(k), v} end))
+    {:ok, seed} = Seeds.create_seed_for_user(user.id, merged)
     seed
   end
 

@@ -4,52 +4,64 @@ defmodule BackyardGarden.PlantingCalendarTest do
   alias BackyardGarden.PlantingCalendar
 
   describe "parse_ideal_months/1" do
-    test "returns nil for nil input" do
-      assert PlantingCalendar.parse_ideal_months(nil) == nil
+    test "returns empty list for nil input" do
+      assert PlantingCalendar.parse_ideal_months(nil) == []
     end
 
-    test "returns nil for empty string" do
-      assert PlantingCalendar.parse_ideal_months("") == nil
+    test "returns empty list for empty string" do
+      assert PlantingCalendar.parse_ideal_months("") == []
     end
 
     test "parses 'Early Spring' to March-April" do
-      assert PlantingCalendar.parse_ideal_months("Early Spring") == {3, 4}
+      assert PlantingCalendar.parse_ideal_months("Early Spring") == [{3, 4}]
     end
 
     test "parses 'Late Spring' to April-May" do
-      assert PlantingCalendar.parse_ideal_months("Late Spring") == {4, 5}
+      assert PlantingCalendar.parse_ideal_months("Late Spring") == [{4, 5}]
     end
 
     test "parses 'Spring' to March-May" do
-      assert PlantingCalendar.parse_ideal_months("Spring") == {3, 5}
+      assert PlantingCalendar.parse_ideal_months("Spring") == [{3, 5}]
     end
 
     test "parses 'Early/Late Spring' to March-May" do
-      assert PlantingCalendar.parse_ideal_months("Early/Late Spring") == {3, 5}
+      assert PlantingCalendar.parse_ideal_months("Early/Late Spring") == [{3, 5}]
     end
 
     test "parses month range 'April-July'" do
-      assert PlantingCalendar.parse_ideal_months("April-July") == {4, 7}
+      assert PlantingCalendar.parse_ideal_months("April-July") == [{4, 7}]
     end
 
     test "parses 'Late April' to April-April" do
-      assert PlantingCalendar.parse_ideal_months("Late April") == {4, 4}
+      assert PlantingCalendar.parse_ideal_months("Late April") == [{4, 4}]
     end
 
     test "parses 'Early April' to April-April" do
-      assert PlantingCalendar.parse_ideal_months("Early April") == {4, 4}
+      assert PlantingCalendar.parse_ideal_months("Early April") == [{4, 4}]
     end
 
     test "parses 'Summer' to June-August" do
-      assert PlantingCalendar.parse_ideal_months("Summer") == {6, 8}
+      assert PlantingCalendar.parse_ideal_months("Summer") == [{6, 8}]
     end
 
     test "parses 'Fall' to September-October" do
-      assert PlantingCalendar.parse_ideal_months("Fall") == {9, 10}
+      assert PlantingCalendar.parse_ideal_months("Fall") == [{9, 10}]
     end
 
-    test "returns nil for unrecognised string" do
-      assert PlantingCalendar.parse_ideal_months("whenever") == nil
+    test "returns empty list for unrecognised string" do
+      assert PlantingCalendar.parse_ideal_months("whenever") == []
+    end
+
+    test "parses comma-separated multi-window 'Autumn,Early Spring'" do
+      assert PlantingCalendar.parse_ideal_months("Autumn,Early Spring") == [{9, 10}, {3, 4}]
+    end
+
+    test "parses comma-separated with spaces 'Fall, Spring'" do
+      assert PlantingCalendar.parse_ideal_months("Fall, Spring") == [{9, 10}, {3, 5}]
+    end
+
+    test "skips unrecognised segments in a comma list" do
+      assert PlantingCalendar.parse_ideal_months("whenever, Spring") == [{3, 5}]
     end
   end
 

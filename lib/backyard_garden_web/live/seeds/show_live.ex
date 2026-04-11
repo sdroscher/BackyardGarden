@@ -11,16 +11,24 @@ defmodule BackyardGardenWeb.Seeds.ShowLive do
   @impl true
   def mount(%{"id" => id}, _session, socket) do
     seed = Seeds.get_seed_with_supplier!(id)
-    status = season_status(seed)
-    zones = GardenZones.recommend_zones(socket.assigns.current_user.id, seed)
 
-    {:ok,
-     socket
-     |> assign(:seed, seed)
-     |> assign(:season_status, status)
-     |> assign(:show_log_form, false)
-     |> assign(:log_form, nil)
-     |> assign(:log_zones, zones)}
+    if seed.user_id != socket.assigns.current_user.id do
+      {:ok,
+       socket
+       |> put_flash(:error, "Seed not found.")
+       |> push_navigate(to: ~p"/seeds")}
+    else
+      status = season_status(seed)
+      zones = GardenZones.recommend_zones(socket.assigns.current_user.id, seed)
+
+      {:ok,
+       socket
+       |> assign(:seed, seed)
+       |> assign(:season_status, status)
+       |> assign(:show_log_form, false)
+       |> assign(:log_form, nil)
+       |> assign(:log_zones, zones)}
+    end
   end
 
   @impl true
@@ -89,21 +97,15 @@ defmodule BackyardGardenWeb.Seeds.ShowLive do
   end
 
   defp season_status(seed) do
-    today = Date.utc_today()
+    m = Date.utc_today().month
 
-    case PlantingCalendar.parse_ideal_months(seed.ideal_planting_time) do
-      nil ->
-        :out_of_season
+    in_window =
+      seed.ideal_planting_time
+      |> PlantingCalendar.parse_ideal_months()
+      |> Enum.any?(fn {start_m, end_m} ->
+        if start_m <= end_m, do: m >= start_m and m <= end_m, else: m >= start_m or m <= end_m
+      end)
 
-      {start_m, end_m} ->
-        m = today.month
-
-        in_window =
-          if start_m <= end_m,
-            do: m >= start_m and m <= end_m,
-            else: m >= start_m or m <= end_m
-
-        if in_window, do: :in_season, else: :out_of_season
-    end
+    if in_window, do: :in_season, else: :out_of_season
   end
 end

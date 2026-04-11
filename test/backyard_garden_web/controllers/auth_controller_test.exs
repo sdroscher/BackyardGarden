@@ -71,14 +71,16 @@ defmodule BackyardGardenWeb.AuthControllerTest do
   end
 
   describe "delete/2" do
-    test "clears session and redirects to /auth/auth0", %{conn: conn} do
+    test "clears session and redirects to Auth0 logout endpoint", %{conn: conn} do
       conn =
         conn
         |> Plug.Test.init_test_session(%{user_id: "some-user-id"})
         |> get(~p"/auth/logout")
 
       assert get_session(conn, :user_id) == nil
-      assert redirected_to(conn) == "/auth/auth0"
+      location = redirected_to(conn)
+      assert location =~ "auth0.com/v2/logout"
+      assert location =~ "returnTo="
     end
   end
 end

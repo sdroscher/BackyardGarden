@@ -9,16 +9,18 @@ defmodule BackyardGardenWeb.Seeds.IndexLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    user_id = socket.assigns.current_user.id
+
     {:ok,
      socket
      |> assign(:sort_field, nil)
      |> assign(:sort_dir, :asc)
-     |> assign_filters(%{})
-     |> assign(:types, Seeds.list_types())
-     |> assign(:brands, Seeds.list_brands())
-     |> assign(:cycles, Seeds.list_cycles())
-     |> assign(:planting_methods, Seeds.list_planting_methods())
-     |> assign(:sun_requirements, Seeds.list_sun_requirements())}
+     |> assign_filters(%{}, user_id)
+     |> assign(:types, Seeds.list_types(user_id))
+     |> assign(:brands, Seeds.list_brands(user_id))
+     |> assign(:cycles, Seeds.list_cycles(user_id))
+     |> assign(:planting_methods, Seeds.list_planting_methods(user_id))
+     |> assign(:sun_requirements, Seeds.list_sun_requirements(user_id))}
   end
 
   @impl true
@@ -32,7 +34,7 @@ defmodule BackyardGardenWeb.Seeds.IndexLive do
       search: params["search"] || ""
     }
 
-    {:noreply, assign_filters(socket, filters)}
+    {:noreply, assign_filters(socket, filters, socket.assigns.current_user.id)}
   end
 
   @impl true
@@ -48,12 +50,13 @@ defmodule BackyardGardenWeb.Seeds.IndexLive do
      socket
      |> assign(:sort_field, field)
      |> assign(:sort_dir, new_dir)
-     |> assign_filters(socket.assigns.filters)}
+     |> assign_filters(socket.assigns.filters, socket.assigns.current_user.id)}
   end
 
-  defp assign_filters(socket, filters) do
+  defp assign_filters(socket, filters, user_id) do
     seeds =
       Seeds.list_seeds(
+        user_id,
         Map.merge(filters, %{
           sort_field: socket.assigns.sort_field,
           sort_dir: socket.assigns.sort_dir
@@ -71,29 +74,20 @@ defmodule BackyardGardenWeb.Seeds.IndexLive do
 
   defp season_status(seed) do
     today = Date.utc_today()
+    windows = BackyardGarden.PlantingCalendar.parse_ideal_months(seed.ideal_planting_time)
 
-    case BackyardGarden.PlantingCalendar.parse_ideal_months(seed.ideal_planting_time) do
-      nil -> :out_of_season
-      {start_m, end_m} -> classify_season(today, start_m, end_m)
-    end
-  end
-
-  defp classify_season(today, start_m, end_m) do
-    m = today.month
-
-    in_window =
-      if start_m <= end_m do
-        m >= start_m and m <= end_m
-      else
-        m >= start_m or m <= end_m
-      end
-
-    if in_window do
+    if Enum.any?(windows, fn {s, e} -> month_in_window?(today.month, s, e) end) do
       :in_season
     else
-      days_until_open(today, start_m)
+      windows
+      |> Enum.map(&days_until_open(today, elem(&1, 0)))
+      |> Enum.filter(&match?({:coming_soon, _}, &1))
+      |> Enum.min_by(&elem(&1, 1), fn -> :out_of_season end)
     end
   end
+
+  defp month_in_window?(m, start_m, end_m) when start_m <= end_m, do: m >= start_m and m <= end_m
+  defp month_in_window?(m, start_m, end_m), do: m >= start_m or m <= end_m
 
   defp days_until_open(today, start_m) do
     this_year_open = %{today | month: start_m, day: 1}

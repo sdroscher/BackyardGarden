@@ -18,6 +18,7 @@ defmodule BackyardGarden.Seeds.Seed do
     field :weeks_to_start_indoors, :integer
     field :hardening_days, :integer
 
+    belongs_to :user, BackyardGarden.Users.User
     belongs_to :supplier_product, BackyardGarden.SupplierCatalog.SupplierProduct, type: :binary_id
 
     timestamps()
@@ -26,6 +27,7 @@ defmodule BackyardGarden.Seeds.Seed do
   def changeset(seed, attrs) do
     seed
     |> cast(attrs, [
+      :user_id,
       :name,
       :brand,
       :type,
@@ -40,6 +42,6 @@ defmodule BackyardGarden.Seeds.Seed do
       :hardening_days,
       :supplier_product_id
     ])
-    |> validate_required([:name])
+    |> validate_required([:name, :user_id])
   end
 end

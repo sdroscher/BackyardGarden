@@ -7,8 +7,17 @@ defmodule BackyardGarden.PlantingsTest do
   alias BackyardGarden.Test.Fixtures
 
   defp seed_fixture(attrs \\ %{}) do
-    defaults = %{name: "Test Seed", brand: "Metchosin Farm", type: "Herb", cycle: "Annual"}
-    {:ok, seed} = Seeds.create_seed(Map.merge(defaults, attrs))
+    user = Fixtures.user_fixture()
+
+    defaults = %{
+      "name" => "Test Seed",
+      "brand" => "Metchosin Farm",
+      "type" => "Herb",
+      "cycle" => "Annual"
+    }
+
+    merged = Map.merge(defaults, Map.new(attrs, fn {k, v} -> {to_string(k), v} end))
+    {:ok, seed} = Seeds.create_seed_for_user(user.id, merged)
     seed
   end
 

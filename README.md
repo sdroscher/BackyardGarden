@@ -34,7 +34,15 @@ Built with **Elixir + Phoenix LiveView**, deployed to **fly.io**.
 - All garden data (plantings, zones) scoped to the authenticated user
 - Prowl API key encrypted at rest using Cloak AES-GCM
 - Profile settings page — update name, email, location, timezone
-- Logout link in nav
+- Logout link in nav (clears Auth0 session via `/v2/logout` so re-auth is required)
+
+**User-Scoped Seed Library — Complete**
+- Seeds are owned per-user — new users start with zero seeds
+- Add Seed page (`/seeds/new`) with three modes:
+  - **Supplier Catalog** — browse West Coast Seeds and Metchosin Farm products with supplier toggle filters and live search; select to pre-fill the form including supplier link
+  - **From URL** — paste a `westcoastseeds.com` or `metchosinfarm.ca` product URL; app fetches and pre-fills the form
+  - **Enter Manually** — free-form entry for any source
+- Multi-window planting time parsing — `"Autumn,Early Spring"` correctly matches both planting windows for season badges and Plant Now recommendations
 
 **Session Improvements (April 2026)**
 - Seedling tracking — full indoor lifecycle: sow in trays → harden outdoors → transplant; new planting statuses `sown` and `hardening`
@@ -119,7 +127,7 @@ In the application settings, set:
 | Field | Value |
 |---|---|
 | Allowed Callback URLs | `http://localhost:4000/auth/auth0/callback` |
-| Allowed Logout URLs | `http://localhost:4000` |
+| Allowed Logout URLs | `http://localhost:4000/auth/auth0` |
 
 For production, add your production domain alongside localhost (comma-separated).
 
@@ -234,8 +242,9 @@ fly launch
 fly deploy
 ```
 
-Remember to add your production callback URL to Auth0:
-`https://your-app.fly.dev/auth/auth0/callback`
+Remember to add your production URLs to Auth0:
+- Allowed Callback URLs: `https://your-app.fly.dev/auth/auth0/callback`
+- Allowed Logout URLs: `https://your-app.fly.dev/auth/auth0`
 
 ---
 
@@ -297,6 +306,22 @@ Run `mix supplier.scrape` first to populate the catalog, then `mix supplier.matc
 
 ## Seed Data
 
-Initial seed data sourced from:
+Seeds are user-owned — each user manages their own library. New users start with zero seeds and add them via the Add Seed page.
+
+The app owner's initial 62 seeds were imported from CSV and can be backfilled after adding the `user_id` migration:
+
+```elixir
+# In iex -S mix
+user = BackyardGarden.Users.get_user_by_email("your@email.com")
+import Ecto.Query
+BackyardGarden.Repo.update_all(
+  from(s in BackyardGarden.Seeds.Seed, where: is_nil(s.user_id)),
+  set: [user_id: user.id]
+)
+```
+
+The global supplier catalog (West Coast Seeds + Metchosin Farm) is separate and powers the Add Seed browse/search workflow. Populate it by running `mix supplier.scrape`.
+
+Original seed data sourced from:
 - [Metchosin Farm Seed Library](https://metchosinfarm.ca/collections/all-seeds)
 - [West Coast Seeds](https://www.westcoastseeds.com/)

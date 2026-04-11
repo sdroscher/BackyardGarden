@@ -12,18 +12,18 @@ defmodule BackyardGardenWeb.Seeds.ShowLiveTest do
     conn = log_in_user(conn, user)
 
     {:ok, seed} =
-      Seeds.create_seed(%{
-        name: "Purple Basil",
-        brand: "Metchosin Farm",
-        type: "Herb",
-        cycle: "Annual",
-        planting_method: "Seedlings",
-        ideal_planting_time: "Late April/Early May",
-        maturity_days: 60,
-        notes: "Great companion plant"
+      Seeds.create_seed_for_user(user.id, %{
+        "name" => "Purple Basil",
+        "brand" => "Metchosin Farm",
+        "type" => "Herb",
+        "cycle" => "Annual",
+        "planting_method" => "Seedlings",
+        "ideal_planting_time" => "Late April/Early May",
+        "maturity_days" => 60,
+        "notes" => "Great companion plant"
       })
 
-    %{conn: conn, seed: seed}
+    %{conn: conn, user: user, seed: seed}
   end
 
   test "renders seed name and all present fields", %{conn: conn, seed: seed} do
@@ -50,9 +50,13 @@ defmodule BackyardGardenWeb.Seeds.ShowLiveTest do
     assert html =~ "BackyardGarden"
   end
 
-  test "does not render optional fields when nil", %{conn: conn} do
+  test "does not render optional fields when nil", %{conn: conn, user: user} do
     {:ok, seed_no_notes} =
-      Seeds.create_seed(%{name: "Plain Seed", type: "Vegetable", cycle: "Annual"})
+      Seeds.create_seed_for_user(user.id, %{
+        "name" => "Plain Seed",
+        "type" => "Vegetable",
+        "cycle" => "Annual"
+      })
 
     {:ok, _view, html} = live(conn, ~p"/seeds/#{seed_no_notes.id}")
 
@@ -67,7 +71,26 @@ defmodule BackyardGardenWeb.Seeds.ShowLiveTest do
     end
   end
 
-  test "renders supplier section when seed is linked to a supplier product", %{conn: conn} do
+  test "redirects with error flash when accessing another user's seed", %{conn: conn} do
+    other_user = Fixtures.user_fixture()
+
+    {:ok, other_seed} =
+      Seeds.create_seed_for_user(other_user.id, %{
+        "name" => "Other User Seed",
+        "type" => "Vegetable",
+        "cycle" => "Annual"
+      })
+
+    assert {:error, {:live_redirect, %{to: "/seeds", flash: flash}}} =
+             live(conn, ~p"/seeds/#{other_seed.id}")
+
+    assert flash["error"] =~ "not found"
+  end
+
+  test "renders supplier section when seed is linked to a supplier product", %{
+    conn: conn,
+    user: user
+  } do
     {:ok, product} =
       SupplierCatalog.upsert_supplier_product(%{
         supplier: "metchosin_farm",
@@ -80,7 +103,11 @@ defmodule BackyardGardenWeb.Seeds.ShowLiveTest do
       })
 
     {:ok, seed} =
-      Seeds.create_seed(%{name: "Purple Basil", type: "Herb", supplier_product_id: product.id})
+      Seeds.create_seed_for_user(user.id, %{
+        "name" => "Purple Basil",
+        "type" => "Herb",
+        "supplier_product_id" => product.id
+      })
 
     {:ok, _view, html} = live(conn, ~p"/seeds/#{seed.id}")
 
@@ -97,12 +124,19 @@ defmodule BackyardGardenWeb.Seeds.ShowLiveTest do
     refute html =~ "From the Supplier"
   end
 
-  test "shows in-season badge when seed window includes current month", %{conn: conn} do
+  test "shows in-season badge when seed window includes current month", %{
+    conn: conn,
+    user: user
+  } do
     today = Date.utc_today()
     month_name = Calendar.strftime(today, "%B") |> String.downcase()
 
     {:ok, seed} =
-      Seeds.create_seed(%{name: "In Season Herb", type: "Herb", ideal_planting_time: month_name})
+      Seeds.create_seed_for_user(user.id, %{
+        "name" => "In Season Herb",
+        "type" => "Herb",
+        "ideal_planting_time" => month_name
+      })
 
     {:ok, _view, html} = live(conn, ~p"/seeds/#{seed.id}")
     assert html =~ "In season"

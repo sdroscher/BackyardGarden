@@ -33,37 +33,37 @@ defmodule BackyardGarden.Workers.DailyCheckWorkerTest do
 
     # Create test seeds in current planting window (April is month 4)
     {:ok, seed_ready} =
-      Seeds.create_seed(%{
-        name: "Tomato",
-        type: "Vegetable",
-        ideal_planting_time: "April-May",
-        maturity_days: 60
+      Seeds.create_seed_for_user(user.id, %{
+        "name" => "Tomato",
+        "type" => "Vegetable",
+        "ideal_planting_time" => "April-May",
+        "maturity_days" => 60
       })
 
     {:ok, seed_ready2} =
-      Seeds.create_seed(%{
-        name: "Lettuce",
-        type: "Vegetable",
-        ideal_planting_time: "April-June",
-        maturity_days: 30
+      Seeds.create_seed_for_user(user.id, %{
+        "name" => "Lettuce",
+        "type" => "Vegetable",
+        "ideal_planting_time" => "April-June",
+        "maturity_days" => 30
       })
 
     # Create a seed not in current planting window
     {:ok, seed_not_ready} =
-      Seeds.create_seed(%{
-        name: "Pumpkin",
-        type: "Vegetable",
-        ideal_planting_time: "May-June",
-        maturity_days: 90
+      Seeds.create_seed_for_user(user.id, %{
+        "name" => "Pumpkin",
+        "type" => "Vegetable",
+        "ideal_planting_time" => "May-June",
+        "maturity_days" => 90
       })
 
     # Create a separate seed for harvest_soon test
     {:ok, harvest_seed} =
-      Seeds.create_seed(%{
-        name: "Carrot",
-        type: "Vegetable",
-        ideal_planting_time: "March-April",
-        maturity_days: 60
+      Seeds.create_seed_for_user(user.id, %{
+        "name" => "Carrot",
+        "type" => "Vegetable",
+        "ideal_planting_time" => "March-April",
+        "maturity_days" => 60
       })
 
     # Create plantings for harvest_soon test

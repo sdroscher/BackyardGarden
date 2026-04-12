@@ -11,22 +11,18 @@ config :backyard_garden,
   ecto_repos: [BackyardGarden.Repo],
   generators: [timestamp_type: :utc_datetime, binary_id: true]
 
-config :backyard_garden, BackyardGarden.Repo,
-  database: Path.expand("../priv/repo/backyard_garden.db", __DIR__),
-  pool_size: 5
+config :backyard_garden, BackyardGarden.Repo, pool_size: 5
 
 config :backyard_garden, Oban,
   repo: BackyardGarden.Repo,
   engine: Oban.Engines.Basic,
+  notifier: Oban.Notifiers.Postgres,
   peer: {Oban.Peers.Isolated, []},
   stage_interval: 1000,
   plugins: [
     {Oban.Plugins.Cron,
-     crons: [
-       hourly_check: [
-         schedule: "0 * * * *",
-         worker: "BackyardGarden.Workers.HourlyCheckWorker"
-       ]
+     crontab: [
+       {"0 * * * *", BackyardGarden.Workers.HourlyCheckWorker}
      ]}
   ]
 

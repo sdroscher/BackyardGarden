@@ -11,7 +11,7 @@ defmodule BackyardGarden.SupplierCatalog.SupplierProduct do
 
   schema "supplier_products" do
     field :supplier, :string
-    field :shopify_product_id, :integer
+    field :shopify_product_id, :id
     field :handle, :string
     field :title, :string
     field :product_type, :string

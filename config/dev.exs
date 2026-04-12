@@ -1,14 +1,16 @@
 import Config
 
-# Configure your database
+# Configure your database (URL set in runtime.exs after dotenvy loads .env)
 config :backyard_garden, BackyardGarden.Repo,
-  database: Path.expand("../priv/repo/backyard_garden_dev.db", __DIR__),
   pool_size: 5,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
 
+# Temporary SQLite repo used only by mix migrate.sqlite_to_postgres
+config :backyard_garden, BackyardGarden.RepoSQLite,
+  database: Path.expand("../priv/repo/backyard_garden_dev.db", __DIR__)
+
 config :backyard_garden, Oban,
-  testing: :manual,
   queues: [default: 10, notifications: 5],
   plugins: []
 

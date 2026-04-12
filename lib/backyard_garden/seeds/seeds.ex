@@ -113,16 +113,13 @@ defmodule BackyardGarden.Seeds do
   defp filter_by_search(query, ""), do: query
 
   defp filter_by_search(query, search) do
-    escaped =
-      search |> String.downcase() |> String.replace("%", "\\%") |> String.replace("_", "\\_")
-
-    term = "%#{escaped}%"
+    escaped = search |> String.replace("%", "\\%") |> String.replace("_", "\\_")
+    term = "%#{String.downcase(escaped)}%"
 
     where(
       query,
       [s],
-      like(fragment("lower(?)", s.name), ^term) or
-        like(fragment("lower(?)", s.brand), ^term)
+      like(fragment("lower(?)", s.name), ^term) or like(fragment("lower(?)", s.brand), ^term)
     )
   end
 

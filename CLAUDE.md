@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 BackyardGarden is a Phoenix LiveView web app for managing planting schedules. Phase 1 (seed library with browsing, filtering, and detail pages) is complete. Future phases add planting schedules, garden zones, weather integration, iOS notifications (Prowl), and Auth0 login.
 
-**Progress:** Phase 1 ✅, Phase 1.5 (Supplier Catalog) ✅, Phase 2 (Garden & Plantings) ✅, Phase 3 (Dashboard & Weather) ✅, Phase 4 (Notifications) ✅, Phase 5 (Auth0 + multi-user) ✅. Phase 6 (Deployment) coming next.
+**Progress:** Phase 1 ✅, Phase 1.5 (Supplier Catalog) ✅, Phase 2 (Garden & Plantings) ✅, Phase 3 (Dashboard & Weather) ✅, Phase 4 (Notifications) ✅, Phase 5 (Auth0 + multi-user) ✅, Phase 5.5 (Postgres migration) ✅. Phase 6 (Deployment) coming next.
 
-**Stack:** Elixir + Phoenix 1.8 + Phoenix LiveView + Ecto + SQLite3 + Tailwind CSS
+**Stack:** Elixir + Phoenix 1.8 + Phoenix LiveView + Ecto + Postgres (dev/prod) / SQLite3 (test) + Tailwind CSS
 
 ## Commands
 
@@ -83,7 +83,7 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 - **No early return in Elixir** — use `with false <- condition` (or pattern-match on `:ok`/`:error`) to bail out of a function with a specific value. `return/1` does not exist.
 - **Planting date field is `planted_at`** — the `Planting` schema field is `:planted_at`, not `:date_planted`.
 - **Credo strict mode is on.** `TODO` comments fail the build (exit_status 2). Max line length: 120.
-- **Oban + SQLite in testing mode** — Oban supervisor startup is complex with SQLite. Workaround: comment out supervisor in `application.ex` for dev/test, uncomment for Postgres (Phase 6+). Core Oban infrastructure (workers, jobs, config) works fine; issue is runtime notifier/engine configuration.
+- **Oban is fully enabled** — Oban supervisor runs in dev/prod on Postgres. Tests use `notifier: Oban.Notifiers.PG` (in `config/test.exs`) to avoid Postgrex connection errors; `notifier: Oban.Notifiers.Postgres` is the prod/dev notifier (in `config/config.exs`).
 - **`@moduledoc` must come before `use`** in LiveView modules (enforced by credo).
 - **SQL wildcard escaping:** `%` and `_` in search strings must be escaped before LIKE queries — see `Seeds.filter_by_search/2`.
 - **Binary IDs (UUIDs)** are the default primary key type — set in generator config.
@@ -106,6 +106,10 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 - **Testing mount-time redirects** — when `push_navigate` fires in `mount/3` (e.g. ownership check), `live(conn, path)` returns `{:error, {:live_redirect, %{to: "/path", flash: flash}}}`. Pattern match on that; don't expect `{:ok, view, html}`.
 - **Hidden inputs for pre-filled non-visible fields** — if a field is set in a changeset via pre-fill but has no visible `<.input>`, it is dropped on submit. Add `<input type="hidden" name="schema[field]" value={@form[:field].value} />` to preserve it.
 - **Cancel in-flight async Tasks before re-spawning** — call `Task.shutdown(socket.assigns.fetch_task, :brutal_kill)` before spawning a replacement task, otherwise both results arrive and the first one wins.
+- **`ilike` is Postgres-only** — SQLite does not support `ilike`. Use `like(fragment("lower(?)", field), ^String.downcase(term))` for searches that need to work on both adapters (dev uses Postgres, tests use SQLite).
+- **SQLite does not support `ALTER COLUMN`** — migrations that use `modify` must guard against SQLite: `unless BackyardGarden.Repo.__adapter__() == Ecto.Adapters.SQLite3 do ... end`. Without the guard, `mix test` will fail when the migration runs against the test SQLite DB.
+- **Large integer columns need `bigint` in Postgres** — `:integer` maps to int4 (max ~2.1B). Shopify product IDs exceed this; use `field :shopify_product_id, :id` in the schema (Ecto `:id` = int8) and `add :col, :bigint` in migrations.
+- **Dev/prod use Postgres; tests use SQLite** — `Repo.__adapter__()` returns the correct adapter per `Mix.env()`. DB URL for dev comes from `DATABASE_URL` in `.env`, loaded by dotenvy in `config/runtime.exs` (not `dev.exs`, since `dev.exs` is evaluated before dotenvy runs).
 
 ## Code Quality
 

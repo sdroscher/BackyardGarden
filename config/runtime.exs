@@ -3,6 +3,8 @@ import Config
 if config_env() == :dev do
   {:ok, env} = Dotenvy.source([".env", System.get_env()])
   System.put_env(env)
+
+  config :backyard_garden, BackyardGarden.Repo, url: System.get_env("DATABASE_URL")
 end
 
 # config/runtime.exs is executed for all environments, including
@@ -56,11 +58,11 @@ config :ueberauth, Ueberauth.Strategy.Auth0.OAuth,
   client_secret: System.get_env("AUTH0_CLIENT_SECRET", "placeholder")
 
 if config_env() == :prod do
-  database_path =
-    System.get_env("DATABASE_PATH") ||
-      raise "environment variable DATABASE_PATH is missing."
+  database_url =
+    System.get_env("DATABASE_URL") ||
+      raise "environment variable DATABASE_URL is missing."
 
-  config :backyard_garden, BackyardGarden.Repo, database: database_path
+  config :backyard_garden, BackyardGarden.Repo, url: database_url
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

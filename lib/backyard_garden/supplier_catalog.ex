@@ -165,10 +165,8 @@ defmodule BackyardGarden.SupplierCatalog do
   defp filter_by_search(query, ""), do: query
 
   defp filter_by_search(query, search) do
-    escaped =
-      search |> String.downcase() |> String.replace("%", "\\%") |> String.replace("_", "\\_")
-
-    term = "%#{escaped}%"
+    escaped = search |> String.replace("%", "\\%") |> String.replace("_", "\\_")
+    term = "%#{String.downcase(escaped)}%"
     where(query, [p], like(fragment("lower(?)", p.title), ^term))
   end
 end

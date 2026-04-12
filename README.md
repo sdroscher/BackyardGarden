@@ -2,7 +2,7 @@
 
 A mobile-responsive web app for managing planting schedules, tracking seed plantings, and receiving iOS reminders via Prowl.
 
-Built with **Elixir + Phoenix LiveView**, deployed to **fly.io**.
+Built with **Elixir + Phoenix LiveView + Postgres**, deployed to **fly.io**.
 
 ## Features
 
@@ -36,6 +36,11 @@ Built with **Elixir + Phoenix LiveView**, deployed to **fly.io**.
 - Profile settings page — update name, email, location, timezone
 - Logout link in nav (clears Auth0 session via `/v2/logout` so re-auth is required)
 
+**Phase 5.5 — Complete**
+- Migrated from SQLite to Postgres for dev and prod (tests remain on SQLite)
+- Oban background jobs fully enabled with `Oban.Notifiers.Postgres`
+- One-shot data migration task: `mix migrate.sqlite_to_postgres`
+
 **User-Scoped Seed Library — Complete**
 - Seeds are owned per-user — new users start with zero seeds
 - Add Seed page (`/seeds/new`) with three modes:
@@ -56,6 +61,7 @@ Built with **Elixir + Phoenix LiveView**, deployed to **fly.io**.
 
 - Elixir 1.18+ and Erlang/OTP 27+ (install via [asdf](https://asdf-vm.com/))
 - Phoenix 1.8+
+- PostgreSQL 14+ running locally
 
 ```bash
 asdf plugin add erlang && asdf install erlang 27.2
@@ -68,6 +74,9 @@ mix archive.install hex phx_new
 Create a `.env` file in the project root (auto-loaded in dev via dotenvy):
 
 ```
+# Database (required)
+DATABASE_URL=postgresql://username:password@localhost:5432/backyard_garden_dev
+
 # Auth0 (required — see Auth0 Setup below)
 AUTH0_DOMAIN=your-tenant.auth0.com
 AUTH0_CLIENT_ID=your_client_id
@@ -86,6 +95,7 @@ TIMEZONE=America/Vancouver          # IANA timezone name
 ```
 
 **Env var notes:**
+- `DATABASE_URL` — Postgres connection URL; required in dev and prod
 - `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET` — required for login to work; the app will start without them but the OAuth callback will fail
 - `CLOAK_KEY` — required in production; a hard-coded dev fallback is used if omitted in dev/test
 - `DEFAULT_LOCATION` and `TIMEZONE` — have sensible defaults if omitted
@@ -95,13 +105,15 @@ TIMEZONE=America/Vancouver          # IANA timezone name
 ### Setup
 
 ```bash
-# Install deps, create & migrate DB, import seed data, build assets
+# Install deps, create & migrate Postgres DB, build assets
 mix setup
 
 mix phx.server
 ```
 
 Visit [http://localhost:4000](http://localhost:4000). You will be redirected to Auth0 to log in.
+
+> **Note:** Tests run against SQLite (auto-created, no setup required). Dev and prod use Postgres via `DATABASE_URL`.
 
 ### Tests
 
@@ -199,7 +211,7 @@ lib/
     plugs/
       require_auth.ex       # redirects unauthenticated requests to Auth0
     live/auth_hooks.ex      # on_mount hook — loads current_user into LiveView socket
-  mix/tasks/                # mix supplier.scrape / match / link
+  mix/tasks/                # mix supplier.scrape / match / link / migrate.sqlite_to_postgres
 priv/
   repo/
     migrations/             # Ecto migrations
@@ -223,11 +235,45 @@ Detailed task-by-task plans are in `docs/superpowers/plans/`.
 
 ## Deployment
 
-Targeted at [fly.io](https://fly.io). SQLite with a persistent volume for local/dev; Postgres migration path is documented in Plan.md.
+Targeted at [fly.io](https://fly.io). Uses a `fly pg` Postgres cluster (unmanaged — you own and operate it) rather than the Supabase-managed option.
 
-Set the following secrets before deploying:
+### Create a Postgres Database on fly.io
+
+Use `fly pg` to create an unmanaged Postgres cluster (you own and manage it):
 
 ```bash
+# Create a single-node Postgres cluster (cheapest option for a personal app)
+fly pg create --name backyard-garden-db --region yyz --initial-cluster-size 1 --vm-size shared-cpu-1x --volume-size 10
+
+# Note the connection details printed at the end — you'll need the database URL.
+# It looks like: postgres://postgres:<password>@backyard-garden-db.internal:5432
+```
+
+Then create a dedicated database and user (optional but recommended over using the default `postgres` user):
+
+```bash
+fly pg connect --app backyard-garden-db
+
+# Inside psql:
+CREATE DATABASE backyard_garden;
+CREATE USER backyard_garden WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE backyard_garden TO backyard_garden;
+\q
+```
+
+Your `DATABASE_URL` will be:
+```
+postgres://backyard_garden:your_password@backyard-garden-db.internal:5432/backyard_garden
+```
+
+> **Note:** The `.internal` hostname only resolves within the fly.io private network. It is not accessible from your local machine.
+
+### Deploy the App
+
+Set secrets and deploy:
+
+```bash
+fly secrets set DATABASE_URL=postgres://backyard_garden:your_password@backyard-garden-db.internal:5432/backyard_garden
 fly secrets set AUTH0_DOMAIN=your-tenant.auth0.com
 fly secrets set AUTH0_CLIENT_ID=your_client_id
 fly secrets set AUTH0_CLIENT_SECRET=your_client_secret
@@ -274,7 +320,7 @@ The app includes an Oban job (`HourlyCheckWorker`) that runs at the top of every
 **Evening checks:**
 - **Hardening Evening** — reminder to bring seedlings inside for the night
 
-**Known Issue:** Oban supervisor startup is currently commented out in `lib/backyard_garden/application.ex` due to SQLite+testing mode configuration. The job infrastructure is complete; uncomment the supervisor line once notifier configuration is finalized (auto-works with Postgres in Phase 6+).
+Oban is fully enabled and running. Jobs are processed in dev and prod; tests use `Oban.Notifiers.PG` so no Postgres connection is required in the test environment.
 
 ---
 

@@ -14,8 +14,7 @@ defmodule BackyardGarden.Application do
       {DNSCluster, query: Application.get_env(:backyard_garden, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: BackyardGarden.PubSub},
       BackyardGarden.Weather.Cache,
-      # Oban job queue - commented for SQLite dev/test (Phase 6+: uncomment for Postgres)
-      # {Oban, Application.fetch_env!(:backyard_garden, Oban)},
+      {Oban, Application.fetch_env!(:backyard_garden, Oban)},
       # Start to serve requests, typically the last entry
       BackyardGardenWeb.Endpoint
     ]

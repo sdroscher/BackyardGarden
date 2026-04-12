@@ -136,14 +136,25 @@ notifications
 - [x] 5.5 Scope all garden data to authenticated user
 - [x] 5.6 Add `auth0_id` and `location` fields to `users` table
 
+### Phase 5.5 — Postgres Migration ✅
+
+- [x] 5.5.1 Update deps: `ecto_sqlite3` dev+test only, `postgrex` non-optional
+- [x] 5.5.2 Conditional adapter in `Repo` (Postgres for dev/prod, SQLite for test)
+- [x] 5.5.3 Update config files (dev + runtime use `DATABASE_URL`)
+- [x] 5.5.4 Enable Oban supervisor + configure Postgres notifier (test overrides to `Oban.Notifiers.PG`)
+- [x] 5.5.5 Create one-shot `mix migrate.sqlite_to_postgres` data migration task
+- [x] 5.5.6 Migrate existing dev data from SQLite to Postgres
+- [x] 5.5.7 `ilike` kept as `lower/like` for SQLite test compat (noted in CLAUDE.md)
+
+Plan: `docs/superpowers/plans/2026-04-12-postgres-migration.md`
+Spec: `docs/superpowers/specs/2026-04-12-postgres-migration-design.md`
+
 ### Phase 6 — Deployment
 
 - [ ] 6.1 Dockerfile (multi-stage, minimal image)
-- [ ] 6.2 `fly.toml` — SQLite persistent volume
-- [ ] 6.3 Runtime config (env vars for Auth0 credentials, secrets)
+- [ ] 6.2 `fly.toml` — Postgres-backed config
+- [ ] 6.3 Runtime config (env vars for Auth0 credentials, secrets, DATABASE_URL)
 - [ ] 6.4 fly.io deploy and smoke test
-- [ ] 6.5 Uncomment Oban supervisor (works out-of-the-box on Postgres)
-- [ ] 6.6 (Optional) Postgres migration — swap `ecto_sqlite3` for `postgrex`, run `mix ecto.migrate`
 
 ---
 

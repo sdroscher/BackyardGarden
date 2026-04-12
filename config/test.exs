@@ -16,6 +16,7 @@ config :backyard_garden, BackyardGarden.Repo,
 
 config :backyard_garden, Oban,
   testing: :manual,
+  notifier: Oban.Notifiers.PG,
   queues: false,
   plugins: []
 

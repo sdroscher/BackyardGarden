@@ -179,7 +179,9 @@ git commit -m "feat: add Dockerfile and fly.toml for Fly.io deployment"
 
 ---
 
-## Task 4: Set Fly.io secrets
+## Task 4: Set Fly.io secrets — MANUAL STEP (done by you, not the agent)
+
+> **CHECKPOINT — pause here.** Task 4 must be completed by the developer manually before the agent proceeds to Task 5. Do not continue until you confirm Task 4 is done.
 
 Set all sensitive values as Fly secrets. These are injected at runtime and never stored in the repo.
 

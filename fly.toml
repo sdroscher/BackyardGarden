@@ -7,6 +7,7 @@ primary_region = "sjc"
   PHX_HOST = "backyardgarden.fly.dev"
   PHX_SERVER = "true"
   DEFAULT_LOCATION = "Victoria,CA"
+  ECTO_IPV6 = "true"
 
 [http_service]
   internal_port = 4000

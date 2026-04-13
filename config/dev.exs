@@ -6,10 +6,6 @@ config :backyard_garden, BackyardGarden.Repo,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
 
-# Temporary SQLite repo used only by mix migrate.sqlite_to_postgres
-config :backyard_garden, BackyardGarden.RepoSQLite,
-  database: Path.expand("../priv/repo/backyard_garden_dev.db", __DIR__)
-
 config :backyard_garden, Oban,
   queues: [default: 10, notifications: 5],
   plugins: []

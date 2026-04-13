@@ -149,12 +149,12 @@ notifications
 Plan: `docs/superpowers/plans/2026-04-12-postgres-migration.md`
 Spec: `docs/superpowers/specs/2026-04-12-postgres-migration-design.md`
 
-### Phase 6 — Deployment
+### Phase 6 — Deployment ✅
 
-- [ ] 6.1 Dockerfile (multi-stage, minimal image)
-- [ ] 6.2 `fly.toml` — Postgres-backed config
-- [ ] 6.3 Runtime config (env vars for Auth0 credentials, secrets, DATABASE_URL)
-- [ ] 6.4 fly.io deploy and smoke test
+- [x] 6.1 Dockerfile (multi-stage, minimal image)
+- [x] 6.2 `fly.toml` — Postgres-backed config
+- [x] 6.3 Runtime config (env vars for Auth0 credentials, secrets, DATABASE_URL)
+- [x] 6.4 fly.io deploy and smoke test
 
 ---
 

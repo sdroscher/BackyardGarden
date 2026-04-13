@@ -235,62 +235,57 @@ Detailed task-by-task plans are in `docs/superpowers/plans/`.
 
 ## Deployment
 
-Targeted at [fly.io](https://fly.io). Uses a `fly pg` Postgres cluster (unmanaged — you own and operate it) rather than the Supabase-managed option.
+Live at **[https://backyardgarden.fly.dev](https://backyardgarden.fly.dev)**
 
-### Create a Postgres Database on fly.io
+Deployed on [Fly.io](https://fly.io) (SJC region) with a Fly Postgres cluster. CI/CD via GitHub Actions — pushes to `main` run tests then auto-deploy.
 
-Use `fly pg` to create an unmanaged Postgres cluster (you own and manage it):
+### How to Deploy
+
+Pushes to `main` trigger the CI workflow automatically:
+1. `quality` job runs tests, credo, sobelow, format check
+2. `deploy` job runs `flyctl deploy --remote-only` on success
+
+To deploy manually:
+```bash
+fly deploy --remote-only -a backyardgarden
+```
+
+### Monitoring
 
 ```bash
-# Create a single-node Postgres cluster (cheapest option for a personal app)
-fly pg create --name backyard-garden-db --region yyz --initial-cluster-size 1 --vm-size shared-cpu-1x --volume-size 10
+# Live logs
+fly logs -a backyardgarden
 
-# Note the connection details printed at the end — you'll need the database URL.
-# It looks like: postgres://postgres:<password>@backyard-garden-db.internal:5432
+# Machine status
+fly status -a backyardgarden
+
+# SSH into running machine
+fly ssh console -a backyardgarden
 ```
 
-Then create a dedicated database and user (optional but recommended over using the default `postgres` user):
+### Secrets
 
-```bash
-fly pg connect --app backyard-garden-db
+All sensitive config is set as Fly secrets (never committed):
 
-# Inside psql:
-CREATE DATABASE backyard_garden;
-CREATE USER backyard_garden WITH PASSWORD 'your_password';
-GRANT ALL PRIVILEGES ON DATABASE backyard_garden TO backyard_garden;
-\q
-```
+| Secret | How to generate |
+|---|---|
+| `SECRET_KEY_BASE` | `mix phx.gen.secret` |
+| `DATABASE_URL` | Set automatically by `fly postgres attach` |
+| `CLOAK_KEY` | `mix run -e 'IO.puts Base.encode64(:crypto.strong_rand_bytes(32))'` |
+| `AUTH0_DOMAIN` | Auth0 dashboard |
+| `AUTH0_CLIENT_ID` | Auth0 dashboard |
+| `AUTH0_CLIENT_SECRET` | Auth0 dashboard |
+| `OPENWEATHERMAP_API_KEY` | OpenWeatherMap account |
 
-Your `DATABASE_URL` will be:
-```
-postgres://backyard_garden:your_password@backyard-garden-db.internal:5432/backyard_garden
-```
+Non-sensitive config lives in `fly.toml` under `[env]`: `PHX_HOST`, `PHX_SERVER`, `DEFAULT_LOCATION`, `ECTO_IPV6`.
 
-> **Note:** The `.internal` hostname only resolves within the fly.io private network. It is not accessible from your local machine.
+> **Important:** `ECTO_IPV6=true` is required — Fly's private network is IPv6-only, and Ecto must be configured to use IPv6 sockets to reach the Postgres cluster.
 
-### Deploy the App
+### Auth0 Production URLs
 
-Set secrets and deploy:
-
-```bash
-fly secrets set DATABASE_URL=postgres://backyard_garden:your_password@backyard-garden-db.internal:5432/backyard_garden
-fly secrets set AUTH0_DOMAIN=your-tenant.auth0.com
-fly secrets set AUTH0_CLIENT_ID=your_client_id
-fly secrets set AUTH0_CLIENT_SECRET=your_client_secret
-fly secrets set CLOAK_KEY=your_base64_key
-fly secrets set OPENWEATHERMAP_API_KEY=your_key   # optional
-```
-
-Then:
-
-```bash
-fly launch
-fly deploy
-```
-
-Remember to add your production URLs to Auth0:
-- Allowed Callback URLs: `https://your-app.fly.dev/auth/auth0/callback`
-- Allowed Logout URLs: `https://your-app.fly.dev/auth/auth0`
+In Auth0 dashboard → your app → Settings:
+- **Allowed Callback URLs:** `https://backyardgarden.fly.dev/auth/auth0/callback`
+- **Allowed Logout URLs:** `https://backyardgarden.fly.dev`
 
 ---
 

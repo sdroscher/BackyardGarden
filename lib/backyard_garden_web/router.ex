@@ -18,6 +18,11 @@ defmodule BackyardGardenWeb.Router do
     plug :accepts, ["json"]
   end
 
+  # Health check — no pipeline, excluded from force_ssl in prod.exs
+  scope "/", BackyardGardenWeb do
+    get "/health", HealthController, :index
+  end
+
   # Unauthenticated routes (OAuth flow)
   scope "/", BackyardGardenWeb do
     pipe_through :browser

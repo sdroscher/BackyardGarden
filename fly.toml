@@ -10,6 +10,7 @@ primary_region = "sjc"
   PHX_HOST = "backyardgarden.fly.dev"
   PHX_SERVER = "true"
   DEFAULT_LOCATION = "Victoria,CA"
+  ECTO_IPV6 = "true"
 
 [http_service]
   internal_port = 4000
@@ -19,14 +20,8 @@ primary_region = "sjc"
   min_machines_running = 0
   processes = ["app"]
 
-  [[http_service.checks]]
-    grace_period = "20s"
-    interval = "30s"
-    method = "GET"
-    path = "/"
-    timeout = "5s"
 
 [[vm]]
-  memory = "256mb"
+  memory = "512mb"
   cpu_kind = "shared"
   cpus = 1

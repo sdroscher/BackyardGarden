@@ -35,11 +35,11 @@ COPY priv priv
 COPY lib lib
 COPY assets assets
 
+# Compile the app first — generates the phoenix-colocated hooks index needed by esbuild
+RUN mix compile
+
 # Compile assets
 RUN mix assets.deploy
-
-# Compile the release
-RUN mix compile
 
 # runtime.exs is evaluated at startup, not compile time — copy it last
 COPY config/runtime.exs config/

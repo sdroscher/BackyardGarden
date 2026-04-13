@@ -1,0 +1,39 @@
+# Elixir build artifacts
+/_build/
+/cover/
+/deps/
+/doc/
+
+# Test
+/test/
+
+# Static assets (generated at build time in Dockerfile)
+/priv/static/assets/
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+priv/repo/backyard_garden*.db
+
+# Environment / secrets — never bake into image
+.env
+.env.local
+*.secret.exs
+
+# Dev tooling
+/.git/
+/.elixir_ls/
+/.idea/
+/.vscode/
+node_modules/
+
+# macOS
+.DS_Store
+
+# Docs / plans
+/docs/
+
+# Misc
+erl_crash.dump
+*.ez

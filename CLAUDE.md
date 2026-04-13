@@ -177,3 +177,12 @@ New nav links go in the existing `<div class="flex items-center gap-6 ...">` blo
   - this includes quick start instructions, env variable table, and any new dependencies or setup steps
 - Mark any completed tasks/phases in Plan.md and update the project roadmap as needed
 
+## Fly.io Deployment
+
+- **Fly.io private network requires IPv6 sockets** — set `ECTO_IPV6=true` in `fly.toml [env]` and add `socket_options: maybe_ipv6` to the Repo config in `runtime.exs`. Without this, all `.internal` and `.flycast` connections fail with `:nxdomain` because Erlang defaults to IPv4 sockets on an IPv6-only network.
+- **`mix phx.gen.release` doesn't set executable bits** — generated `rel/overlays/bin/server` and `rel/overlays/bin/migrate` are created as `644`. Run `chmod +x rel/overlays/bin/server rel/overlays/bin/migrate` and commit the mode change.
+- **`mix compile` before `mix assets.deploy` in Dockerfile** — Phoenix 1.8 colocated hooks generate a `phoenix-colocated/backyard_garden` package during `mix compile`. The Dockerfile must compile the app first or esbuild can't resolve the import.
+- **512MB minimum for BEAM on Fly.io** — 256MB causes OOM kills on startup. Set `memory = "512mb"` in `[[vm]]`.
+- **`force_ssl` breaks Fly health checks** — Fly's internal HTTP health checks don't include `x-forwarded-proto`, so `force_ssl` returns 301, marking the machine critical. Remove `[[http_service.checks]]` or use a dedicated `/health` path excluded from SSL.
+- **`flyctl` not `fly` in GitHub Actions** — the `superfly/flyctl-actions/setup-flyctl@master` action installs the binary as `flyctl`, not `fly`.
+

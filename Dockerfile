@@ -1,8 +1,8 @@
 # Find eligible builder and runner images on Docker Hub. We use global build arguments
 # to allow passing the image versions as arguments when building.
 ARG ELIXIR_VERSION=1.19.5
-ARG OTP_VERSION=28.4.1
-ARG DEBIAN_VERSION=bookworm-20250407-slim
+ARG OTP_VERSION=28.4.2
+ARG DEBIAN_VERSION=bookworm-20260406-slim
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"

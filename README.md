@@ -239,11 +239,11 @@ Live at **[https://backyardgarden.fly.dev](https://backyardgarden.fly.dev)**
 
 Deployed on [Fly.io](https://fly.io) (SJC region) with a Fly Postgres cluster. CI/CD via GitHub Actions — pushes to `main` run tests then auto-deploy.
 
-### How to Deploy
+### Ongoing Deploys
 
-Pushes to `main` trigger the CI workflow automatically:
-1. `quality` job runs tests, credo, sobelow, format check
-2. `deploy` job runs `flyctl deploy --remote-only` on success
+Pushes to `main` trigger CI automatically:
+1. `quality` job — tests, credo, sobelow, format check
+2. `deploy` job — `flyctl deploy --remote-only` on success
 
 To deploy manually:
 ```bash
@@ -253,37 +253,147 @@ fly deploy --remote-only -a backyardgarden
 ### Monitoring
 
 ```bash
-# Live logs
-fly logs -a backyardgarden
-
-# Machine status
-fly status -a backyardgarden
-
-# SSH into running machine
-fly ssh console -a backyardgarden
+fly logs -a backyardgarden          # live logs
+fly status -a backyardgarden        # machine state
+fly ssh console -a backyardgarden   # shell inside running machine
 ```
 
-### Secrets
+---
 
-All sensitive config is set as Fly secrets (never committed):
+### Setting Up from Scratch
 
-| Secret | How to generate |
-|---|---|
-| `SECRET_KEY_BASE` | `mix phx.gen.secret` |
-| `DATABASE_URL` | Set automatically by `fly postgres attach` |
-| `CLOAK_KEY` | `mix run -e 'IO.puts Base.encode64(:crypto.strong_rand_bytes(32))'` |
-| `AUTH0_DOMAIN` | Auth0 dashboard |
-| `AUTH0_CLIENT_ID` | Auth0 dashboard |
-| `AUTH0_CLIENT_SECRET` | Auth0 dashboard |
-| `OPENWEATHERMAP_API_KEY` | OpenWeatherMap account |
+If you ever need to recreate the Fly.io deployment, follow these steps in order. There are several non-obvious gotchas documented below.
 
-Non-sensitive config lives in `fly.toml` under `[env]`: `PHX_HOST`, `PHX_SERVER`, `DEFAULT_LOCATION`, `ECTO_IPV6`.
+#### 1. Install and authenticate flyctl
 
-> **Important:** `ECTO_IPV6=true` is required — Fly's private network is IPv6-only, and Ecto must be configured to use IPv6 sockets to reach the Postgres cluster.
+```bash
+brew install flyctl
+fly auth login
+```
 
-### Auth0 Production URLs
+#### 2. Create the Fly app
 
-In Auth0 dashboard → your app → Settings:
+```bash
+fly apps create backyardgarden --org personal
+```
+
+> **Do not use `fly launch`** — it calls `mix phx.gen.release --docker` internally, which fetches Docker Hub at runtime and can fail. It also creates files without executable bits and may leave the app in a broken network state if it fails partway through. Create the app manually and write `Dockerfile` + `fly.toml` by hand instead.
+
+#### 3. Attach Postgres
+
+```bash
+fly postgres attach backyardgarden-pg --app backyardgarden
+```
+
+This sets `DATABASE_URL` as a Fly secret automatically. If you get "database user already exists", connect to the cluster and drop the orphaned user first:
+
+```bash
+fly postgres connect -a backyardgarden-pg
+# then: DROP USER backyardgarden; \q
+```
+
+#### 4. Set secrets
+
+```bash
+# Generate values:
+mix phx.gen.secret                                          # → SECRET_KEY_BASE
+mix run -e 'IO.puts Base.encode64(:crypto.strong_rand_bytes(32))'  # → CLOAK_KEY
+
+fly secrets set \
+  SECRET_KEY_BASE="..." \
+  CLOAK_KEY="..." \
+  AUTH0_DOMAIN="your-tenant.auth0.com" \
+  AUTH0_CLIENT_ID="..." \
+  AUTH0_CLIENT_SECRET="..." \
+  OPENWEATHERMAP_API_KEY="..." \
+  -a backyardgarden
+```
+
+Non-sensitive config lives in `fly.toml` under `[env]` (committed to git): `PHX_HOST`, `PHX_SERVER`, `DEFAULT_LOCATION`, `ECTO_IPV6`.
+
+#### 5. Fix executable bits on release scripts
+
+`mix phx.gen.release` creates the overlay scripts without the executable bit:
+
+```bash
+chmod +x rel/overlays/bin/server rel/overlays/bin/migrate
+git add rel/overlays/bin/server rel/overlays/bin/migrate
+git commit -m "fix: set executable bit on release scripts"
+```
+
+Without this the machine will crash on every start with `Permission denied (os error 13)`.
+
+#### 6. Dockerfile build order
+
+Phoenix 1.8 colocated hooks generate a `phoenix-colocated/backyard_garden` package during `mix compile`. The Dockerfile **must** run `mix compile` before `mix assets.deploy` or esbuild fails with `Could not resolve "phoenix-colocated/backyard_garden"`.
+
+#### 7. IPv6 sockets for Ecto (critical)
+
+Fly's private network is **IPv6-only**. Erlang defaults to IPv4 sockets, so all `.internal` connections fail with `:nxdomain` unless you explicitly opt in.
+
+In `fly.toml`:
+```toml
+[env]
+  ECTO_IPV6 = "true"
+```
+
+In `config/runtime.exs` (prod block):
+```elixir
+maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
+config :backyard_garden, BackyardGarden.Repo,
+  url: database_url,
+  socket_options: maybe_ipv6
+```
+
+Without this you will get endless `:nxdomain` errors even though DNS is configured correctly.
+
+#### 8. Machine memory
+
+256MB causes OOM kills on BEAM startup. Use 512MB minimum:
+
+```toml
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
+```
+
+#### 9. Health checks and force_ssl
+
+Fly's internal HTTP health checks hit port 4000 directly **without** `x-forwarded-proto`, so `force_ssl` returns 301, marking the machine critical and blocking all traffic.
+
+Either omit `[[http_service.checks]]` entirely (current setup), or add a dedicated `/health` endpoint excluded from SSL:
+
+```elixir
+# prod.exs
+config :backyard_garden, BackyardGardenWeb.Endpoint,
+  force_ssl: [rewrite_on: [:x_forwarded_proto], exclude: [paths: ["/health"]]]
+```
+
+#### 10. GitHub Actions CI/CD
+
+The deploy job uses `superfly/flyctl-actions/setup-flyctl@master`. The binary it installs is `flyctl`, not `fly`:
+
+```yaml
+- uses: superfly/flyctl-actions/setup-flyctl@master
+- run: flyctl deploy --remote-only
+  env:
+    FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+```
+
+Generate the token with:
+```bash
+fly tokens create deploy -a backyardgarden
+```
+
+Add it as `FLY_API_TOKEN` in GitHub → repo Settings → Secrets and variables → Actions.
+
+> The token may need to be regenerated if it becomes unauthorized — this has happened after app recreation. Just run `fly tokens create deploy` again and update the GitHub secret.
+
+#### 11. Auth0 production URLs
+
+In Auth0 dashboard → your app → Settings, add alongside the localhost URLs:
+
 - **Allowed Callback URLs:** `https://backyardgarden.fly.dev/auth/auth0/callback`
 - **Allowed Logout URLs:** `https://backyardgarden.fly.dev`
 

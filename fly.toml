@@ -3,9 +3,6 @@ primary_region = "sjc"
 
 [build]
 
-[deploy]
-  release_command = "/app/bin/backyard_garden eval BackyardGarden.Release.migrate()"
-
 [env]
   PHX_HOST = "backyardgarden.fly.dev"
   PHX_SERVER = "true"

@@ -76,12 +76,6 @@ defmodule BackyardGardenWeb.Settings.ZonesLive do
         true -> MapSet.put(current, value)
       end
 
-    require Logger
-
-    Logger.info(
-      "toggle_pill field=#{field} value=#{value} before=#{inspect(current)} after=#{inspect(new_selections)}"
-    )
-
     {:noreply, assign(socket, key, new_selections)}
   end
 

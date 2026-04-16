@@ -1,6 +1,6 @@
 defmodule Mix.Tasks.Supplier.Scrape do
   @moduledoc """
-  Fetches and upserts products from West Coast Seeds and Metchosin Farm
+  Fetches and upserts products from West Coast Seeds, Metchosin Farm, and Brother Nature
   into the supplier_products table. Safe to re-run — uses upsert.
 
   Usage:
@@ -11,13 +11,14 @@ defmodule Mix.Tasks.Supplier.Scrape do
   use Mix.Task
 
   alias BackyardGarden.SupplierCatalog
-  alias BackyardGarden.SupplierCatalog.Scrapers.{MetchosinFarm, WestCoastSeeds}
+  alias BackyardGarden.SupplierCatalog.Scrapers.{BrotherNature, MetchosinFarm, WestCoastSeeds}
 
   @shortdoc "Scrape supplier catalogs into supplier_products"
 
   @suppliers %{
     "https://www.westcoastseeds.com" => {"West Coast Seeds", WestCoastSeeds},
-    "https://metchosinfarm.ca" => {"Metchosin Farm", MetchosinFarm}
+    "https://metchosinfarm.ca" => {"Metchosin Farm", MetchosinFarm},
+    "https://brothernature.ca" => {"Brother Nature", BrotherNature}
   }
 
   @impl Mix.Task
@@ -33,6 +34,7 @@ defmodule Mix.Tasks.Supplier.Scrape do
     Mix.Task.run("app.start")
     scrape("West Coast Seeds", &WestCoastSeeds.fetch_all_products/0)
     scrape("Metchosin Farm", &MetchosinFarm.fetch_all_products/0)
+    scrape("Brother Nature", &BrotherNature.fetch_all_products/0)
     Mix.shell().info("Done.")
   end
 

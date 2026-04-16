@@ -36,13 +36,59 @@ defmodule BackyardGardenWeb.Settings.ZonesLiveTest do
   test "creates a new zone via the form", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/settings/zones")
     render_click(view, "new_zone", %{})
+    render_click(view, "toggle_pill", %{"field" => "sun", "value" => "full_sun"})
 
     html =
       view
-      |> form("#zone-form", %{"zone" => %{"name" => "Fruit Patch", "sun_exposures" => "full_sun"}})
+      |> form("#zone-form", %{"zone" => %{"name" => "Fruit Patch"}})
       |> render_submit()
 
     assert html =~ "Fruit Patch"
+  end
+
+  test "toggle_pill selects a sun value", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/settings/zones")
+    render_click(view, "new_zone", %{})
+    render_click(view, "toggle_pill", %{"field" => "sun", "value" => "full_sun"})
+
+    assert view
+           |> element("button[phx-value-field=sun][phx-value-value=full_sun]")
+           |> render() =~ "bg-[#2d6a4f]"
+  end
+
+  test "toggle_pill deselects a value when clicked again", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/settings/zones")
+    render_click(view, "new_zone", %{})
+    render_click(view, "toggle_pill", %{"field" => "sun", "value" => "full_sun"})
+    render_click(view, "toggle_pill", %{"field" => "sun", "value" => "full_sun"})
+
+    assert view
+           |> element("button[phx-value-field=sun][phx-value-value=any]")
+           |> render() =~ "bg-[#6b7280]"
+  end
+
+  test "toggle_pill 'any' clears specific selections", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/settings/zones")
+    render_click(view, "new_zone", %{})
+    render_click(view, "toggle_pill", %{"field" => "type", "value" => "Vegetable"})
+    render_click(view, "toggle_pill", %{"field" => "type", "value" => "any"})
+
+    assert view
+           |> element("button[phx-value-field=type][phx-value-value=any]")
+           |> render() =~ "bg-[#6b7280]"
+  end
+
+  test "creates a zone with pill-selected sun exposure", %{conn: conn, user: user} do
+    {:ok, view, _html} = live(conn, ~p"/settings/zones")
+    render_click(view, "new_zone", %{})
+    render_click(view, "toggle_pill", %{"field" => "sun", "value" => "partial_sun"})
+
+    view
+    |> form("#zone-form", %{"zone" => %{"name" => "Shady Corner"}})
+    |> render_submit()
+
+    assert GardenZones.list_zones(user.id)
+           |> Enum.any?(&(&1.sun_exposures == "partial_sun"))
   end
 
   test "deletes a zone", %{conn: conn, user: user} do

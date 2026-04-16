@@ -5,9 +5,9 @@
     <%= if @weather do %>
       <span class="text-2xl ml-1">
         {if String.contains?(String.downcase(@weather.condition), ["rain", "drizzle"]),
-          do: "🌧️",
+          do: "🌦",
           else:
-            if(String.contains?(String.downcase(@weather.condition), "cloud"), do: "🌤️", else: "☀️")}
+            if(String.contains?(String.downcase(@weather.condition), "cloud"), do: "⛅", else: "🌞")}
       </span>
     <% end %>
   </h1>
@@ -24,11 +24,11 @@
         >
           <div class="absolute right-6 top-5 text-7xl opacity-40 pointer-events-none select-none">
             {if String.contains?(String.downcase(@weather.condition), ["rain", "drizzle"]),
-              do: "🌧️",
+              do: "🌦",
               else:
                 if(String.contains?(String.downcase(@weather.condition), "cloud"),
-                  do: "🌤️",
-                  else: "☀️"
+                  do: "⛅",
+                  else: "🌞"
                 )}
           </div>
           <div class="text-[11px] font-bold tracking-widest uppercase text-[#2d6a4f] mb-2">

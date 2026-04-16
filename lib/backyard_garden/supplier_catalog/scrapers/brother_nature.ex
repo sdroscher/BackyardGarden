@@ -93,10 +93,12 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
   # GETs the product HTML page and extracts all `div.seed-details` blocks
   # (used for both "Seed Details" and "Instructions" sections).
   # Returns nil if no sections found.
+  # Uses html_headers/0 (not user_agent_headers/0) — Shopify returns JSON when
+  # accept: application/json is sent, even for non-.json URLs.
   defp fetch_care_html(handle) do
     case Req.get("#{@base_url}/products/#{handle}",
            receive_timeout: 15_000,
-           headers: user_agent_headers(),
+           headers: html_headers(),
            retry: false
          ) do
       {:ok, %{body: html}} when is_binary(html) ->
@@ -134,6 +136,28 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
 
   defp normalize_tags(tags) when is_list(tags), do: Enum.join(tags, ", ")
   defp normalize_tags(tags), do: tags
+
+  # HTML accept header for product page fetches — Shopify uses content negotiation and
+  # returns JSON when accept: application/json is sent, even on non-.json URLs.
+  defp html_headers do
+    [
+      {"user-agent",
+       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"},
+      {"accept",
+       "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"},
+      {"accept-encoding", "gzip, deflate"},
+      {"accept-language", "en-US,en;q=0.9"},
+      {"sec-ch-ua",
+       "\"Chromium\";v=\"146\", \"Not-A.Brand\";v=\"24\", \"Google Chrome\";v=\"146\""},
+      {"sec-ch-ua-mobile", "?0"},
+      {"sec-ch-ua-platform", "\"macOS\""},
+      {"sec-fetch-dest", "document"},
+      {"sec-fetch-mode", "navigate"},
+      {"sec-fetch-site", "none"},
+      {"sec-fetch-user", "?1"},
+      {"upgrade-insecure-requests", "1"}
+    ]
+  end
 
   defp user_agent_headers do
     [

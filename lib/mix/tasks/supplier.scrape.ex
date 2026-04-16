@@ -4,8 +4,11 @@ defmodule Mix.Tasks.Supplier.Scrape do
   into the supplier_products table. Safe to re-run — uses upsert.
 
   Usage:
-      mix supplier.scrape                   # full catalog scrape
-      mix supplier.scrape <product_url>     # import a single product by URL
+      mix supplier.scrape                          # scrape all suppliers
+      mix supplier.scrape west_coast_seeds         # scrape one supplier
+      mix supplier.scrape metchosin_farm
+      mix supplier.scrape brother_nature
+      mix supplier.scrape <product_url>            # import a single product by URL
   """
 
   use Mix.Task
@@ -21,20 +24,38 @@ defmodule Mix.Tasks.Supplier.Scrape do
     "https://brothernature.ca" => {"Brother Nature", BrotherNature}
   }
 
+  @supplier_keys %{
+    "west_coast_seeds" => {"West Coast Seeds", &WestCoastSeeds.fetch_all_products/0},
+    "metchosin_farm" => {"Metchosin Farm", &MetchosinFarm.fetch_all_products/0},
+    "brother_nature" => {"Brother Nature", &BrotherNature.fetch_all_products/0}
+  }
+
   @impl Mix.Task
-  def run([url]) do
+  def run([arg]) do
     configure_logging()
     Mix.Task.run("app.start")
-    import_single_product(url)
+
+    if String.starts_with?(arg, "http") do
+      import_single_product(arg)
+    else
+      case Map.fetch(@supplier_keys, arg) do
+        {:ok, {name, fetch_fn}} ->
+          scrape(name, fetch_fn)
+
+        :error ->
+          Mix.raise(
+            "Unknown supplier #{inspect(arg)}. Valid keys: #{Map.keys(@supplier_keys) |> Enum.join(", ")}"
+          )
+      end
+    end
+
     Mix.shell().info("Done.")
   end
 
   def run(_args) do
     configure_logging()
     Mix.Task.run("app.start")
-    scrape("West Coast Seeds", &WestCoastSeeds.fetch_all_products/0)
-    scrape("Metchosin Farm", &MetchosinFarm.fetch_all_products/0)
-    scrape("Brother Nature", &BrotherNature.fetch_all_products/0)
+    Enum.each(@supplier_keys, fn {_key, {name, fetch_fn}} -> scrape(name, fetch_fn) end)
     Mix.shell().info("Done.")
   end
 

@@ -412,6 +412,11 @@ Three mix tasks manage this:
 # Fetch and upsert all products from all three suppliers
 mix supplier.scrape
 
+# Scrape a single supplier
+mix supplier.scrape west_coast_seeds
+mix supplier.scrape metchosin_farm
+mix supplier.scrape brother_nature
+
 # Import a single product by URL (useful for products missed by the bulk scrape)
 mix supplier.scrape https://www.westcoastseeds.com/products/bright-lights-1
 

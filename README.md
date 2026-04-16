@@ -59,11 +59,6 @@ TIMEZONE=America/Vancouver          # IANA timezone name
 
 # Prowl notifications (optional — configurable via /settings/notifications)
 # PROWL_API_KEY=your_prowl_key_here
-
-# Brother Nature scraper — Cloudflare clearance cookie (required to scrape brothernature.ca)
-# Visit brothernature.ca in your browser, open DevTools → Application → Cookies,
-# copy the value of `cf_clearance`, and paste it here. Valid for ~24 hours.
-# BROTHER_NATURE_CF_CLEARANCE=your_cf_clearance_value
 ```
 
 **Env var notes:**

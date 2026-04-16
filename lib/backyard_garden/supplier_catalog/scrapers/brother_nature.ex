@@ -4,6 +4,9 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
   Uses the public /products.json endpoint, paginated by page number.
   Per-product HTML pages are scraped for "Seed Details" and "Instructions"
   sections (both use the `div.seed-details` CSS class).
+
+  Uses curl instead of Req for all HTTP requests. brothernature.ca is behind
+  Cloudflare, which blocks Erlang's TLS fingerprint but allows curl's.
   """
 
   @base_url "https://brothernature.ca"
@@ -13,78 +16,44 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
 
   @doc "Returns a list of attribute maps ready for SupplierCatalog.upsert_supplier_product/1."
   def fetch_all_products do
-    cookies = fetch_session_cookies()
-    fetch_page(1, [], cookies)
+    fetch_page(1, [])
   end
 
   @doc "Fetches a single product by handle, including care HTML scraped from the product page."
   def fetch_product(handle) do
-    cookies = fetch_session_cookies()
-
-    case Req.get("#{@base_url}/products/#{handle}.json",
-           receive_timeout: 15_000,
-           headers: headers(cookies),
-           retry: false
-         ) do
-      {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
-        attrs = to_attrs(body["product"])
-        Map.put(attrs, :care_html, fetch_care_html(handle, cookies))
-
-      {:ok, %{status: 429}} ->
-        raise "Brother Nature blocked by Cloudflare (429). Set BROTHER_NATURE_CF_CLEARANCE in .env — see scraper module for instructions."
-
-      {:ok, %{status: 404}} ->
-        raise "Product not found on Brother Nature (404)"
-
-      {:ok, %{status: status}} ->
-        raise "Brother Nature returned status #{status}"
+    case curl_json("#{@base_url}/products/#{handle}.json") do
+      {:ok, %{"product" => product}} ->
+        attrs = to_attrs(product)
+        Map.put(attrs, :care_html, fetch_care_html(handle))
 
       {:error, reason} ->
-        raise "Brother Nature connection error: #{inspect(reason)}"
+        raise "Brother Nature fetch error: #{inspect(reason)}"
     end
   end
 
-  defp fetch_page(page, acc, cookies) do
-    case Req.get("#{@base_url}/products.json?limit=250&page=#{page}",
-           receive_timeout: 15_000,
-           headers: headers(cookies),
-           retry: false
-         ) do
-      {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
-        case body["products"] do
-          [] ->
-            acc
-
-          products ->
-            new_attrs = process_products(products, cookies)
-            Process.sleep(3000)
-            fetch_page(page + 1, acc ++ new_attrs, cookies)
-        end
-
-      {:ok, %{status: 429}} ->
-        Mix.shell().error(
-          "Brother Nature blocked by Cloudflare (429). Set BROTHER_NATURE_CF_CLEARANCE in .env — see scraper module for instructions."
-        )
-
+  defp fetch_page(page, acc) do
+    case curl_json("#{@base_url}/products.json?limit=250&page=#{page}") do
+      {:ok, %{"products" => []}} ->
         acc
 
-      {:ok, %{status: status}} ->
-        Mix.shell().error("Brother Nature API returned status #{status}, stopping scrape")
-        acc
+      {:ok, %{"products" => products}} ->
+        new_attrs = process_products(products)
+        Process.sleep(3000)
+        fetch_page(page + 1, acc ++ new_attrs)
 
       {:error, reason} ->
-        Mix.shell().error("Brother Nature API error: #{inspect(reason)}, stopping scrape")
+        Mix.shell().error("Brother Nature fetch error: #{inspect(reason)}, stopping scrape")
         acc
     end
   end
 
-  defp process_products(products, cookies) do
+  defp process_products(products) do
     products
     |> Enum.reject(&excluded_product?/1)
     |> Task.async_stream(
       fn product ->
         attrs = to_attrs(product)
-        Map.put(attrs, :care_html, fetch_care_html(attrs[:handle], cookies))
+        Map.put(attrs, :care_html, fetch_care_html(attrs[:handle]))
       end,
       max_concurrency: 2,
       timeout: 20_000
@@ -99,17 +68,10 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
   # GETs the product HTML page and extracts all `div.seed-details` blocks
   # (used for both "Seed Details" and "Instructions" sections).
   # Returns nil if no sections found.
-  defp fetch_care_html(handle, cookies) do
-    case Req.get("#{@base_url}/products/#{handle}",
-           receive_timeout: 15_000,
-           headers: headers(cookies),
-           retry: false
-         ) do
-      {:ok, %{body: html}} when is_binary(html) ->
-        parse_care_html(html)
-
-      _ ->
-        nil
+  defp fetch_care_html(handle) do
+    case curl_html("#{@base_url}/products/#{handle}") do
+      {:ok, html} -> parse_care_html(html)
+      {:error, _} -> nil
     end
   end
 
@@ -141,44 +103,27 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
   defp normalize_tags(tags) when is_list(tags), do: Enum.join(tags, ", ")
   defp normalize_tags(tags), do: tags
 
-  # Reads the Cloudflare clearance cookie from the BROTHER_NATURE_CF_CLEARANCE env var.
-  # brothernature.ca uses Cloudflare Managed Challenge, which requires JavaScript to solve.
-  # Automated HTTP clients can't pass this, but the cookie is valid for ~24 hours once
-  # issued to a real browser.
-  #
-  # To obtain it: visit https://brothernature.ca in your browser, open DevTools →
-  # Application → Cookies → brothernature.ca, copy the value of `cf_clearance`, then
-  # set BROTHER_NATURE_CF_CLEARANCE=<value> in your .env before running the scraper.
-  defp fetch_session_cookies do
-    case System.get_env("BROTHER_NATURE_CF_CLEARANCE") do
-      nil -> ""
-      "" -> ""
-      value -> "cf_clearance=#{value}"
+  # Fetches a URL via curl and decodes the JSON response body.
+  # Uses curl because brothernature.ca is behind Cloudflare, which blocks
+  # Erlang's TLS fingerprint but allows curl's (OpenSSL-based).
+  defp curl_json(url) do
+    case System.cmd("curl", ["-s", "--max-time", "15", url], stderr_to_stdout: false) do
+      {body, 0} ->
+        case Jason.decode(body) do
+          {:ok, decoded} -> {:ok, decoded}
+          {:error, _} -> {:error, :invalid_json}
+        end
+
+      {_, exit_code} ->
+        {:error, {:curl_exit, exit_code}}
     end
   end
 
-  # Browser-like headers used for all requests. Avoids `accept: application/json`
-  # which brothernature.ca's bot detection uses to identify scrapers. Shopify
-  # returns JSON for `.json` URLs regardless of Accept.
-  defp headers(cookies) do
-    base = [
-      {"user-agent",
-       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"},
-      {"accept",
-       "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"},
-      {"accept-encoding", "gzip, deflate"},
-      {"accept-language", "en-US,en;q=0.9"},
-      {"sec-ch-ua",
-       "\"Chromium\";v=\"146\", \"Not-A.Brand\";v=\"24\", \"Google Chrome\";v=\"146\""},
-      {"sec-ch-ua-mobile", "?0"},
-      {"sec-ch-ua-platform", "\"macOS\""},
-      {"sec-fetch-dest", "document"},
-      {"sec-fetch-mode", "navigate"},
-      {"sec-fetch-site", "none"},
-      {"sec-fetch-user", "?1"},
-      {"upgrade-insecure-requests", "1"}
-    ]
-
-    if cookies != "", do: base ++ [{"cookie", cookies}], else: base
+  # Fetches a URL via curl and returns the raw HTML body.
+  defp curl_html(url) do
+    case System.cmd("curl", ["-s", "--max-time", "15", "-L", url], stderr_to_stdout: false) do
+      {body, 0} -> {:ok, body}
+      {_, exit_code} -> {:error, {:curl_exit, exit_code}}
+    end
   end
 end

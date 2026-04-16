@@ -11,6 +11,12 @@ defmodule BackyardGardenWeb.Layouts do
   # and other static content.
   embed_templates "layouts/*"
 
+  attr :href, :string, required: true
+  attr :current_path, :string, required: true
+  attr :mobile, :boolean, default: false
+  attr :rest, :global
+  slot :inner_block, required: true
+
   defp nav_link(assigns) do
     active =
       String.starts_with?(assigns.current_path, assigns.href) and
@@ -23,12 +29,17 @@ defmodule BackyardGardenWeb.Layouts do
       href={@href}
       aria-current={if @active, do: "page", else: false}
       class={[
-        "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+        "font-medium transition-colors",
+        if(@mobile,
+          do: "px-4 py-3 text-sm border-b border-white/10",
+          else: "px-3 py-1.5 rounded-lg text-sm"
+        ),
         if(@active,
           do: "bg-white/10 text-white font-semibold",
           else: "text-[#95d5b2] hover:text-white hover:bg-white/5"
         )
       ]}
+      {@rest}
     >
       {render_slot(@inner_block)}
     </a>

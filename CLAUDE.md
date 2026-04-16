@@ -186,3 +186,10 @@ New nav links go in the existing `<div class="flex items-center gap-6 ...">` blo
 - **`force_ssl` breaks Fly health checks** — Fly's internal HTTP health checks don't include `x-forwarded-proto`, so `force_ssl` returns 301, marking the machine critical. Remove `[[http_service.checks]]` or use a dedicated `/health` path excluded from SSL.
 - **`flyctl` not `fly` in GitHub Actions** — the `superfly/flyctl-actions/setup-flyctl@master` action installs the binary as `flyctl`, not `fly`.
 
+## UI / Frontend Gotchas
+
+- **daisyUI `prefersdark: true` conflicts with fixed light design** — setting `prefersdark: true` on the dark daisyUI theme makes `.input`, `.select`, `.textarea` get dark backgrounds via `prefers-color-scheme: dark` even when `bg-[...]`/`text-[...]` classes on `<body>` are light. Set `prefersdark: false` so dark theme only activates via explicit `data-theme="dark"`.
+- **Set background on `<html>` to prevent dark overscroll on mobile** — `<body>` alone is insufficient; the `<html>` element also needs `bg-[#fafdf9]` in `root.html.heex` or overscrolling reveals the dark browser default on iOS/Android.
+- **Mobile hamburger menus use `JS.toggle`** — `phx-click={JS.toggle(to: "#mobile-menu")}` in heex templates is the Phoenix LiveView approach; no custom JS hooks needed. Pair with `hidden md:flex` on the desktop nav and `hidden md:hidden` on the mobile dropdown.
+- **`attr` on `defp` components requires `slot` declaration** — once you add any `attr` macro to a `defp` function component, Phoenix requires all slots to be declared too (e.g. `slot :inner_block, required: true`), or you get "undefined slot" compiler warnings.
+- **CSS grid blockifies inline elements for full-width tap targets** — `grid grid-cols-1` on a container automatically promotes `<a>` and other inline children to block-level full-width, avoiding the need to add `block w-full` to every child individually.

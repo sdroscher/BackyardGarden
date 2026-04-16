@@ -1,16 +1,18 @@
 <header
   style="background: linear-gradient(90deg, #0f1f15 0%, #1a3a2a 60%, #2d6a4f 100%);"
-  class="shadow-lg sticky top-0 z-50"
+  class="shadow-lg sticky top-0 z-50 relative"
 >
   <nav
     aria-label="Main navigation"
-    class="px-8 flex items-center justify-between h-14"
+    class="px-4 md:px-8 flex items-center justify-between h-14"
   >
-    <a href="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+    <a href="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
       <span class="text-xl">🌿</span>
       <span class="text-[#d8f3dc] text-base font-bold tracking-tight">BackyardGarden</span>
     </a>
-    <div class="flex items-center gap-1 text-sm font-medium">
+
+    <%!-- Desktop nav --%>
+    <div class="hidden md:flex items-center gap-1 text-sm font-medium">
       <.nav_link href={~p"/"} current_path={@current_path}>Dashboard</.nav_link>
       <.nav_link href={~p"/seeds"} current_path={@current_path}>Seeds</.nav_link>
       <.nav_link href={~p"/garden"} current_path={@current_path}>My Garden</.nav_link>
@@ -23,10 +25,76 @@
         Log out
       </a>
     </div>
+
+    <%!-- Hamburger button (mobile only) --%>
+    <button
+      class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5 rounded-lg hover:bg-white/10 transition-colors"
+      phx-click={JS.toggle(to: "#mobile-menu", display: "flex")}
+      aria-label="Toggle navigation menu"
+    >
+      <span class="block w-6 h-0.5 bg-[#d8f3dc] rounded"></span>
+      <span class="block w-6 h-0.5 bg-[#d8f3dc] rounded"></span>
+      <span class="block w-6 h-0.5 bg-[#d8f3dc] rounded"></span>
+    </button>
   </nav>
+
+  <%!-- Mobile dropdown menu — overlays page content --%>
+  <div
+    id="mobile-menu"
+    class="hidden flex-col absolute top-full left-0 right-0 z-50 shadow-xl border-t border-white/10"
+    style="background: linear-gradient(180deg, #1a3a2a 0%, #0f1f15 100%);"
+  >
+    <.nav_link
+      mobile
+      href={~p"/"}
+      current_path={@current_path}
+      phx-click={JS.hide(to: "#mobile-menu")}
+    >
+      Dashboard
+    </.nav_link>
+    <.nav_link
+      mobile
+      href={~p"/seeds"}
+      current_path={@current_path}
+      phx-click={JS.hide(to: "#mobile-menu")}
+    >
+      Seeds
+    </.nav_link>
+    <.nav_link
+      mobile
+      href={~p"/garden"}
+      current_path={@current_path}
+      phx-click={JS.hide(to: "#mobile-menu")}
+    >
+      My Garden
+    </.nav_link>
+    <.nav_link
+      mobile
+      href={~p"/calendar"}
+      current_path={@current_path}
+      phx-click={JS.hide(to: "#mobile-menu")}
+    >
+      Calendar
+    </.nav_link>
+    <.nav_link
+      mobile
+      href={~p"/settings/zones"}
+      current_path={@current_path}
+      phx-click={JS.hide(to: "#mobile-menu")}
+    >
+      Settings
+    </.nav_link>
+    <a
+      href={~p"/auth/logout"}
+      phx-click={JS.hide(to: "#mobile-menu")}
+      class="px-4 py-3 text-sm font-medium text-[#95d5b2] hover:text-white hover:bg-white/5 transition-colors border-t border-white/10"
+    >
+      Log out
+    </a>
+  </div>
 </header>
 
-<main class="mx-auto max-w-[1280px] px-8 py-7">
+<main class="mx-auto max-w-[1280px] px-4 md:px-8 py-7">
   <.flash_group flash={@flash} />
   {@inner_content}
 </main>

@@ -34,46 +34,156 @@
           {if @editing_zone, do: "Edit Zone", else: "Add Zone"}
         </h2>
       </div>
-      <div class="bg-white px-6 pb-6 pt-4">
+      <div class="bg-white px-6 pb-6 pt-4 space-y-3">
         <.form
           id="zone-form"
           for={@form}
           phx-submit="save_zone"
           phx-change="validate_zone"
-          class="space-y-3"
         >
           <.input field={@form[:name]} type="text" label="Name" />
           <.input field={@form[:description]} type="text" label="Description" />
-          <div>
-            <.input field={@form[:sun_exposures]} type="text" label="Sun Exposures" />
-            <p class="mt-1 text-xs text-[#6b7280]">
-              Comma-separated: full_sun, partial_sun, shade_tolerant
-            </p>
-          </div>
-          <div>
-            <.input field={@form[:allowed_types]} type="text" label="Allowed Types" />
-            <p class="mt-1 text-xs text-[#6b7280]">Comma-separated, or blank for any</p>
-          </div>
-          <div>
-            <.input field={@form[:allowed_cycles]} type="text" label="Allowed Cycles" />
-            <p class="mt-1 text-xs text-[#6b7280]">Comma-separated, or blank for any</p>
-          </div>
-          <div class="flex gap-3">
-            <button
-              type="submit"
-              class="bg-[#2d6a4f] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#1a3a2a] transition-colors"
-            >
-              Save
-            </button>
+        </.form>
+        <div>
+          <p class="block text-sm font-semibold leading-6 text-zinc-800 mb-2">Sun Exposures</p>
+          <div class="flex flex-wrap gap-2">
             <button
               type="button"
-              phx-click="cancel_form"
-              class="rounded-lg px-4 py-2 text-sm font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+              phx-click="toggle_pill"
+              phx-value-field="sun"
+              phx-value-pill="any"
+              class={[
+                "px-3 py-1.5 rounded-full text-sm border transition-colors",
+                if(MapSet.size(@sun_selections) == 0,
+                  do: "bg-[#6b7280] text-white border-[#6b7280]",
+                  else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
+                )
+              ]}
             >
-              Cancel
+              Any
             </button>
+            <%= for {label, value, selected} <-
+                  Enum.map(@sun_options, fn {l, v} ->
+                    {l, v, MapSet.member?(@sun_selections, v)}
+                  end) do %>
+              <button
+                type="button"
+                phx-click="toggle_pill"
+                phx-value-field="sun"
+                phx-value-pill={value}
+                class={[
+                  "px-3 py-1.5 rounded-full text-sm border transition-colors",
+                  if(selected,
+                    do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
+                    else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
+                  )
+                ]}
+              >
+                {label}
+              </button>
+            <% end %>
           </div>
-        </.form>
+        </div>
+        <div>
+          <p class="block text-sm font-semibold leading-6 text-zinc-800 mb-2">
+            Allowed Types
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <button
+              type="button"
+              phx-click="toggle_pill"
+              phx-value-field="type"
+              phx-value-pill="any"
+              class={[
+                "px-3 py-1.5 rounded-full text-sm border transition-colors",
+                if(MapSet.size(@type_selections) == 0,
+                  do: "bg-[#6b7280] text-white border-[#6b7280]",
+                  else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
+                )
+              ]}
+            >
+              Any
+            </button>
+            <%= for {option, selected} <-
+                  Enum.map(@type_options, fn v ->
+                    {v, MapSet.member?(@type_selections, v)}
+                  end) do %>
+              <button
+                type="button"
+                phx-click="toggle_pill"
+                phx-value-field="type"
+                phx-value-pill={option}
+                class={[
+                  "px-3 py-1.5 rounded-full text-sm border transition-colors",
+                  if(selected,
+                    do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
+                    else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
+                  )
+                ]}
+              >
+                {option}
+              </button>
+            <% end %>
+          </div>
+        </div>
+        <div>
+          <p class="block text-sm font-semibold leading-6 text-zinc-800 mb-2">
+            Allowed Cycles
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <button
+              type="button"
+              phx-click="toggle_pill"
+              phx-value-field="cycle"
+              phx-value-pill="any"
+              class={[
+                "px-3 py-1.5 rounded-full text-sm border transition-colors",
+                if(MapSet.size(@cycle_selections) == 0,
+                  do: "bg-[#6b7280] text-white border-[#6b7280]",
+                  else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
+                )
+              ]}
+            >
+              Any
+            </button>
+            <%= for {option, selected} <-
+                  Enum.map(@cycle_options, fn v ->
+                    {v, MapSet.member?(@cycle_selections, v)}
+                  end) do %>
+              <button
+                type="button"
+                phx-click="toggle_pill"
+                phx-value-field="cycle"
+                phx-value-pill={option}
+                class={[
+                  "px-3 py-1.5 rounded-full text-sm border transition-colors",
+                  if(selected,
+                    do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
+                    else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
+                  )
+                ]}
+              >
+                {option}
+              </button>
+            <% end %>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button
+            type="submit"
+            form="zone-form"
+            class="bg-[#2d6a4f] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#1a3a2a] transition-colors"
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            phx-click="cancel_form"
+            class="rounded-lg px-4 py-2 text-sm font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   <% end %>
@@ -97,29 +207,61 @@
                 <%= if zone.description && zone.description != "" do %>
                   <p class="text-sm text-[#6b7280]">{zone.description}</p>
                 <% end %>
-                <div class="flex flex-wrap gap-3 text-xs text-[#374151] mt-1">
-                  <span>
-                    <span class="text-[#52b788] uppercase tracking-wide font-semibold">Sun:</span>
-                    {if zone.sun_exposures && zone.sun_exposures != "",
-                      do: zone.sun_exposures,
-                      else: "Any"}
-                  </span>
-                  <span>
-                    <span class="text-[#52b788] uppercase tracking-wide font-semibold">
-                      Types:
+                <div class="space-y-2 mt-1">
+                  <div>
+                    <span class="text-[#52b788] uppercase tracking-wide font-semibold text-xs">
+                      Sun
                     </span>
-                    {if zone.allowed_types && zone.allowed_types != "",
-                      do: zone.allowed_types,
-                      else: "Any"}
-                  </span>
-                  <span>
-                    <span class="text-[#52b788] uppercase tracking-wide font-semibold">
-                      Cycles:
+                    <div class="flex flex-wrap gap-1.5 mt-1">
+                      <%= if zone.sun_exposures && zone.sun_exposures != "" do %>
+                        <%= for val <- String.split(zone.sun_exposures, ",", trim: true) do %>
+                          <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#fef9c3] text-[#92400e]">
+                            {format_sun(val)}
+                          </span>
+                        <% end %>
+                      <% else %>
+                        <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#f3f4f6] text-[#6b7280]">
+                          Any
+                        </span>
+                      <% end %>
+                    </div>
+                  </div>
+                  <div>
+                    <span class="text-[#52b788] uppercase tracking-wide font-semibold text-xs">
+                      Types
                     </span>
-                    {if zone.allowed_cycles && zone.allowed_cycles != "",
-                      do: zone.allowed_cycles,
-                      else: "Any"}
-                  </span>
+                    <div class="flex flex-wrap gap-1.5 mt-1">
+                      <%= if zone.allowed_types && zone.allowed_types != "" do %>
+                        <%= for val <- String.split(zone.allowed_types, ",", trim: true) do %>
+                          <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#dcfce7] text-[#14532d]">
+                            {val}
+                          </span>
+                        <% end %>
+                      <% else %>
+                        <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#f3f4f6] text-[#6b7280]">
+                          Any
+                        </span>
+                      <% end %>
+                    </div>
+                  </div>
+                  <div>
+                    <span class="text-[#52b788] uppercase tracking-wide font-semibold text-xs">
+                      Cycles
+                    </span>
+                    <div class="flex flex-wrap gap-1.5 mt-1">
+                      <%= if zone.allowed_cycles && zone.allowed_cycles != "" do %>
+                        <%= for val <- String.split(zone.allowed_cycles, ",", trim: true) do %>
+                          <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#e0f2fe] text-[#0c4a6e]">
+                            {val}
+                          </span>
+                        <% end %>
+                      <% else %>
+                        <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#f3f4f6] text-[#6b7280]">
+                          Any
+                        </span>
+                      <% end %>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div class="flex gap-2 shrink-0">

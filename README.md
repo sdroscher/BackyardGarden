@@ -11,7 +11,7 @@ Built with **Elixir + Phoenix LiveView + Postgres**, deployed to **fly.io**.
 - Seed detail pages
 
 **Phase 1.5 — Complete**
-- Supplier catalog scraped from West Coast Seeds and Metchosin Farm (Shopify JSON API)
+- Supplier catalog scraped from West Coast Seeds, Metchosin Farm, and Brother Nature (Shopify JSON API)
 - Fuzzy name matching links seeds to supplier products (`mix supplier.scrape`, `mix supplier.match`, `mix supplier.link`)
 - Seed detail page shows "From the Supplier" section with care HTML and link to product page
 
@@ -44,8 +44,8 @@ Built with **Elixir + Phoenix LiveView + Postgres**, deployed to **fly.io**.
 **User-Scoped Seed Library — Complete**
 - Seeds are owned per-user — new users start with zero seeds
 - Add Seed page (`/seeds/new`) with three modes:
-  - **Supplier Catalog** — browse West Coast Seeds and Metchosin Farm products with supplier toggle filters and live search; select to pre-fill the form including supplier link
-  - **From URL** — paste a `westcoastseeds.com` or `metchosinfarm.ca` product URL; app fetches and pre-fills the form
+  - **Supplier Catalog** — browse West Coast Seeds, Metchosin Farm, and Brother Nature products with supplier toggle filters and live search; select to pre-fill the form including supplier link
+  - **From URL** — paste a `westcoastseeds.com`, `metchosinfarm.ca`, or `brothernature.ca` product URL; app fetches and pre-fills the form
   - **Enter Manually** — free-form entry for any source
 - Multi-window planting time parsing — `"Autumn,Early Spring"` correctly matches both planting windows for season badges and Plant Now recommendations
 
@@ -431,10 +431,18 @@ Oban is fully enabled and running. Jobs are processed in dev and prod; tests use
 
 ## Supplier Catalog
 
-Seed detail pages can show care information scraped from supplier Shopify stores. Three mix tasks manage this:
+Seed detail pages can show care information scraped from supplier Shopify stores. Three supported suppliers:
+
+| Supplier | URL | Notes |
+|---|---|---|
+| West Coast Seeds | westcoastseeds.com | Full catalog + care guide scraping |
+| Metchosin Farm | metchosinfarm.ca | Full catalog |
+| Brother Nature | brothernature.ca | Full catalog + "Seed Details" / "Instructions" scraping |
+
+Three mix tasks manage this:
 
 ```bash
-# Fetch and upsert all products from West Coast Seeds and Metchosin Farm
+# Fetch and upsert all products from all three suppliers
 mix supplier.scrape
 
 # Import a single product by URL (useful for products missed by the bulk scrape)
@@ -448,6 +456,7 @@ mix supplier.link <seed_id> <product_id|handle|url>
 
 # Examples:
 mix supplier.link <seed_id> https://metchosinfarm.ca/products/noche-zucchini
+mix supplier.link <seed_id> https://brothernature.ca/products/cosmo-mix-seashell
 mix supplier.link <seed_id> noche-zucchini
 ```
 
@@ -476,3 +485,4 @@ The global supplier catalog (West Coast Seeds + Metchosin Farm) is separate and 
 Original seed data sourced from:
 - [Metchosin Farm Seed Library](https://metchosinfarm.ca/collections/all-seeds)
 - [West Coast Seeds](https://www.westcoastseeds.com/)
+- [Brother Nature Seeds](https://brothernature.ca/)

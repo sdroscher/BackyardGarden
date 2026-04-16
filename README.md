@@ -366,7 +366,7 @@ In Auth0 dashboard → your app → Settings, add alongside the localhost URLs:
 
 ---
 
-## Prowl Notifications (Phase 4)
+## Prowl Notifications
 
 Receive iOS push notifications for planting events and seedling reminders.
 

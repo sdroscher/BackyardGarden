@@ -167,8 +167,7 @@
 
   <%!-- Supplier info panel — shown when a product is selected and has content --%>
   <%= if sp = @selected_supplier_product do %>
-    <% content = sp.care_html || sp.description_html %>
-    <%= if content do %>
+    <%= if sp.care_html || sp.description_html do %>
       <div class="bg-white border border-[#bbf7d0] rounded-xl overflow-hidden">
         <div class="px-4 py-3 bg-[#f0fdf4] border-b border-[#bbf7d0] flex items-center justify-between">
           <p class="text-xs font-semibold text-[#52b788] uppercase tracking-wide">
@@ -183,7 +182,16 @@
           </a>
         </div>
         <div class="px-4 py-3 text-sm text-[#374151] space-y-2 [&_h4]:font-semibold [&_h4]:text-[#14532d] [&_h4]:mt-3 [&_h4]:mb-1 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mt-0.5">
-          {Phoenix.HTML.raw(content)}
+          <%= if sp.care_html do %>
+            {Phoenix.HTML.raw(sp.care_html)}
+          <% else %>
+            {Phoenix.HTML.raw(sp.description_html)}
+            <p class="text-xs text-[#6b7280] mt-2 italic">
+              Full care guide unavailable —
+              <a href={sp.url} target="_blank" class="underline">view on supplier site</a>
+              for planting instructions.
+            </p>
+          <% end %>
         </div>
       </div>
     <% end %>

@@ -198,29 +198,61 @@
                 <%= if zone.description && zone.description != "" do %>
                   <p class="text-sm text-[#6b7280]">{zone.description}</p>
                 <% end %>
-                <div class="flex flex-wrap gap-3 text-xs text-[#374151] mt-1">
-                  <span>
-                    <span class="text-[#52b788] uppercase tracking-wide font-semibold">Sun:</span>
-                    {if zone.sun_exposures && zone.sun_exposures != "",
-                      do: zone.sun_exposures,
-                      else: "Any"}
-                  </span>
-                  <span>
-                    <span class="text-[#52b788] uppercase tracking-wide font-semibold">
-                      Types:
+                <div class="space-y-2 mt-1">
+                  <div>
+                    <span class="text-[#52b788] uppercase tracking-wide font-semibold text-xs">
+                      Sun
                     </span>
-                    {if zone.allowed_types && zone.allowed_types != "",
-                      do: zone.allowed_types,
-                      else: "Any"}
-                  </span>
-                  <span>
-                    <span class="text-[#52b788] uppercase tracking-wide font-semibold">
-                      Cycles:
+                    <div class="flex flex-wrap gap-1.5 mt-1">
+                      <%= if zone.sun_exposures && zone.sun_exposures != "" do %>
+                        <%= for val <- String.split(zone.sun_exposures, ",", trim: true) do %>
+                          <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#fef9c3] text-[#92400e]">
+                            {format_sun(val)}
+                          </span>
+                        <% end %>
+                      <% else %>
+                        <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#f3f4f6] text-[#6b7280]">
+                          Any
+                        </span>
+                      <% end %>
+                    </div>
+                  </div>
+                  <div>
+                    <span class="text-[#52b788] uppercase tracking-wide font-semibold text-xs">
+                      Types
                     </span>
-                    {if zone.allowed_cycles && zone.allowed_cycles != "",
-                      do: zone.allowed_cycles,
-                      else: "Any"}
-                  </span>
+                    <div class="flex flex-wrap gap-1.5 mt-1">
+                      <%= if zone.allowed_types && zone.allowed_types != "" do %>
+                        <%= for val <- String.split(zone.allowed_types, ",", trim: true) do %>
+                          <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#dcfce7] text-[#14532d]">
+                            {val}
+                          </span>
+                        <% end %>
+                      <% else %>
+                        <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#f3f4f6] text-[#6b7280]">
+                          Any
+                        </span>
+                      <% end %>
+                    </div>
+                  </div>
+                  <div>
+                    <span class="text-[#52b788] uppercase tracking-wide font-semibold text-xs">
+                      Cycles
+                    </span>
+                    <div class="flex flex-wrap gap-1.5 mt-1">
+                      <%= if zone.allowed_cycles && zone.allowed_cycles != "" do %>
+                        <%= for val <- String.split(zone.allowed_cycles, ",", trim: true) do %>
+                          <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#e0f2fe] text-[#0c4a6e]">
+                            {val}
+                          </span>
+                        <% end %>
+                      <% else %>
+                        <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#f3f4f6] text-[#6b7280]">
+                          Any
+                        </span>
+                      <% end %>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div class="flex gap-2 shrink-0">

@@ -13,22 +13,25 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
 
   @doc "Returns a list of attribute maps ready for SupplierCatalog.upsert_supplier_product/1."
   def fetch_all_products do
-    fetch_page(1, [])
+    cookies = fetch_session_cookies()
+    fetch_page(1, [], cookies)
   end
 
   @doc "Fetches a single product by handle, including care HTML scraped from the product page."
   def fetch_product(handle) do
+    cookies = fetch_session_cookies()
+
     case Req.get("#{@base_url}/products/#{handle}.json",
            receive_timeout: 15_000,
-           headers: user_agent_headers(),
+           headers: headers(cookies),
            retry: false
          ) do
       {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
         attrs = to_attrs(body["product"])
-        Map.put(attrs, :care_html, fetch_care_html(handle))
+        Map.put(attrs, :care_html, fetch_care_html(handle, cookies))
 
       {:ok, %{status: 429}} ->
-        raise "Brother Nature rate limited (429) — try again later"
+        raise "Brother Nature blocked by Cloudflare (429). Set BROTHER_NATURE_CF_CLEARANCE in .env — see scraper module for instructions."
 
       {:ok, %{status: 404}} ->
         raise "Product not found on Brother Nature (404)"
@@ -41,10 +44,10 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
     end
   end
 
-  defp fetch_page(page, acc) do
+  defp fetch_page(page, acc, cookies) do
     case Req.get("#{@base_url}/products.json?limit=250&page=#{page}",
            receive_timeout: 15_000,
-           headers: user_agent_headers(),
+           headers: headers(cookies),
            retry: false
          ) do
       {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
@@ -53,13 +56,16 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
             acc
 
           products ->
-            new_attrs = process_products(products)
+            new_attrs = process_products(products, cookies)
             Process.sleep(3000)
-            fetch_page(page + 1, acc ++ new_attrs)
+            fetch_page(page + 1, acc ++ new_attrs, cookies)
         end
 
       {:ok, %{status: 429}} ->
-        Mix.shell().error("Brother Nature rate limited (429), stopping scrape")
+        Mix.shell().error(
+          "Brother Nature blocked by Cloudflare (429). Set BROTHER_NATURE_CF_CLEARANCE in .env — see scraper module for instructions."
+        )
+
         acc
 
       {:ok, %{status: status}} ->
@@ -72,13 +78,13 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
     end
   end
 
-  defp process_products(products) do
+  defp process_products(products, cookies) do
     products
     |> Enum.reject(&excluded_product?/1)
     |> Task.async_stream(
       fn product ->
         attrs = to_attrs(product)
-        Map.put(attrs, :care_html, fetch_care_html(attrs[:handle]))
+        Map.put(attrs, :care_html, fetch_care_html(attrs[:handle], cookies))
       end,
       max_concurrency: 2,
       timeout: 20_000
@@ -93,12 +99,10 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
   # GETs the product HTML page and extracts all `div.seed-details` blocks
   # (used for both "Seed Details" and "Instructions" sections).
   # Returns nil if no sections found.
-  # Uses html_headers/0 (not user_agent_headers/0) — Shopify returns JSON when
-  # accept: application/json is sent, even for non-.json URLs.
-  defp fetch_care_html(handle) do
+  defp fetch_care_html(handle, cookies) do
     case Req.get("#{@base_url}/products/#{handle}",
            receive_timeout: 15_000,
-           headers: html_headers(),
+           headers: headers(cookies),
            retry: false
          ) do
       {:ok, %{body: html}} when is_binary(html) ->
@@ -137,10 +141,27 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
   defp normalize_tags(tags) when is_list(tags), do: Enum.join(tags, ", ")
   defp normalize_tags(tags), do: tags
 
-  # HTML accept header for product page fetches — Shopify uses content negotiation and
-  # returns JSON when accept: application/json is sent, even on non-.json URLs.
-  defp html_headers do
-    [
+  # Reads the Cloudflare clearance cookie from the BROTHER_NATURE_CF_CLEARANCE env var.
+  # brothernature.ca uses Cloudflare Managed Challenge, which requires JavaScript to solve.
+  # Automated HTTP clients can't pass this, but the cookie is valid for ~24 hours once
+  # issued to a real browser.
+  #
+  # To obtain it: visit https://brothernature.ca in your browser, open DevTools →
+  # Application → Cookies → brothernature.ca, copy the value of `cf_clearance`, then
+  # set BROTHER_NATURE_CF_CLEARANCE=<value> in your .env before running the scraper.
+  defp fetch_session_cookies do
+    case System.get_env("BROTHER_NATURE_CF_CLEARANCE") do
+      nil -> ""
+      "" -> ""
+      value -> "cf_clearance=#{value}"
+    end
+  end
+
+  # Browser-like headers used for all requests. Avoids `accept: application/json`
+  # which brothernature.ca's bot detection uses to identify scrapers. Shopify
+  # returns JSON for `.json` URLs regardless of Accept.
+  defp headers(cookies) do
+    base = [
       {"user-agent",
        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"},
       {"accept",
@@ -157,24 +178,7 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
       {"sec-fetch-user", "?1"},
       {"upgrade-insecure-requests", "1"}
     ]
-  end
 
-  defp user_agent_headers do
-    [
-      {"user-agent",
-       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"},
-      {"accept", "application/json"},
-      {"accept-encoding", "gzip, deflate"},
-      {"accept-language", "en-US,en;q=0.9"},
-      {"sec-ch-ua",
-       "\"Chromium\";v=\"146\", \"Not-A.Brand\";v=\"24\", \"Google Chrome\";v=\"146\""},
-      {"sec-ch-ua-mobile", "?0"},
-      {"sec-ch-ua-platform", "\"macOS\""},
-      {"sec-fetch-dest", "document"},
-      {"sec-fetch-mode", "navigate"},
-      {"sec-fetch-site", "none"},
-      {"sec-fetch-user", "?1"},
-      {"upgrade-insecure-requests", "1"}
-    ]
+    if cookies != "", do: base ++ [{"cookie", cookies}], else: base
   end
 end

@@ -73,6 +73,16 @@
         >
           Metchosin Farm
         </button>
+        <button
+          phx-click="toggle_supplier"
+          phx-value-supplier="brother_nature"
+          class={"px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border " <>
+            if MapSet.member?(@supplier_filters, "brother_nature"),
+              do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
+              else: "bg-white text-[#6b7280] border-[#bbf7d0] hover:bg-[#f0fdf4]"}
+        >
+          Brother Nature
+        </button>
       </div>
       <input
         type="text"

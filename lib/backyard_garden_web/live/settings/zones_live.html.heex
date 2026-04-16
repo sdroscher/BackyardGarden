@@ -34,156 +34,156 @@
           {if @editing_zone, do: "Edit Zone", else: "Add Zone"}
         </h2>
       </div>
-      <div class="bg-white px-6 pb-6 pt-4">
+      <div class="bg-white px-6 pb-6 pt-4 space-y-3">
         <.form
           id="zone-form"
           for={@form}
           phx-submit="save_zone"
           phx-change="validate_zone"
-          class="space-y-3"
         >
           <.input field={@form[:name]} type="text" label="Name" />
           <.input field={@form[:description]} type="text" label="Description" />
-          <div>
-            <p class="block text-sm font-semibold leading-6 text-zinc-800 mb-2">Sun Exposures</p>
-            <div class="flex flex-wrap gap-2">
+        </.form>
+        <div>
+          <p class="block text-sm font-semibold leading-6 text-zinc-800 mb-2">Sun Exposures</p>
+          <div class="flex flex-wrap gap-2">
+            <button
+              type="button"
+              phx-click="toggle_pill"
+              phx-value-field="sun"
+              phx-value-value="any"
+              class={[
+                "px-3 py-1.5 rounded-full text-sm border transition-colors",
+                if(MapSet.size(@sun_selections) == 0,
+                  do: "bg-[#6b7280] text-white border-[#6b7280]",
+                  else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
+                )
+              ]}
+            >
+              Any
+            </button>
+            <%= for {label, value, selected} <-
+                  Enum.map(@sun_options, fn {l, v} ->
+                    {l, v, MapSet.member?(@sun_selections, v)}
+                  end) do %>
               <button
                 type="button"
                 phx-click="toggle_pill"
                 phx-value-field="sun"
-                phx-value-value="any"
+                phx-value-value={value}
                 class={[
                   "px-3 py-1.5 rounded-full text-sm border transition-colors",
-                  if(MapSet.size(@sun_selections) == 0,
-                    do: "bg-[#6b7280] text-white border-[#6b7280]",
+                  if(selected,
+                    do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
                     else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
                   )
                 ]}
               >
-                Any
+                {label}
               </button>
-              <%= for {label, value, selected} <-
-                    Enum.map(@sun_options, fn {l, v} ->
-                      {l, v, MapSet.member?(@sun_selections, v)}
-                    end) do %>
-                <button
-                  type="button"
-                  phx-click="toggle_pill"
-                  phx-value-field="sun"
-                  phx-value-value={value}
-                  class={[
-                    "px-3 py-1.5 rounded-full text-sm border transition-colors",
-                    if(selected,
-                      do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
-                      else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
-                    )
-                  ]}
-                >
-                  {label}
-                </button>
-              <% end %>
-            </div>
+            <% end %>
           </div>
-          <div>
-            <p class="block text-sm font-semibold leading-6 text-zinc-800 mb-2">
-              Allowed Types <span class="font-normal text-[#6b7280]">(blank = any)</span>
-            </p>
-            <div class="flex flex-wrap gap-2">
+        </div>
+        <div>
+          <p class="block text-sm font-semibold leading-6 text-zinc-800 mb-2">
+            Allowed Types
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <button
+              type="button"
+              phx-click="toggle_pill"
+              phx-value-field="type"
+              phx-value-value="any"
+              class={[
+                "px-3 py-1.5 rounded-full text-sm border transition-colors",
+                if(MapSet.size(@type_selections) == 0,
+                  do: "bg-[#6b7280] text-white border-[#6b7280]",
+                  else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
+                )
+              ]}
+            >
+              Any
+            </button>
+            <%= for {option, selected} <-
+                  Enum.map(@type_options, fn v ->
+                    {v, MapSet.member?(@type_selections, v)}
+                  end) do %>
               <button
                 type="button"
                 phx-click="toggle_pill"
                 phx-value-field="type"
-                phx-value-value="any"
+                phx-value-value={option}
                 class={[
                   "px-3 py-1.5 rounded-full text-sm border transition-colors",
-                  if(MapSet.size(@type_selections) == 0,
-                    do: "bg-[#6b7280] text-white border-[#6b7280]",
+                  if(selected,
+                    do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
                     else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
                   )
                 ]}
               >
-                Any
+                {option}
               </button>
-              <%= for {option, selected} <-
-                    Enum.map(@type_options, fn v ->
-                      {v, MapSet.member?(@type_selections, v)}
-                    end) do %>
-                <button
-                  type="button"
-                  phx-click="toggle_pill"
-                  phx-value-field="type"
-                  phx-value-value={option}
-                  class={[
-                    "px-3 py-1.5 rounded-full text-sm border transition-colors",
-                    if(selected,
-                      do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
-                      else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
-                    )
-                  ]}
-                >
-                  {option}
-                </button>
-              <% end %>
-            </div>
+            <% end %>
           </div>
-          <div>
-            <p class="block text-sm font-semibold leading-6 text-zinc-800 mb-2">
-              Allowed Cycles <span class="font-normal text-[#6b7280]">(blank = any)</span>
-            </p>
-            <div class="flex flex-wrap gap-2">
+        </div>
+        <div>
+          <p class="block text-sm font-semibold leading-6 text-zinc-800 mb-2">
+            Allowed Cycles
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <button
+              type="button"
+              phx-click="toggle_pill"
+              phx-value-field="cycle"
+              phx-value-value="any"
+              class={[
+                "px-3 py-1.5 rounded-full text-sm border transition-colors",
+                if(MapSet.size(@cycle_selections) == 0,
+                  do: "bg-[#6b7280] text-white border-[#6b7280]",
+                  else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
+                )
+              ]}
+            >
+              Any
+            </button>
+            <%= for {option, selected} <-
+                  Enum.map(@cycle_options, fn v ->
+                    {v, MapSet.member?(@cycle_selections, v)}
+                  end) do %>
               <button
                 type="button"
                 phx-click="toggle_pill"
                 phx-value-field="cycle"
-                phx-value-value="any"
+                phx-value-value={option}
                 class={[
                   "px-3 py-1.5 rounded-full text-sm border transition-colors",
-                  if(MapSet.size(@cycle_selections) == 0,
-                    do: "bg-[#6b7280] text-white border-[#6b7280]",
+                  if(selected,
+                    do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
                     else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
                   )
                 ]}
               >
-                Any
+                {option}
               </button>
-              <%= for {option, selected} <-
-                    Enum.map(@cycle_options, fn v ->
-                      {v, MapSet.member?(@cycle_selections, v)}
-                    end) do %>
-                <button
-                  type="button"
-                  phx-click="toggle_pill"
-                  phx-value-field="cycle"
-                  phx-value-value={option}
-                  class={[
-                    "px-3 py-1.5 rounded-full text-sm border transition-colors",
-                    if(selected,
-                      do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
-                      else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
-                    )
-                  ]}
-                >
-                  {option}
-                </button>
-              <% end %>
-            </div>
+            <% end %>
           </div>
-          <div class="flex gap-3">
-            <button
-              type="submit"
-              class="bg-[#2d6a4f] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#1a3a2a] transition-colors"
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              phx-click="cancel_form"
-              class="rounded-lg px-4 py-2 text-sm font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </.form>
+        </div>
+        <div class="flex gap-3">
+          <button
+            type="submit"
+            form="zone-form"
+            class="bg-[#2d6a4f] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#1a3a2a] transition-colors"
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            phx-click="cancel_form"
+            class="rounded-lg px-4 py-2 text-sm font-medium border border-[#bbf7d0] text-[#374151] hover:bg-[#f0fdf4] transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   <% end %>

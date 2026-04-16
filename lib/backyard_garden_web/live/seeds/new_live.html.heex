@@ -106,9 +106,7 @@
               <div>
                 <p class="text-sm font-medium text-[#14532d]">{product.title}</p>
                 <p class="text-xs text-[#6b7280]">
-                  {if product.supplier == "west_coast_seeds",
-                    do: "West Coast Seeds",
-                    else: "Metchosin Farm"}
+                  {supplier_label(product.supplier)}
                 </p>
               </div>
               <button

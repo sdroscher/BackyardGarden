@@ -177,8 +177,10 @@ defmodule BackyardGardenWeb.Seeds.NewLive do
     }
   end
 
-  defp supplier_to_brand("west_coast_seeds"), do: "West Coast Seeds"
-  defp supplier_to_brand("metchosin_farm"), do: "Metchosin Farm"
-  defp supplier_to_brand("brother_nature"), do: "Brother Nature"
-  defp supplier_to_brand(other), do: other
+  def supplier_label("west_coast_seeds"), do: "West Coast Seeds"
+  def supplier_label("metchosin_farm"), do: "Metchosin Farm"
+  def supplier_label("brother_nature"), do: "Brother Nature"
+  def supplier_label(other), do: other
+
+  defp supplier_to_brand(supplier), do: supplier_label(supplier)
 end

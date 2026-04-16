@@ -103,15 +103,24 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
   defp normalize_tags(tags) when is_list(tags), do: Enum.join(tags, ", ")
   defp normalize_tags(tags), do: tags
 
+  @curl_user_agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+
   # Fetches a URL via curl and decodes the JSON response body.
   # Uses curl because brothernature.ca is behind Cloudflare, which blocks
   # Erlang's TLS fingerprint but allows curl's (OpenSSL-based).
   defp curl_json(url) do
-    case System.cmd("curl", ["-s", "--max-time", "15", url], stderr_to_stdout: false) do
+    case System.cmd(
+           "curl",
+           ["-s", "--max-time", "15", "-A", @curl_user_agent, url],
+           stderr_to_stdout: false
+         ) do
       {body, 0} ->
         case Jason.decode(body) do
-          {:ok, decoded} -> {:ok, decoded}
-          {:error, _} -> {:error, :invalid_json}
+          {:ok, decoded} ->
+            {:ok, decoded}
+
+          {:error, _} ->
+            {:error, {:invalid_json, String.slice(body, 0, 200)}}
         end
 
       {_, exit_code} ->
@@ -121,7 +130,11 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.BrotherNature do
 
   # Fetches a URL via curl and returns the raw HTML body.
   defp curl_html(url) do
-    case System.cmd("curl", ["-s", "--max-time", "15", "-L", url], stderr_to_stdout: false) do
+    case System.cmd(
+           "curl",
+           ["-s", "--max-time", "15", "-L", "-A", @curl_user_agent, url],
+           stderr_to_stdout: false
+         ) do
       {body, 0} -> {:ok, body}
       {_, exit_code} -> {:error, {:curl_exit, exit_code}}
     end

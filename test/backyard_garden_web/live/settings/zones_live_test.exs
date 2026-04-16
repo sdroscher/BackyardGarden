@@ -36,7 +36,7 @@ defmodule BackyardGardenWeb.Settings.ZonesLiveTest do
   test "creates a new zone via the form", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/settings/zones")
     render_click(view, "new_zone", %{})
-    render_click(view, "toggle_pill", %{"field" => "sun", "value" => "full_sun"})
+    render_click(view, "toggle_pill", %{"field" => "sun", "pill" => "full_sun"})
 
     html =
       view
@@ -49,39 +49,39 @@ defmodule BackyardGardenWeb.Settings.ZonesLiveTest do
   test "toggle_pill selects a sun value", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/settings/zones")
     render_click(view, "new_zone", %{})
-    render_click(view, "toggle_pill", %{"field" => "sun", "value" => "full_sun"})
+    render_click(view, "toggle_pill", %{"field" => "sun", "pill" => "full_sun"})
 
     assert view
-           |> element("button[phx-value-field=sun][phx-value-value=full_sun]")
+           |> element("button[phx-value-field=sun][phx-value-pill=full_sun]")
            |> render() =~ "bg-[#2d6a4f]"
   end
 
   test "toggle_pill deselects a value when clicked again", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/settings/zones")
     render_click(view, "new_zone", %{})
-    render_click(view, "toggle_pill", %{"field" => "sun", "value" => "full_sun"})
-    render_click(view, "toggle_pill", %{"field" => "sun", "value" => "full_sun"})
+    render_click(view, "toggle_pill", %{"field" => "sun", "pill" => "full_sun"})
+    render_click(view, "toggle_pill", %{"field" => "sun", "pill" => "full_sun"})
 
     assert view
-           |> element("button[phx-value-field=sun][phx-value-value=any]")
+           |> element("button[phx-value-field=sun][phx-value-pill=any]")
            |> render() =~ "bg-[#6b7280]"
   end
 
   test "toggle_pill 'any' clears specific selections", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/settings/zones")
     render_click(view, "new_zone", %{})
-    render_click(view, "toggle_pill", %{"field" => "type", "value" => "Vegetable"})
-    render_click(view, "toggle_pill", %{"field" => "type", "value" => "any"})
+    render_click(view, "toggle_pill", %{"field" => "type", "pill" => "Vegetable"})
+    render_click(view, "toggle_pill", %{"field" => "type", "pill" => "any"})
 
     assert view
-           |> element("button[phx-value-field=type][phx-value-value=any]")
+           |> element("button[phx-value-field=type][phx-value-pill=any]")
            |> render() =~ "bg-[#6b7280]"
   end
 
   test "creates a zone with pill-selected sun exposure", %{conn: conn, user: user} do
     {:ok, view, _html} = live(conn, ~p"/settings/zones")
     render_click(view, "new_zone", %{})
-    render_click(view, "toggle_pill", %{"field" => "sun", "value" => "partial_sun"})
+    render_click(view, "toggle_pill", %{"field" => "sun", "pill" => "partial_sun"})
 
     view
     |> form("#zone-form", %{"zone" => %{"name" => "Shady Corner"}})

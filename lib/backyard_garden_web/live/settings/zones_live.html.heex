@@ -51,7 +51,7 @@
               type="button"
               phx-click="toggle_pill"
               phx-value-field="sun"
-              phx-value-value="any"
+              phx-value-pill="any"
               class={[
                 "px-3 py-1.5 rounded-full text-sm border transition-colors",
                 if(MapSet.size(@sun_selections) == 0,
@@ -70,7 +70,7 @@
                 type="button"
                 phx-click="toggle_pill"
                 phx-value-field="sun"
-                phx-value-value={value}
+                phx-value-pill={value}
                 class={[
                   "px-3 py-1.5 rounded-full text-sm border transition-colors",
                   if(selected,
@@ -93,7 +93,7 @@
               type="button"
               phx-click="toggle_pill"
               phx-value-field="type"
-              phx-value-value="any"
+              phx-value-pill="any"
               class={[
                 "px-3 py-1.5 rounded-full text-sm border transition-colors",
                 if(MapSet.size(@type_selections) == 0,
@@ -112,7 +112,7 @@
                 type="button"
                 phx-click="toggle_pill"
                 phx-value-field="type"
-                phx-value-value={option}
+                phx-value-pill={option}
                 class={[
                   "px-3 py-1.5 rounded-full text-sm border transition-colors",
                   if(selected,
@@ -135,7 +135,7 @@
               type="button"
               phx-click="toggle_pill"
               phx-value-field="cycle"
-              phx-value-value="any"
+              phx-value-pill="any"
               class={[
                 "px-3 py-1.5 rounded-full text-sm border transition-colors",
                 if(MapSet.size(@cycle_selections) == 0,
@@ -154,7 +154,7 @@
                 type="button"
                 phx-click="toggle_pill"
                 phx-value-field="cycle"
-                phx-value-value={option}
+                phx-value-pill={option}
                 class={[
                   "px-3 py-1.5 rounded-full text-sm border transition-colors",
                   if(selected,

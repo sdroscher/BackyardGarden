@@ -65,7 +65,7 @@ defmodule BackyardGardenWeb.Settings.ZonesLive do
   end
 
   @impl true
-  def handle_event("toggle_pill", %{"field" => field, "value" => value}, socket) do
+  def handle_event("toggle_pill", %{"field" => field, "pill" => value}, socket) do
     key = selections_key(field)
     current = Map.get(socket.assigns, key)
 
@@ -75,6 +75,12 @@ defmodule BackyardGardenWeb.Settings.ZonesLive do
         MapSet.member?(current, value) -> MapSet.delete(current, value)
         true -> MapSet.put(current, value)
       end
+
+    require Logger
+
+    Logger.info(
+      "toggle_pill field=#{field} value=#{value} before=#{inspect(current)} after=#{inspect(new_selections)}"
+    )
 
     {:noreply, assign(socket, key, new_selections)}
   end

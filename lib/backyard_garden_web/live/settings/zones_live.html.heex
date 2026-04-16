@@ -62,7 +62,10 @@
               >
                 Any
               </button>
-              <%= for {label, value} <- @sun_options do %>
+              <%= for {label, value, selected} <-
+                    Enum.map(@sun_options, fn {l, v} ->
+                      {l, v, MapSet.member?(@sun_selections, v)}
+                    end) do %>
                 <button
                   type="button"
                   phx-click="toggle_pill"
@@ -70,7 +73,7 @@
                   phx-value-value={value}
                   class={[
                     "px-3 py-1.5 rounded-full text-sm border transition-colors",
-                    if(MapSet.member?(@sun_selections, value),
+                    if(selected,
                       do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
                       else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
                     )
@@ -101,7 +104,10 @@
               >
                 Any
               </button>
-              <%= for option <- @type_options do %>
+              <%= for {option, selected} <-
+                    Enum.map(@type_options, fn v ->
+                      {v, MapSet.member?(@type_selections, v)}
+                    end) do %>
                 <button
                   type="button"
                   phx-click="toggle_pill"
@@ -109,7 +115,7 @@
                   phx-value-value={option}
                   class={[
                     "px-3 py-1.5 rounded-full text-sm border transition-colors",
-                    if(MapSet.member?(@type_selections, option),
+                    if(selected,
                       do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
                       else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
                     )
@@ -140,7 +146,10 @@
               >
                 Any
               </button>
-              <%= for option <- @cycle_options do %>
+              <%= for {option, selected} <-
+                    Enum.map(@cycle_options, fn v ->
+                      {v, MapSet.member?(@cycle_selections, v)}
+                    end) do %>
                 <button
                   type="button"
                   phx-click="toggle_pill"
@@ -148,7 +157,7 @@
                   phx-value-value={option}
                   class={[
                     "px-3 py-1.5 rounded-full text-sm border transition-colors",
-                    if(MapSet.member?(@cycle_selections, option),
+                    if(selected,
                       do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
                       else: "bg-white text-[#374151] border-[#bbf7d0] hover:bg-[#f0fdf4]"
                     )

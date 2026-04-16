@@ -119,8 +119,11 @@ defmodule BackyardGarden.SupplierCatalog do
       String.contains?(host, "metchosinfarm.ca") ->
         extract_handle(path, "metchosin_farm")
 
+      String.contains?(host, "brothernature.ca") ->
+        extract_handle(path, "brother_nature")
+
       true ->
-        {:error, "URL must be from westcoastseeds.com or metchosinfarm.ca"}
+        {:error, "URL must be from westcoastseeds.com, metchosinfarm.ca, or brothernature.ca"}
     end
   end
 
@@ -144,6 +147,17 @@ defmodule BackyardGarden.SupplierCatalog do
 
   defp fetch_and_store("metchosin_farm", handle) do
     attrs = BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm.fetch_product(handle)
+
+    case upsert_supplier_product(attrs) do
+      {:ok, product} -> {:ok, product}
+      {:error, _} -> {:error, "Failed to save supplier product"}
+    end
+  rescue
+    e -> {:error, Exception.message(e)}
+  end
+
+  defp fetch_and_store("brother_nature", handle) do
+    attrs = BackyardGarden.SupplierCatalog.Scrapers.BrotherNature.fetch_product(handle)
 
     case upsert_supplier_product(attrs) do
       {:ok, product} -> {:ok, product}

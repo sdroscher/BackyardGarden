@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-BackyardGarden is a Phoenix LiveView web app for managing planting schedules. Phase 1 (seed library with browsing, filtering, and detail pages) is complete. Future phases add planting schedules, garden zones, weather integration, iOS notifications (Prowl), and Auth0 login.
+BackyardGarden is a Phoenix LiveView web app for managing planting schedules, garden zones, weather, and a supplier seed catalog. Deployed on Fly.io. All phases complete; ongoing work is feature additions and improvements.
 
-**Progress:** Phase 1 ✅, Phase 1.5 (Supplier Catalog) ✅, Phase 2 (Garden & Plantings) ✅, Phase 3 (Dashboard & Weather) ✅, Phase 4 (Notifications) ✅, Phase 5 (Auth0 + multi-user) ✅, Phase 5.5 (Postgres migration) ✅. Phase 6 (Deployment) coming next.
+**Progress:** All phases complete ✅ — Seed library, Supplier Catalog, Garden & Plantings, Dashboard & Weather, Notifications, Auth0 + multi-user, Postgres migration, Fly.io deployment.
 
 **Stack:** Elixir + Phoenix 1.8 + Phoenix LiveView + Ecto + Postgres (dev/prod) / SQLite3 (test) + Tailwind CSS
 
@@ -36,6 +36,11 @@ mix format       # code formatter
 
 # Pre-commit check (compile with warnings-as-errors + format + deps + tests)
 mix precommit
+
+# Supplier catalog scraping
+mix supplier.scrape                          # all suppliers
+mix supplier.scrape brother_nature           # single supplier (west_coast_seeds, metchosin_farm, brother_nature)
+mix supplier.scrape <url>                    # single product by URL
 ```
 
 ## Architecture
@@ -52,11 +57,14 @@ Phoenix context pattern: business logic lives in `lib/backyard_garden/` contexts
 - `BackyardGarden.PlantingCalendar` — parses `ideal_planting_time` text → list of `{start_month, end_month}` tuples (supports comma-separated multi-window e.g. `"Autumn,Early Spring"`); returns `[]` for unrecognised input; builds week grids
 - `BackyardGarden.Dashboard` — query functions for the dashboard (plant_now_seeds, recently_planted, upcoming_schedule)
 - `BackyardGarden.Weather` / `Weather.Client` / `Weather.Cache` / `Weather.Tips` — weather facade, HTTP client, ETS cache, and contextual tip generation
+- `BackyardGarden.SupplierCatalog` — context for the supplier product catalog; `upsert_supplier_product/1`, `fetch_and_upsert_by_url/1`, fuzzy match helpers. `SupplierProduct` schema holds scraped Shopify product data (title, handle, care_html, description_html, tags).
+- Scrapers: `Scrapers.WestCoastSeeds`, `Scrapers.MetchosinFarm`, `Scrapers.BrotherNature` — each returns `{upserted, skipped, errors}`; see Key Conventions for the shared scraper pattern.
 
 **Web layer:**
 - `Dashboard.IndexLive` — dashboard page at `/`; bento grid with Plant Now quick-log, Recently Planted, Coming Up, weather card
 - `BackyardGardenWeb.NavHooks` — `on_mount` hook assigning `current_path` for active nav highlighting
 - `Seeds.IndexLive` — live browse/filter page at `/seeds`; handles `"filter"` events, rebuilds query in real-time
+- `Seeds.NewLive` — Add Seed page at `/seeds/new`; browse supplier catalog with filter pills, search, and care HTML preview; or enter manually
 - `Seeds.ShowLive` — seed detail page at `/seeds/:id`
 - `Seeds.EditLive` — seed edit form at `/seeds/:id/edit`
 - `Garden.IndexLive` — My Garden page at `/garden`; log plantings, update status, zone recommendations

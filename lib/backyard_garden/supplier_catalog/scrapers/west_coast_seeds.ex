@@ -79,35 +79,39 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
     end
   end
 
-  defp process_and_save(products, cached, {upserted, skipped, errors}) do
-    Enum.reduce(products, {upserted, skipped, errors}, fn product, {u, s, e} ->
+  defp process_and_save(products, cached, counts) do
+    Enum.reduce(products, counts, fn product, acc ->
       attrs = to_attrs(product)
-      handle = attrs[:handle]
 
-      if MapSet.member?(cached, handle) do
-        Mix.shell().info("  #{attrs[:title]} (skipped)")
-        {u, s + 1, e}
-      else
-        Process.sleep(2000)
-        care = fetch_care_guide(handle)
-        status = if care, do: "scraped", else: "no care guide"
-        attrs_with_care = Map.put(attrs, :care_html, care)
-
-        case upsert_with_retry(attrs_with_care) do
-          {:ok, _} ->
-            Mix.shell().info("  #{attrs[:title]} (#{status})")
-            {u + 1, s, e}
-
-          {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
-            Mix.shell().error("  #{attrs[:title]} failed: #{inspect(changeset.errors)}")
-            {u, s, e + 1}
-
-          {:error, reason} ->
-            Mix.shell().error("  #{attrs[:title]} failed: #{inspect(reason)}")
-            {u, s, e + 1}
-        end
-      end
+      if MapSet.member?(cached, attrs[:handle]),
+        do: skip_product(attrs, acc),
+        else: fetch_and_upsert(attrs, acc)
     end)
+  end
+
+  defp skip_product(attrs, {u, s, e}) do
+    Mix.shell().info("  #{attrs[:title]} (skipped)")
+    {u, s + 1, e}
+  end
+
+  defp fetch_and_upsert(attrs, {u, s, e}) do
+    Process.sleep(2000)
+    care = fetch_care_guide(attrs[:handle])
+    status = if care, do: "scraped", else: "no care guide"
+
+    case upsert_with_retry(Map.put(attrs, :care_html, care)) do
+      {:ok, _} ->
+        Mix.shell().info("  #{attrs[:title]} (#{status})")
+        {u + 1, s, e}
+
+      {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+        Mix.shell().error("  #{attrs[:title]} failed: #{inspect(changeset.errors)}")
+        {u, s, e + 1}
+
+      {:error, reason} ->
+        Mix.shell().error("  #{attrs[:title]} failed: #{inspect(reason)}")
+        {u, s, e + 1}
+    end
   end
 
   defp existing_care_html_handles do

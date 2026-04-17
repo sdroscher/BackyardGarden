@@ -78,29 +78,13 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
     end
   end
 
-  defp process_and_save(products, existing, {upserted, skipped, errors}) do
-    Enum.reduce(products, {upserted, skipped, errors}, fn product, {u, s, e} ->
+  defp process_and_save(products, existing, counts) do
+    Enum.reduce(products, counts, fn product, acc ->
       attrs = to_attrs(product)
-      handle = attrs[:handle]
 
-      if MapSet.member?(existing, handle) do
-        Mix.shell().info("  #{attrs[:title]} (skipped)")
-        {u, s + 1, e}
-      else
-        case upsert_with_retry(attrs) do
-          {:ok, _} ->
-            Mix.shell().info("  #{attrs[:title]} (saved)")
-            {u + 1, s, e}
-
-          {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
-            Mix.shell().error("  #{attrs[:title]} failed: #{inspect(changeset.errors)}")
-            {u, s, e + 1}
-
-          {:error, reason} ->
-            Mix.shell().error("  #{attrs[:title]} failed: #{inspect(reason)}")
-            {u, s, e + 1}
-        end
-      end
+      if MapSet.member?(existing, attrs[:handle]),
+        do: skip_product(attrs, acc),
+        else: upsert_product(attrs, acc)
     end)
   end
 
@@ -113,6 +97,27 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
     )
     |> Repo.all()
     |> MapSet.new()
+  end
+
+  defp skip_product(attrs, {u, s, e}) do
+    Mix.shell().info("  #{attrs[:title]} (skipped)")
+    {u, s + 1, e}
+  end
+
+  defp upsert_product(attrs, {u, s, e}) do
+    case upsert_with_retry(attrs) do
+      {:ok, _} ->
+        Mix.shell().info("  #{attrs[:title]} (saved)")
+        {u + 1, s, e}
+
+      {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+        Mix.shell().error("  #{attrs[:title]} failed: #{inspect(changeset.errors)}")
+        {u, s, e + 1}
+
+      {:error, reason} ->
+        Mix.shell().error("  #{attrs[:title]} failed: #{inspect(reason)}")
+        {u, s, e + 1}
+    end
   end
 
   defp to_attrs(product) do

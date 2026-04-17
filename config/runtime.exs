@@ -66,7 +66,8 @@ if config_env() == :prod do
 
   config :backyard_garden, BackyardGarden.Repo,
     url: database_url,
-    socket_options: maybe_ipv6
+    socket_options: maybe_ipv6,
+    idle_interval: 30_000
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

@@ -90,6 +90,15 @@ defmodule BackyardGarden.SupplierCatalogTest do
     end
   end
 
+  describe "fetch_and_upsert_by_url/1" do
+    test "returns error for unrecognised supplier URL" do
+      assert {:error, msg} =
+               SupplierCatalog.fetch_and_upsert_by_url("https://example.com/products/foo")
+
+      assert msg =~ "brothernature.ca"
+    end
+  end
+
   describe "find_match_for_seed/1" do
     test "returns the best-matching supplier product and its score" do
       product_fixture(%{title: "Bush Bean Mix", shopify_product_id: 1})

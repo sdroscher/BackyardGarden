@@ -4,20 +4,28 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
   Uses the public /products.json endpoint, paginated by page number.
   """
 
+  import Ecto.Query
+  alias BackyardGarden.{Repo, SupplierCatalog, SupplierCatalog.SupplierProduct}
+
   @base_url "https://www.westcoastseeds.com"
   @supplier "west_coast_seeds"
   @excluded_sections ~w[Latin Difficulty]
 
-  @doc "Returns a list of attribute maps ready for SupplierCatalog.upsert_supplier_product/1."
+  @doc """
+  Fetches all new/incomplete products, upserts them, and returns a
+  `{upserted, skipped, errors}` count tuple. Products that already have
+  care_html in the DB are skipped entirely — no HTTP fetch, no upsert.
+  """
   def fetch_all_products do
-    fetch_page(1, [])
+    cached = existing_care_html_handles()
+    fetch_page(1, {0, 0, 0}, cached)
   end
 
   @doc "Fetches a single product by handle, including the care guide scraped from the product page."
   def fetch_product(handle) do
     case Req.get("#{@base_url}/products/#{handle}.json",
            receive_timeout: 15_000,
-           headers: user_agent_header(),
+           headers: user_agent_headers(),
            retry: false
          ) do
       {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
@@ -38,12 +46,89 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
     end
   end
 
+  defp fetch_page(page, counts, cached) do
+    case Req.get("#{@base_url}/products.json?limit=250&page=#{page}",
+           receive_timeout: 15_000,
+           headers: user_agent_headers(),
+           retry: false
+         ) do
+      {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
+        case body["products"] do
+          [] ->
+            counts
+
+          products ->
+            eligible = Enum.filter(products, &seed_product?/1)
+            Mix.shell().info("  Page #{page}: #{length(eligible)} seed products")
+            new_counts = process_and_save(eligible, cached, counts)
+            Process.sleep(3000)
+            fetch_page(page + 1, new_counts, cached)
+        end
+
+      {:ok, %{status: 429}} ->
+        Mix.shell().error("West Coast Seeds rate limited (429), stopping scrape")
+        counts
+
+      {:ok, %{status: status}} ->
+        Mix.shell().error("West Coast Seeds API returned status #{status}, stopping scrape")
+        counts
+
+      {:error, reason} ->
+        Mix.shell().error("West Coast Seeds API error: #{inspect(reason)}, stopping scrape")
+        counts
+    end
+  end
+
+  defp process_and_save(products, cached, counts) do
+    Enum.reduce(products, counts, fn product, acc ->
+      attrs = to_attrs(product)
+
+      if MapSet.member?(cached, attrs[:handle]),
+        do: skip_product(attrs, acc),
+        else: fetch_and_upsert(attrs, acc)
+    end)
+  end
+
+  defp skip_product(attrs, {u, s, e}) do
+    Mix.shell().info("  #{attrs[:title]} (skipped)")
+    {u, s + 1, e}
+  end
+
+  defp fetch_and_upsert(attrs, {u, s, e}) do
+    Process.sleep(2000)
+    care = fetch_care_guide(attrs[:handle])
+    status = if care, do: "scraped", else: "no care guide"
+
+    case upsert_with_retry(Map.put(attrs, :care_html, care)) do
+      {:ok, _} ->
+        Mix.shell().info("  #{attrs[:title]} (#{status})")
+        {u + 1, s, e}
+
+      {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+        Mix.shell().error("  #{attrs[:title]} failed: #{inspect(changeset.errors)}")
+        {u, s, e + 1}
+
+      {:error, reason} ->
+        Mix.shell().error("  #{attrs[:title]} failed: #{inspect(reason)}")
+        {u, s, e + 1}
+    end
+  end
+
+  defp existing_care_html_handles do
+    from(p in SupplierProduct,
+      where: p.supplier == ^@supplier and not is_nil(p.care_html),
+      select: p.handle
+    )
+    |> Repo.all()
+    |> MapSet.new()
+  end
+
   # Fetches the product HTML page and parses the "All About" accordion sections.
   # Returns nil if the section is absent or all sections are empty.
   defp fetch_care_guide(handle) do
     case Req.get("#{@base_url}/products/#{handle}",
            receive_timeout: 15_000,
-           headers: user_agent_header(),
+           headers: user_agent_headers(),
            retry: false
          ) do
       {:ok, %{body: html}} when is_binary(html) ->
@@ -52,26 +137,6 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
       _ ->
         nil
     end
-  end
-
-  # Browser-like headers to avoid bot detection and rate limiting
-  defp user_agent_header do
-    [
-      {"user-agent",
-       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"},
-      {"accept", "application/json"},
-      {"accept-encoding", "gzip, deflate"},
-      {"accept-language", "en-US,en;q=0.9"},
-      {"sec-ch-ua",
-       "\"Chromium\";v=\"146\", \"Not-A.Brand\";v=\"24\", \"Google Chrome\";v=\"146\""},
-      {"sec-ch-ua-mobile", "?0"},
-      {"sec-ch-ua-platform", "\"macOS\""},
-      {"sec-fetch-dest", "document"},
-      {"sec-fetch-mode", "navigate"},
-      {"sec-fetch-site", "none"},
-      {"sec-fetch-user", "?1"},
-      {"upgrade-insecure-requests", "1"}
-    ]
   end
 
   defp parse_care_guide(html) do
@@ -104,49 +169,6 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
     end
   end
 
-  defp fetch_page(page, acc) do
-    case Req.get("#{@base_url}/products.json?limit=250&page=#{page}",
-           receive_timeout: 15_000,
-           headers: user_agent_header(),
-           retry: false
-         ) do
-      {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
-        case body["products"] do
-          [] ->
-            acc
-
-          products ->
-            new_attrs = process_products(products)
-            Process.sleep(3000)
-            fetch_page(page + 1, acc ++ new_attrs)
-        end
-
-      {:ok, %{status: 429}} ->
-        acc
-
-      {:ok, %{status: _status}} ->
-        acc
-
-      {:error, _reason} ->
-        acc
-    end
-  end
-
-  defp process_products(products) do
-    seed_products = Enum.filter(products, &seed_product?/1)
-
-    seed_products
-    |> Task.async_stream(
-      fn product ->
-        attrs = to_attrs(product)
-        Map.put(attrs, :care_html, fetch_care_guide(attrs[:handle]))
-      end,
-      max_concurrency: 2,
-      timeout: 20_000
-    )
-    |> Enum.map(fn {:ok, attrs} -> attrs end)
-  end
-
   # West Coast Seeds sells non-seed products (books, tools, soil amendments, etc.).
   # Only import products whose type contains "seed" to keep the catalog relevant.
   defp seed_product?(product) do
@@ -176,4 +198,38 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.WestCoastSeeds do
   # Shopify returns tags as a list; store as a comma-separated string.
   defp normalize_tags(tags) when is_list(tags), do: Enum.join(tags, ", ")
   defp normalize_tags(tags), do: tags
+
+  defp upsert_with_retry(attrs, attempt \\ 1) do
+    SupplierCatalog.upsert_supplier_product(attrs)
+  rescue
+    DBConnection.ConnectionError ->
+      if attempt <= 3 do
+        wait_s = attempt * 10
+        Mix.shell().info("  DB connection lost, retrying in #{wait_s}s (attempt #{attempt}/3)...")
+        Process.sleep(wait_s * 1_000)
+        upsert_with_retry(attrs, attempt + 1)
+      else
+        {:error, :db_unavailable}
+      end
+  end
+
+  # Browser-like headers to avoid bot detection and rate limiting
+  defp user_agent_headers do
+    [
+      {"user-agent",
+       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"},
+      {"accept", "application/json"},
+      {"accept-encoding", "gzip, deflate"},
+      {"accept-language", "en-US,en;q=0.9"},
+      {"sec-ch-ua",
+       "\"Chromium\";v=\"146\", \"Not-A.Brand\";v=\"24\", \"Google Chrome\";v=\"146\""},
+      {"sec-ch-ua-mobile", "?0"},
+      {"sec-ch-ua-platform", "\"macOS\""},
+      {"sec-fetch-dest", "document"},
+      {"sec-fetch-mode", "navigate"},
+      {"sec-fetch-site", "none"},
+      {"sec-fetch-user", "?1"},
+      {"upgrade-insecure-requests", "1"}
+    ]
+  end
 end

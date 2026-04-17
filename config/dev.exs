@@ -3,6 +3,7 @@ import Config
 # Configure your database (URL set in runtime.exs after dotenvy loads .env)
 config :backyard_garden, BackyardGarden.Repo,
   pool_size: 5,
+  idle_interval: 30_000,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
 

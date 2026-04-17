@@ -6,54 +6,21 @@ Built with **Elixir + Phoenix LiveView + Postgres**, deployed to **fly.io**.
 
 ## Features
 
-**Phase 1 — Complete**
-- Seed library with live search and filtering (62 seeds)
-- Seed detail pages
+**Seed Library** — Build a personal seed collection with live search and filtering. Add seeds from the supplier catalog (browse or paste a URL), or enter them manually. Each seed has a detail page with care information pulled from the supplier.
 
-**Phase 1.5 — Complete**
-- Supplier catalog scraped from West Coast Seeds and Metchosin Farm (Shopify JSON API)
-- Fuzzy name matching links seeds to supplier products (`mix supplier.scrape`, `mix supplier.match`, `mix supplier.link`)
-- Seed detail page shows "From the Supplier" section with care HTML and link to product page
+**Planting Schedules** — Log plantings from seed to harvest. Track the full indoor seedling lifecycle: sow in trays, harden outdoors, transplant. Get planting window badges and Plant Now recommendations based on today's date.
 
-**Phase 2 — Complete**
-- Dashboard with Plant Now list, Recently Planted, Coming Up schedule, and weather card
-- Planting schedule tracking — planned, planted, harvested (My Garden page)
-- Garden zone recommendations based on plant type, cycle, and sun requirements
-- Monthly planting calendar with ideal window overlays
-- Weather-aware planting tips via OpenWeatherMap
+**Garden Dashboard** — At-a-glance view of what to plant now, what's recently been planted, and what's coming up. Includes a live weather card with contextual planting tips.
 
-**Phase 4 — Complete**
-- iOS push notifications via [Prowl](https://www.prowlapp.com/) — hourly checks dispatched at each user's preferred morning/evening times
-- Notification types: plant-now, harvest-soon, sow-now, start-hardening, hardening-morning, hardening-evening, hardening-weather-warning
-- Weather-aware hardening alerts: warns when rain, high wind (>40 km/h), or heat (>30°C) is forecast
-- Notification settings page — configure Prowl API key, enable/disable notifications, and set morning/evening reminder times
+**Planting Calendar** — Monthly grid showing your planted items alongside each seed's ideal planting window, so you can plan at a glance.
 
-**Phase 5 — Complete**
-- Auth0 login (Google OAuth and email+password) via ueberauth_auth0
-- All routes protected — unauthenticated users are redirected to Auth0
-- All garden data (plantings, zones) scoped to the authenticated user
-- Prowl API key encrypted at rest using Cloak AES-GCM
-- Profile settings page — update name, email, location, timezone
-- Logout link in nav (clears Auth0 session via `/v2/logout` so re-auth is required)
+**Garden Zones** — Define growing zones (bed, greenhouse, container, etc.) with sun, soil, and microclimate properties. The app recommends compatible zones when logging a new planting.
 
-**Phase 5.5 — Complete**
-- Migrated from SQLite to Postgres for dev and prod (tests remain on SQLite)
-- Oban background jobs fully enabled with `Oban.Notifiers.Postgres`
-- One-shot data migration task: `mix migrate.sqlite_to_postgres`
+**iOS Notifications** — Morning and evening push notifications via [Prowl](https://www.prowlapp.com/). Alerts for plant-now windows, harvest countdowns, seedling sow dates, hardening reminders, and weather warnings (rain, high wind, heat).
 
-**User-Scoped Seed Library — Complete**
-- Seeds are owned per-user — new users start with zero seeds
-- Add Seed page (`/seeds/new`) with three modes:
-  - **Supplier Catalog** — browse West Coast Seeds and Metchosin Farm products with supplier toggle filters and live search; select to pre-fill the form including supplier link
-  - **From URL** — paste a `westcoastseeds.com` or `metchosinfarm.ca` product URL; app fetches and pre-fills the form
-  - **Enter Manually** — free-form entry for any source
-- Multi-window planting time parsing — `"Autumn,Early Spring"` correctly matches both planting windows for season badges and Plant Now recommendations
+**Supplier Catalog** — Scraped product data from West Coast Seeds, Metchosin Farm, and Brother Nature. Care guides are shown on seed detail pages and linked back to the supplier listing.
 
-**Session Improvements (April 2026)**
-- Seedling tracking — full indoor lifecycle: sow in trays → harden outdoors → transplant; new planting statuses `sown` and `hardening`
-- Seed edit page — edit any seed's details including new seedling fields (`weeks_to_start_indoors`, `hardening_days`)
-- Edit logged plantings — inline edit form on My Garden page for any planting
-- Timezone-correct date handling — all dates use the configured app timezone, not UTC
+**Multi-user** — Auth0 login (Google or email/password). Each user's seeds, plantings, and zones are private to their account.
 
 ## Getting Started
 
@@ -399,7 +366,7 @@ In Auth0 dashboard → your app → Settings, add alongside the localhost URLs:
 
 ---
 
-## Prowl Notifications (Phase 4)
+## Prowl Notifications
 
 Receive iOS push notifications for planting events and seedling reminders.
 
@@ -431,11 +398,24 @@ Oban is fully enabled and running. Jobs are processed in dev and prod; tests use
 
 ## Supplier Catalog
 
-Seed detail pages can show care information scraped from supplier Shopify stores. Three mix tasks manage this:
+Seed detail pages can show care information scraped from supplier Shopify stores. Three supported suppliers:
+
+| Supplier | URL | Notes |
+|---|---|---|
+| West Coast Seeds | westcoastseeds.com | Full catalog + care guide scraping |
+| Metchosin Farm | metchosinfarm.ca | Full catalog |
+| Brother Nature | brothernature.ca | Full catalog + "Seed Details" / "Instructions" scraping |
+
+Three mix tasks manage this:
 
 ```bash
-# Fetch and upsert all products from West Coast Seeds and Metchosin Farm
+# Fetch and upsert all products from all three suppliers
 mix supplier.scrape
+
+# Scrape a single supplier
+mix supplier.scrape west_coast_seeds
+mix supplier.scrape metchosin_farm
+mix supplier.scrape brother_nature
 
 # Import a single product by URL (useful for products missed by the bulk scrape)
 mix supplier.scrape https://www.westcoastseeds.com/products/bright-lights-1
@@ -448,10 +428,11 @@ mix supplier.link <seed_id> <product_id|handle|url>
 
 # Examples:
 mix supplier.link <seed_id> https://metchosinfarm.ca/products/noche-zucchini
+mix supplier.link <seed_id> https://brothernature.ca/products/cosmo-mix-seashell
 mix supplier.link <seed_id> noche-zucchini
 ```
 
-Run `mix supplier.scrape` first to populate the catalog, then `mix supplier.match` to link seeds. Re-running either task is safe — scrape uses upsert and match skips already-linked seeds.
+Run `mix supplier.scrape` first to populate the catalog, then `mix supplier.match` to link seeds. Re-running is safe and efficient — products already fully scraped are skipped (no HTTP fetch, no upsert). Progress is printed per-product with a final `upserted / skipped / errors` summary. The scraper recovers from transient DB connection drops with automatic retry.
 
 ---
 
@@ -476,3 +457,4 @@ The global supplier catalog (West Coast Seeds + Metchosin Farm) is separate and 
 Original seed data sourced from:
 - [Metchosin Farm Seed Library](https://metchosinfarm.ca/collections/all-seeds)
 - [West Coast Seeds](https://www.westcoastseeds.com/)
+- [Brother Nature Seeds](https://brothernature.ca/)

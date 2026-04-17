@@ -73,6 +73,16 @@
         >
           Metchosin Farm
         </button>
+        <button
+          phx-click="toggle_supplier"
+          phx-value-supplier="brother_nature"
+          class={"px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border " <>
+            if MapSet.member?(@supplier_filters, "brother_nature"),
+              do: "bg-[#2d6a4f] text-white border-[#2d6a4f]",
+              else: "bg-white text-[#6b7280] border-[#bbf7d0] hover:bg-[#f0fdf4]"}
+        >
+          Brother Nature
+        </button>
       </div>
       <input
         type="text"
@@ -96,9 +106,7 @@
               <div>
                 <p class="text-sm font-medium text-[#14532d]">{product.title}</p>
                 <p class="text-xs text-[#6b7280]">
-                  {if product.supplier == "west_coast_seeds",
-                    do: "West Coast Seeds",
-                    else: "Metchosin Farm"}
+                  {supplier_label(product.supplier)}
                 </p>
               </div>
               <button
@@ -155,6 +163,38 @@
         </p>
       <% end %>
     </div>
+  <% end %>
+
+  <%!-- Supplier info panel — shown when a product is selected and has content --%>
+  <%= if sp = @selected_supplier_product do %>
+    <%= if sp.care_html || sp.description_html do %>
+      <div class="bg-white border border-[#bbf7d0] rounded-xl overflow-hidden">
+        <div class="px-4 py-3 bg-[#f0fdf4] border-b border-[#bbf7d0] flex items-center justify-between">
+          <p class="text-xs font-semibold text-[#52b788] uppercase tracking-wide">
+            From the Supplier
+          </p>
+          <a
+            href={sp.url}
+            target="_blank"
+            class="text-xs text-[#52b788] hover:text-[#2d6a4f] underline"
+          >
+            View on {supplier_label(sp.supplier)} ↗
+          </a>
+        </div>
+        <div class="px-4 py-3 text-sm text-[#374151] space-y-2 [&_h4]:font-semibold [&_h4]:text-[#14532d] [&_h4]:mt-3 [&_h4]:mb-1 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mt-0.5">
+          <%= if sp.care_html do %>
+            {Phoenix.HTML.raw(sp.care_html)}
+          <% else %>
+            {Phoenix.HTML.raw(sp.description_html)}
+            <p class="text-xs text-[#6b7280] mt-2 italic">
+              Full care guide unavailable —
+              <a href={sp.url} target="_blank" class="underline">view on supplier site</a>
+              for planting instructions.
+            </p>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
   <% end %>
 
   <%!-- Seed form --%>

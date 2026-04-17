@@ -4,22 +4,29 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
   Uses the public /products.json endpoint, paginated by page number.
   """
 
+  import Ecto.Query
+  alias BackyardGarden.{Repo, SupplierCatalog, SupplierCatalog.SupplierProduct}
+
   @base_url "https://metchosinfarm.ca"
   @supplier "metchosin_farm"
 
-  @doc "Returns a list of attribute maps ready for SupplierCatalog.upsert_supplier_product/1."
+  @doc """
+  Fetches all products not yet in the DB, upserts them, and returns a
+  `{upserted, skipped, errors}` count tuple. Products already in the DB
+  are skipped — no HTTP fetch, no upsert.
+  """
   def fetch_all_products do
-    fetch_page(1, [])
+    existing = existing_handles()
+    fetch_page(1, {0, 0, 0}, existing)
   end
 
   @doc "Fetches a single product by handle and returns its attribute map."
   def fetch_product(handle) do
-    # Delay before request to avoid hammering server
     Process.sleep(1000)
 
     case Req.get("#{@base_url}/products/#{handle}.json",
            receive_timeout: 15_000,
-           headers: user_agent_header(),
+           headers: user_agent_headers(),
            retry: false
          ) do
       {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
@@ -39,34 +46,77 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
     end
   end
 
-  defp fetch_page(page, acc) do
+  defp fetch_page(page, counts, existing) do
     case Req.get("#{@base_url}/products.json?limit=250&page=#{page}",
            receive_timeout: 15_000,
-           headers: user_agent_header(),
+           headers: user_agent_headers(),
            retry: false
          ) do
       {:ok, %{status: status, body: body}} when status >= 200 and status < 300 and is_map(body) ->
         case body["products"] do
           [] ->
-            acc
+            counts
 
           products ->
-            # Rate limiting: 5s delay between pages
+            Mix.shell().info("  Page #{page}: #{length(products)} products")
+            new_counts = process_and_save(products, existing, counts)
             Process.sleep(5000)
-            fetch_page(page + 1, acc ++ Enum.map(products, &to_attrs/1))
+            fetch_page(page + 1, new_counts, existing)
         end
 
       {:ok, %{status: 429}} ->
         Mix.shell().error("Metchosin Farm rate limited (429), stopping scrape")
-        acc
+        counts
 
       {:ok, %{status: status}} ->
         Mix.shell().error("Metchosin Farm API returned status #{status}, stopping scrape")
-        acc
+        counts
 
       {:error, reason} ->
         Mix.shell().error("Metchosin Farm API error: #{inspect(reason)}, stopping scrape")
-        acc
+        counts
+    end
+  end
+
+  defp process_and_save(products, existing, counts) do
+    Enum.reduce(products, counts, fn product, acc ->
+      attrs = to_attrs(product)
+
+      if MapSet.member?(existing, attrs[:handle]),
+        do: skip_product(attrs, acc),
+        else: upsert_product(attrs, acc)
+    end)
+  end
+
+  # Metchosin Farm has no per-product HTML to scrape, so any existing handle
+  # means the product is already fully saved — skip it entirely.
+  defp existing_handles do
+    from(p in SupplierProduct,
+      where: p.supplier == ^@supplier,
+      select: p.handle
+    )
+    |> Repo.all()
+    |> MapSet.new()
+  end
+
+  defp skip_product(attrs, {u, s, e}) do
+    Mix.shell().info("  #{attrs[:title]} (skipped)")
+    {u, s + 1, e}
+  end
+
+  defp upsert_product(attrs, {u, s, e}) do
+    case upsert_with_retry(attrs) do
+      {:ok, _} ->
+        Mix.shell().info("  #{attrs[:title]} (saved)")
+        {u + 1, s, e}
+
+      {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+        Mix.shell().error("  #{attrs[:title]} failed: #{inspect(changeset.errors)}")
+        {u, s, e + 1}
+
+      {:error, reason} ->
+        Mix.shell().error("  #{attrs[:title]} failed: #{inspect(reason)}")
+        {u, s, e + 1}
     end
   end
 
@@ -88,8 +138,22 @@ defmodule BackyardGarden.SupplierCatalog.Scrapers.MetchosinFarm do
   defp normalize_tags(tags) when is_list(tags), do: Enum.join(tags, ", ")
   defp normalize_tags(tags), do: tags
 
+  defp upsert_with_retry(attrs, attempt \\ 1) do
+    SupplierCatalog.upsert_supplier_product(attrs)
+  rescue
+    DBConnection.ConnectionError ->
+      if attempt <= 3 do
+        wait_s = attempt * 10
+        Mix.shell().info("  DB connection lost, retrying in #{wait_s}s (attempt #{attempt}/3)...")
+        Process.sleep(wait_s * 1_000)
+        upsert_with_retry(attrs, attempt + 1)
+      else
+        {:error, :db_unavailable}
+      end
+  end
+
   # Browser-like headers to avoid bot detection and rate limiting
-  defp user_agent_header do
+  defp user_agent_headers do
     [
       {"user-agent",
        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"},

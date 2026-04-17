@@ -432,7 +432,7 @@ mix supplier.link <seed_id> https://brothernature.ca/products/cosmo-mix-seashell
 mix supplier.link <seed_id> noche-zucchini
 ```
 
-Run `mix supplier.scrape` first to populate the catalog, then `mix supplier.match` to link seeds. Re-running either task is safe — scrape uses upsert and match skips already-linked seeds.
+Run `mix supplier.scrape` first to populate the catalog, then `mix supplier.match` to link seeds. Re-running is safe and efficient — products already fully scraped are skipped (no HTTP fetch, no upsert). Progress is printed per-product with a final `upserted / skipped / errors` summary. The scraper recovers from transient DB connection drops with automatic retry.
 
 ---
 

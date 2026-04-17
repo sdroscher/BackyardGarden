@@ -90,20 +90,7 @@ defmodule Mix.Tasks.Supplier.Scrape do
 
   defp scrape(name, fetch_fn) do
     Mix.shell().info("Scraping #{name}...")
-    products = fetch_fn.()
-
-    count =
-      Enum.reduce(products, 0, fn attrs, acc ->
-        case SupplierCatalog.upsert_supplier_product(attrs) do
-          {:ok, _} ->
-            acc + 1
-
-          {:error, changeset} ->
-            Mix.shell().error("Failed: #{attrs[:title]} — #{inspect(changeset.errors)}")
-            acc
-        end
-      end)
-
-    Mix.shell().info("#{name}: #{count} products upserted.")
+    {upserted, skipped, errors} = fetch_fn.()
+    Mix.shell().info("#{name}: #{upserted} upserted, #{skipped} skipped, #{errors} errors.")
   end
 end

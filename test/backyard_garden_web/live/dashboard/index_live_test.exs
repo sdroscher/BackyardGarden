@@ -7,11 +7,20 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
   alias BackyardGarden.Weather.Cache
   alias BackyardGarden.Test.Fixtures
 
+  @month_names ~w(January February March April May June July August September October November December)
+
   setup %{conn: conn} do
     Cache.clear()
     user = Fixtures.user_fixture()
     %{conn: log_in_user(conn, user), user: user}
   end
+
+  # Dashboard "Plant Now"/"Coming Up" are evaluated against Date.utc_today(), so
+  # fixtures must derive their planting window from the current date — hardcoding a
+  # season makes these tests pass only when CI happens to run during that season.
+  defp current_month_name, do: Enum.at(@month_names, Date.utc_today().month - 1)
+
+  defp next_month_name, do: Enum.at(@month_names, rem(Date.utc_today().month, 12))
 
   defp seed_fixture(user, attrs) do
     defaults = %{
@@ -51,10 +60,10 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
     conn: conn,
     user: user
   } do
-    seed_fixture(user, %{name: "April Spinach", ideal_planting_time: "spring"})
+    seed_fixture(user, %{name: "In Season Spinach", ideal_planting_time: current_month_name()})
 
     {:ok, _view, html} = live(conn, ~p"/")
-    assert html =~ "April Spinach"
+    assert html =~ "In Season Spinach"
   end
 
   test "does not show a planted seed in Plant Now", %{conn: conn, user: user} do
@@ -78,11 +87,11 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
   end
 
   test "shows upcoming seeds in Coming Up", %{conn: conn, user: user} do
-    # May window will show as upcoming in April
-    seed_fixture(user, %{name: "May Beans", ideal_planting_time: "may"})
+    # A window opening next month falls within the 60-day "Coming Up" horizon
+    seed_fixture(user, %{name: "Next Month Beans", ideal_planting_time: next_month_name()})
 
     {:ok, _view, html} = live(conn, ~p"/")
-    assert html =~ "May Beans"
+    assert html =~ "Next Month Beans"
   end
 
   test "shows frost warning banner when forecast has sub-zero temperatures", %{
@@ -104,7 +113,11 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
 
   test "expand_quick_log shows inline form for that seed", %{conn: conn, user: user} do
     seed =
-      seed_fixture(user, %{name: "Quick Log Seed", type: "Herb", ideal_planting_time: "spring"})
+      seed_fixture(user, %{
+        name: "Quick Log Seed",
+        type: "Herb",
+        ideal_planting_time: current_month_name()
+      })
 
     {:ok, view, _} = live(conn, ~p"/")
     html = render_click(view, "expand_quick_log", %{"id" => seed.id})
@@ -116,7 +129,12 @@ defmodule BackyardGardenWeb.Dashboard.IndexLiveTest do
     conn: conn,
     user: user
   } do
-    seed = seed_fixture(user, %{name: "Log It Now", type: "Herb", ideal_planting_time: "spring"})
+    seed =
+      seed_fixture(user, %{
+        name: "Log It Now",
+        type: "Herb",
+        ideal_planting_time: current_month_name()
+      })
 
     {:ok, view, _html} = live(conn, ~p"/")
     render_click(view, "expand_quick_log", %{"id" => seed.id})
